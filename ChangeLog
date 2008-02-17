@@ -1,0 +1,18 @@
+2008-02-17  jacob berkman  <jberkman@ilovegom.org>
+
+	* src/libgom/gomdoc.c (gom_dom_parser_start_element): compile the
+	function here before trying to connect the signal
+	(gom_doc_parse_file): take a filename instead of a string
+
+	* src/libgom/gomjsobject.c (gom_js_object_finalize): use
+	gom_js_object_get_g_object() to get the GObject for this JSObject
+	(gom_js_closure_new, gom_js_object_connect): take a JSFunction
+	instead of a script
+
+	* src/gom/gom.c (parse_idle): move doc parsing here so scripts can
+	quit(), and let gom_doc_parse_file() load the file
+	(main): shutdown javascript runtime to catch refcount bugs
+
+2008-02-17  jacob berkman  <jberkman@ilovegom.org>
+
+	* Gom 0.0 released

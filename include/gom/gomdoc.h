@@ -55,8 +55,7 @@ struct _GomDocClass {
 
 GType gom_doc_get_type (void);
 
-gboolean gom_doc_parse (GomDocument *doc, JSContext *cx, JSObject *global,
-                        const char *filename, const char *text,
-                        GError **error);
+gboolean gom_doc_parse_file (GomDocument *doc, JSContext *cx, JSObject *global,
+                             const char *filename, GError **error);
 
 #endif /* GOM_DOC_H */

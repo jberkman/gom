@@ -40,65 +40,74 @@ gom_error_reporter (JSContext *cx, const char *message, JSErrorReport *report)
     g_printerr ("JS Error: %s\n", message);
 }
 
+typedef struct {
+    JSContext   *cx;
+    JSObject    *window;
+    const char  *filename;
+} MainData;
+
+static gboolean
+parse_idle (gpointer data)
+{
+    MainData *d = data;
+    GError *error = NULL;
+    GomDocument *doc;
+    JSObject *jsdoc;
+
+    doc   = g_object_new (GOM_TYPE_DOC, NULL);
+    jsdoc = gom_js_object_get_or_create_js_object (d->cx, doc);
+    
+    JS_DefineProperty (d->cx, d->window, "document",
+                       OBJECT_TO_JSVAL (jsdoc), NULL, NULL,
+                       JSPROP_PERMANENT | JSPROP_READONLY);
+
+    if (!gom_doc_parse_file (doc, d->cx, jsdoc, d->filename, &error)) {
+        g_printerr ("Error parsing %s: %s\n", d->filename, error->message);
+        gtk_main_quit ();
+    }
+
+    return FALSE;
+}
+
 int
 main (int argc, char *argv[])
 {
-    char *script;
-    gsize scriptlen;
     GError *error = NULL;
 
-    JSObject *jsdoc;
-    GomDocument *doc;
+    MainData d = { NULL };
 
     JSRuntime *rt; 
-    JSContext *cx; 
-    JSObject *window;
 
     gtk_init (&argc, &argv);
 
     if (argc < 2) {
-        g_printerr ("Usage: gom <file>\n");
+        g_printerr ("Usage: gom <file.gom>\n");
         return 1;
     }
 
-    if (!g_file_get_contents (argv[1], &script, &scriptlen, &error)) {
-        g_printerr ("Could not read %s: %s\n", argv[1], error->message);
-        return 1;
-    }
+    d.filename = argv[1];
 
     gom_widget_init ();
 
-    /* 
-     * You always need: 
-     *        a runtime per process, 
-     *        a context per thread, 
-     *        a global object per context, 
-     *        standard classes (e.g. Date). 
-     */ 
     rt = JS_NewRuntime(0x100000); 
-    cx = JS_NewContext(rt, 0x1000); 
+    d.cx = JS_NewContext(rt, 0x1000); 
 
-    window = gom_js_window_new_global (cx);
+    d.window = gom_js_window_new_global (d.cx);
 
-    JS_SetErrorReporter (cx, gom_error_reporter);
+    JS_SetErrorReporter (d.cx, gom_error_reporter);
 
-    gom_js_object_init_class (cx, window);
-    gom_js_node_init_class (cx, window);
-    gom_js_element_init_class (cx, window);
-    gom_js_document_init_class (cx, window);
+    gom_js_object_init_class (d.cx, d.window);
+    gom_js_node_init_class (d.cx, d.window);
+    gom_js_element_init_class (d.cx, d.window);
+    gom_js_document_init_class (d.cx, d.window);
 
-    jsdoc = JS_DefineObject (cx, window, "document", &GomJSDocumentClass, NULL,
-                             JSPROP_PERMANENT | JSPROP_READONLY);
-    doc = g_object_new (GOM_TYPE_DOC, NULL);
-    gom_js_object_set_g_object (cx, jsdoc, doc);
-    
-    if (gom_doc_parse (doc, cx, jsdoc, argv[1], script, NULL)) {
-        GomNode *node = gom_node_get_first_child (GOM_NODE (doc));
-        if (node && GTK_IS_WIDGET (node)) {
-            gtk_widget_show_all (GTK_WIDGET (node));
-        }
-        gtk_main ();
-    }
+    /* parse the file in an idle so that scripts can exit */
+    g_idle_add (parse_idle, &d);
+    gtk_main ();
+
+    JS_DestroyContext (d.cx);
+    JS_DestroyRuntime (rt);
+    JS_ShutDown ();
 
     return 0;
 }

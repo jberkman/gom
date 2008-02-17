@@ -31,7 +31,7 @@ static GHashTable *js2g = NULL;
 static void
 gom_js_object_finalize (JSContext *cx, JSObject *obj)
 {
-    GObject *gobj = JS_GetInstancePrivate (cx, obj, &GomJSObjectClass, NULL);
+    GObject *gobj = gom_js_object_get_g_object (cx, obj);
     g_print ("Finalizing JSObject %p: unref %s %p\n",
              obj, gobj ? g_type_name (G_TYPE_FROM_INSTANCE (gobj)) : "<NULL>",
              gobj);
@@ -154,9 +154,7 @@ gom_js_closure_marshal (GClosure *closure,
 }
 
 static GClosure *
-gom_js_closure_new_script (JSContext *cx, JSObject *obj,
-                           const char *script, gsize scriptlen,
-                           const char *filename, int lineno)
+gom_js_closure_new (JSContext *cx, JSObject *obj, JSFunction *fun)
 {
     GClosure *closure;
     GomJSClosure *jsclosure;
@@ -168,11 +166,7 @@ gom_js_closure_new_script (JSContext *cx, JSObject *obj,
 
     jsclosure->cx  = cx;
     jsclosure->obj = obj;
-
-    jsclosure->fun = JS_CompileFunction (cx, obj, NULL,
-                                         0, NULL,
-                                         script, scriptlen,
-                                         filename, lineno);
+    jsclosure->fun = fun;
 
     g_closure_set_marshal (closure, gom_js_closure_marshal);
 
@@ -180,10 +174,9 @@ gom_js_closure_new_script (JSContext *cx, JSObject *obj,
 }
 
 gulong
-gom_js_object_connect_script (JSContext *cx, JSObject *jsobj,
-                              const char *signal,
-                              const char *script, gsize scriptlen,
-                              const char *filename, int lineno)
+gom_js_object_connect (JSContext *cx, JSObject *jsobj,
+                       const char *signal,
+                       JSFunction *fun)
 {
     GClosure *closure;
     GObject *gobj;
@@ -194,7 +187,7 @@ gom_js_object_connect_script (JSContext *cx, JSObject *jsobj,
         return 0;
     }
 
-    closure = gom_js_closure_new_script (cx, jsobj, script, scriptlen, filename, lineno);
+    closure = gom_js_closure_new (cx, jsobj, fun);
     if (!closure) {
         return 0;
     }

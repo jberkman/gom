@@ -77,10 +77,9 @@ gpointer  gom_js_object_get_g_object  (JSContext *cx, JSObject *jsobj);
 JSObject *gom_js_object_get_js_object (gpointer   gobj);
 JSObject *gom_js_object_get_or_create_js_object (JSContext *cx, gpointer gobj);
 
-gulong    gom_js_object_connect_script (JSContext *cx, JSObject *jsobj,
-                                        const char *signal,
-                                        const char *script, gsize scriptlen,
-                                        const char *filename, int lineno);
+gulong    gom_js_object_connect (JSContext *cx, JSObject *jsobj,
+                                 const char *signal, JSFunction *func);
+                                 
 
 G_END_DECLS
 

@@ -342,7 +342,7 @@ gom_doc_class_init (GomDocClass *klass)
 typedef struct {
     const char *filename;
     JSContext *cx;
-    JSObject *global;
+    JSObject *jsobj;
     GomDocument *doc;
     GSList *elems;
     GString *script;
@@ -372,6 +372,7 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
                     attribute_names[i][1] == 'n' && 
                     g_signal_lookup (&attribute_names[i][2], G_TYPE_FROM_INSTANCE (elem))) {
                     JSObject *jsobj;
+                    JSFunction *fun;
                     int lineno;
 
                     jsobj = gom_js_object_get_or_create_js_object (data->cx, elem);
@@ -379,11 +380,20 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
                         g_printerr ("coudn't get jsobj for %s\n", element_name);
                         continue;
                     }
+
                     g_markup_parse_context_get_position (context, &lineno, NULL);
-                    if (!gom_js_object_connect_script (data->cx, jsobj,
-                                                       &attribute_names[i][2],
-                                                       attribute_values[i], strlen (attribute_values[i]),
-                                                       data->filename, lineno)) {
+                    fun = JS_CompileFunction (data->cx, data->jsobj, NULL, 0, NULL,
+                                              attribute_values[i], strlen (attribute_values[i]),
+                                              data->filename, lineno);
+
+                    if (!fun) {
+                        g_printerr ("couldn't compile script: %s\n", attribute_values[i]);
+                        continue;
+                    }
+
+                    if (!gom_js_object_connect (data->cx, jsobj,
+                                                &attribute_names[i][2],
+                                                fun)) {
                         g_printerr ("couldn't connect script for signal %s\n", attribute_names[i]);
                         continue;
                     }
@@ -415,7 +425,7 @@ gom_dom_parser_end_element (GMarkupParseContext *context,
         int lineno;
 
         g_markup_parse_context_get_position (context, &lineno, NULL);
-        ok = JS_EvaluateScript(data->cx, data->global,
+        ok = JS_EvaluateScript(data->cx, data->jsobj,
                                data->script->str, data->script->len,
                                data->filename, lineno, &rval);
         str = JS_ValueToString(data->cx, rval); 
@@ -475,25 +485,35 @@ static GMarkupParser gom_dom_parser = {
 };
 
 gboolean
-gom_doc_parse (GomDocument *doc,
-               JSContext *cx, JSObject *global,
-               const char *filename,
-               const char *text, GError **error)
+gom_doc_parse_file (GomDocument *doc,
+                    JSContext *cx, JSObject *jsobj,
+                    const char *filename,
+                    GError **error)
 {
     GomDomParserData data;
     GMarkupParseContext *ctx;
+    char *xml;
+    gsize xmllen;
+    gboolean ret;
+
+    if (!g_file_get_contents (filename, &xml, &xmllen, error)) {
+        return FALSE;
+    }
 
     data.filename = filename;
     data.cx = cx;
-    data.global = global;
+    data.jsobj = jsobj;
     data.doc = doc;
     data.elems = NULL;
     data.script = NULL;
     
     ctx = g_markup_parse_context_new (&gom_dom_parser, G_MARKUP_TREAT_CDATA_AS_TEXT, &data, NULL);
-    g_markup_parse_context_parse (ctx, text, strlen (text), error);
-    g_markup_parse_context_end_parse (ctx, error);
+    ret = g_markup_parse_context_parse (ctx, xml, xmllen, error);
+    if (ret) {
+        ret = g_markup_parse_context_end_parse (ctx, error);
+    }
     g_markup_parse_context_free (ctx);
+    g_free (xml);
 
-    return TRUE;
+    return ret;
 }
