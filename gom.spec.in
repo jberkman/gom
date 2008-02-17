@@ -1,0 +1,39 @@
+Summary: A JavaScript binding for GTK
+Name: gom
+Version: @VERSION@
+Release: 1
+License: X11
+Group: Development/Libraries
+URL: http://ilovegom.googlecode.gom/
+Source0: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+
+%description
+Gom allows you to write GTK applications using JavaScript and an
+HTML-like widget layout syntax.
+
+It does this by first implementing a W3C DOM Level 1 (Core) API for
+interacting with GTK widgets and windows, then by providing a
+JavaScript binding to this layer.
+
+%prep
+%setup -q
+
+%build
+
+%install
+rm -rf $RPM_BUILD_ROOT
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+
+%files
+%defattr(-,root,root,-)
+%doc
+
+
+%changelog
+* Sun Feb 17 2008 jacob berkman <jacob@ilovegom.org> - 
+- Initial build.
+

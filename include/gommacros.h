@@ -44,7 +44,7 @@ G_BEGIN_DECLS
     GType                                                               \
     type_name##_get_type (void)                                         \
     {                                                                   \
-        static volatile gsize type_volatile = 0;                        \
+        static volatile gpointer type_volatile = 0;                     \
         if (g_once_init_enter (&type_volatile)) {                       \
             static const GTypeInfo info = {                             \
                 sizeof (TypeName##Interface),                           \
@@ -61,9 +61,9 @@ G_BEGIN_DECLS
             { /* custom code follows */
 #define _GOM_DEFINE_INTERFACE_END()                                     \
             } /* following custom code */                               \
-            g_once_init_leave (&type_volatile, type);                   \
+            g_once_init_leave (&type_volatile, (gpointer)type);         \
         }                                                               \
-        return type_volatile;                                           \
+        return (GType)type_volatile;                                    \
     } /* closes type_name##_get_type() */
 
 
