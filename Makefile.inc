@@ -40,18 +40,18 @@ gominclude_HEADERS :=				\
 
 libgom_la_SOURCES :=				\
 	include/gommacros.h			\
-	src/gomdoc.c				\
-	src/gomdom.c				\
-	src/gomglist.c				\
-	src/gominterfaces.c			\
-	src/gomjsdocument.c			\
-	src/gomjselement.c			\
-	src/gomjsobject.c			\
-	src/gomjsnode.c				\
-	src/gomjswindow.c			\
-	src/gomwidget.c
+	src/libgom/gomdoc.c			\
+	src/libgom/gomdom.c			\
+	src/libgom/gomglist.c			\
+	src/libgom/gominterfaces.c		\
+	src/libgom/gomjsdocument.c		\
+	src/libgom/gomjselement.c		\
+	src/libgom/gomjsobject.c		\
+	src/libgom/gomjsnode.c			\
+	src/libgom/gomjswindow.c		\
+	src/libgom/gomwidget.c
 
-src/gomwidget.c: gomwidgets.c
+src/libgom/gomwidget.c: gomwidgets.c
 
 gomwidgets.c: Makefile.inc
 	awk '/GTK_TYPE_.*get_type/ { print "type ^= "$$2";" }' \
@@ -64,7 +64,7 @@ gomwidgets.c: Makefile.inc
 libgom_la_CFLAGS = -I$(top_srcdir)/include $(GOM_CFLAGS) $(JS_CFLAGS)
 libgom_la_LDFLAGS = $(GOM_LIBS)
 
-gom_SOURCES := src/gom.c
+gom_SOURCES := src/gom/gom.c
 gom_CFLAGS = -I$(top_srcdir)/include $(GOM_CFLAGS) $(JS_CFLAGS)
 gom_LDFLAGS = $(GOM_LIBS) $(JS_LIBS)
 gom_LDADD := libgom.la
