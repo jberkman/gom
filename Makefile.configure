@@ -1,0 +1,12 @@
+DEPTH=$(mozilla_source)
+
+include $(mozilla_source)/config.mk
+
+objdir:
+	@echo $(OBJDIR)
+
+oscflags:
+	@echo $(OS_CFLAGS)
+
+oslibs:
+	@echo $(OS_LIBS)

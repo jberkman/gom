@@ -1,0 +1,40 @@
+Gom
+
+Gom allows you to write GTK applications using JavaScript and an
+HTML-like widget layout syntax.
+
+It does this by first implementing a W3C DOM Level 1 (Core) API for
+interacting with GTK widgets and windows, then by providing a
+JavaScript binding to this layer.
+
+Those are the goals, at any rate.  It is certainly a work in progress;
+basically examples/hello.gom works and probably not much more.
+
+Gom is on the Web!
+
+http://ilovegom.googlecode.com/
+
+To build Gom, you need to check out and build Mozilla's JavaScript
+engine - SpiderMonkey.  Instructions are here:
+
+http://developer.mozilla.org/en/docs/SpiderMonkey_Build_Documentation
+
+Don't worry, it is a small amount of code and should build easily and
+quickly.
+
+When running Gom's configure script, you should point it at your
+mozilla checkout using the --with-mozilla-source=<path> option.
+
+Once you've build gom, you can pass a .gom file to load on the command
+line:
+
+$ ./gom examples/hello.gom
+
+It will spew a bunch of garbage to the command line, but if all goes
+well a window will pop up.  Close the window with your windowmanager,
+and gom should exit.
+
+ -- jacob berkman  <jacob@ilovegom.org>
+
+brookline, ma
+february 17, 2008

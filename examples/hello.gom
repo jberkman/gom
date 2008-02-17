@@ -1,0 +1,3 @@
+<GtkWindow title="Gom 0.0" default-width="200" default-height="50" border-width="20" ondestroy="quit()">
+  <GtkLabel label="Hello, World"/>
+</GtkWindow>
