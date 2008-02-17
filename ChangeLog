@@ -1,4 +1,4 @@
-2008-02-17  jacob berkman  <jberkman@ilovegom.org>
+2008-02-17  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomdoc.c (gom_dom_parser_start_element): compile the
 	function here before trying to connect the signal
@@ -13,6 +13,6 @@
 	quit(), and let gom_doc_parse_file() load the file
 	(main): shutdown javascript runtime to catch refcount bugs
 
-2008-02-17  jacob berkman  <jberkman@ilovegom.org>
+2008-02-17  jacob berkman  <jacob@ilovegom.org>
 
 	* Gom 0.0 released
