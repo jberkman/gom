@@ -1,5 +1,10 @@
 2008-02-21  jacob berkman  <jacob@ilovegom.org>
 
+	* examples/console.gom: quit when the window is closed
+
+	* src/libgom/gomjsobject.c (gom_js_closure_marshal): better
+	handling for callbacks that return void
+
 	* examples/console.gom: beginnings of a gui js console app
 
 	* src/libgom/gomjselement.c (element_set_attribute): handle jsvals

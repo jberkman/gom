@@ -130,9 +130,15 @@ gom_js_closure_marshal (GClosure *closure,
     int i;
     jsval *argv;
     jsval  rval;
+    const char *rettype = NULL;
+    if (return_value) {
+        rettype = G_VALUE_TYPE_NAME (return_value);
+    }
+    if (!rettype) {
+        rettype = "void";
+    }
     g_print ("running closure; returns %s, %d arguments:\n", 
-             G_VALUE_TYPE_NAME (return_value) ? G_VALUE_TYPE_NAME (return_value) : "void",
-             n_param_values);
+             rettype, n_param_values);
     argv = g_new0 (jsval, n_param_values);
     for (i = 0; i < n_param_values; i++) {
         if (g_type_is_a (G_VALUE_TYPE (&param_values[i]), GOM_TYPE_JS_OBJECT)) {
