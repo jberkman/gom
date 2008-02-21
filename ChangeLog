@@ -1,3 +1,40 @@
+2008-02-21  jacob berkman  <jacob@ilovegom.org>
+
+	* examples/console.gom: beginnings of a gui js console app
+
+	* src/libgom/gomjselement.c (element_set_attribute): handle jsvals
+	that aren't strings properly
+
+	* src/libgom/gomdoc.c (gom_dom_parser_text): remove some debugging
+	output
+	(gom_dom_parser_error): remove, this was not useful
+	
+	* src/libgom/gomjswindow.c (window_alert): implement window.alert()
+
+	* src/libgom/gomwidget.c (PRIV, free_priv, init_priv): add a
+	private struct to store attrs instead of using _set_data/_get_data
+	as we have no idea what the types of those data are
+	(widget_append_child): use new priv struct to look for container
+	child properties of the widget being added
+	(widget_find_property): remove.  g_object_class_find_property()
+	can do this all on its own
+	(widget_get_attribute): initial implementation; use priv table if
+	available
+	(widget_set_attribute): store property in priv table if there
+	isn't a property on the object
+	(init_once_cb, gom_widget_init): switch to GOnce/g_once() as below
+
+	* src/libgom/gomjsobject.c (gom_js_closure_marshal): use
+	G_VALUE_TYPE_NAME() instead of g_type_name(G_VALUE_TYPE())
+
+	* src/libgom/*.c: add GOM_NOT_IMPLEMENTED macros where appropriate
+
+	* include/gommacros.h (GOM_NOT_IMPLEMENTED): macro to print a
+	warning on functions that are not yet implemented
+	(_GOM_DEFINE_INTERFACE_BEGIN, _GOM_DEFINE_INTERFACE_END): use
+	GOnce/g_once() instead of g_once_init_enter(), as the latter has
+	different signatures on my mac and linux machines
+
 2008-02-17  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomdoc.c (gom_dom_parser_start_element): compile the

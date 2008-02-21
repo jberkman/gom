@@ -131,7 +131,7 @@ gom_js_closure_marshal (GClosure *closure,
     jsval *argv;
     jsval  rval;
     g_print ("running closure; returns %s, %d arguments:\n", 
-             return_value ? g_type_name (G_VALUE_TYPE (return_value)) : "void",
+             G_VALUE_TYPE_NAME (return_value) ? G_VALUE_TYPE_NAME (return_value) : "void",
              n_param_values);
     argv = g_new0 (jsval, n_param_values);
     for (i = 0; i < n_param_values; i++) {
@@ -142,7 +142,7 @@ gom_js_closure_marshal (GClosure *closure,
         } else {
             argv[i] = JSVAL_NULL;
         }
-        g_print ("\t%s: %#lx\n", g_type_name (G_VALUE_TYPE (&param_values[i])), argv[i]);
+        g_print ("\t%s: %#lx\n", G_VALUE_TYPE_NAME (&param_values[i]), argv[i]);
     }
 
     if (!JS_CallFunction (jsclosure->cx, jsclosure->obj,

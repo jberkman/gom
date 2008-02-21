@@ -25,6 +25,8 @@ THE SOFTWARE.
 
 #include <gom/gomwidget.h>
 
+#include <gommacros.h>
+
 #include <gom/dom/gomdomexception.h>
 #include <gom/dom/gomelement.h>
 #include <gom/gomglist.h>
@@ -39,6 +41,39 @@ THE SOFTWARE.
 
 static GtkBuilder *builder = NULL;
 
+static GQuark gom_widget_private_quark = 0;
+
+typedef struct {
+    GHashTable *attrs;
+} GomWidgetPrivate;
+
+#define PRIV(o) ((GomWidgetPrivate *)g_object_get_qdata (G_OBJECT (o), gom_widget_private_quark))
+
+static void
+free_priv (gpointer data)
+{
+    GomWidgetPrivate *priv = data;
+
+    if (priv->attrs) {
+        g_hash_table_destroy (priv->attrs);
+        priv->attrs = NULL;
+    }
+    g_free (priv);
+}
+
+static GomWidgetPrivate *
+init_priv (gpointer w)
+{
+    GomWidgetPrivate *priv;
+
+    priv = g_new0 (GomWidgetPrivate, 1);
+    priv->attrs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+    g_object_set_qdata_full (G_OBJECT (w), gom_widget_private_quark, priv, free_priv);
+
+    return priv;
+}
+
 /* attributes */
 
 static G_CONST_RETURN char *
@@ -50,12 +85,14 @@ widget_get_node_name (GomNode *node)
 static char *
 widget_get_node_value (GomNode *node, GError **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static void
 widget_set_node_value (GomNode *node, const char *value, GError **error)
 {
+    GOM_NOT_IMPLEMENTED;
 }
 
 static GomNodeType
@@ -140,12 +177,14 @@ widget_get_next_sibling (GomNode *node)
 static GomNamedNodeMap *
 widget_get_attributes (GomNode *node)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static GomDocument *
 widget_get_owner_document (GomNode *node)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -155,6 +194,7 @@ widget_insert_before (GomNode *node,
                       GomNode *ref_child,
                       GError  **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -164,6 +204,7 @@ widget_replace_child (GomNode *node,
                       GomNode *ref_child,
                       GError  **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -172,6 +213,7 @@ widget_remove_child (GomNode *node,
                      GomNode *old_child,
                      GError  **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -180,10 +222,10 @@ widget_append_child (GomNode *node,
                      GomNode *new_child,
                      GError  **error)
 {
-    GParamSpec **specs;
-    char *value;
-    guint n_properties;
-    guint i;
+    GomWidgetPrivate *priv;
+    GParamSpec *spec;
+    GList *keys, *values;
+    GList *key, *value;
     GValue gval = { 0 };
 
     if (!GTK_IS_CONTAINER (node)) {
@@ -204,24 +246,34 @@ widget_append_child (GomNode *node,
 
     gtk_container_add (GTK_CONTAINER (node), GTK_WIDGET (new_child));
 
-    specs = gtk_container_class_list_child_properties (G_OBJECT_GET_CLASS (node),
-                                                       &n_properties);
-    for (i = 0; i < n_properties; i++) {
-        value = g_object_get_data (G_OBJECT (new_child), specs[i]->name);
-        if (!value) {
+    priv = PRIV (new_child);
+    if (!priv) {
+        /* no unknown attributes that might be child props, so return
+         * now */
+        return new_child;
+    }
+
+    keys   = g_hash_table_get_keys (priv->attrs);
+    values = g_hash_table_get_values (priv->attrs);
+
+    for (key = keys, value = values; key; key = key->next, value = value->next) {
+        spec = gtk_container_class_find_child_property (G_OBJECT_GET_CLASS (node), key->data);
+        if (!spec) {
             continue;
         }
         g_print ("found child property '%s' = '%s' on %s for %s\n",
-                 specs[i]->name, value,
+                 spec->name, (char *)value->data,
                  g_type_name (G_TYPE_FROM_INSTANCE (new_child)),
                  g_type_name (G_TYPE_FROM_INSTANCE (node)));
-        if (gtk_builder_value_from_string (builder, specs[i], value, &gval, NULL)) {
+        if (gtk_builder_value_from_string (builder, spec, value->data, &gval, error)) {
             gtk_container_child_set_property (GTK_CONTAINER (node), GTK_WIDGET (new_child),
-                                              specs[i]->name, &gval);
+                                              spec->name, &gval);
             g_value_unset (&gval);
-            g_print ("...and set.\n");
         }
     }
+
+    g_list_free (keys);
+    g_list_free (values);
 
     return new_child;
 }
@@ -242,6 +294,7 @@ widget_has_child_nodes (GomNode *node)
 static GomNode *
 widget_clone_node (GomNode *node, gboolean deep)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -287,49 +340,28 @@ widget_get_tag_name (GomElement *elem)
     return g_type_name (G_TYPE_FROM_INSTANCE (elem));
 }
 
-/* it is hard to believe this is so complicated */
-static GParamSpec *
-widget_find_property (GomElement *elem, const char *name)
-{
-    GParamSpec *spec;
-
-    g_print ("looking up property '%s' in object '%s'\n",
-             name, g_type_name (G_TYPE_FROM_INSTANCE (elem)));
-    spec = g_object_class_find_property (G_OBJECT_GET_CLASS (elem), name);
-    if (!spec) {
-        gpointer g_iface;
-        GType *types;
-        guint n_interfaces;
-        int i;
-
-        types = g_type_interfaces (G_TYPE_FROM_INSTANCE (elem), &n_interfaces);
-        g_print (" no property for class; searching %d interfaces\n", n_interfaces);
-        for (i = 0; !spec && i < n_interfaces; i++) {
-            g_iface = g_type_interface_peek (G_OBJECT_GET_CLASS (elem),
-                                             types[i]);
-            if (g_iface) {
-                g_print ("  looking up property '%s' in interface '%s'\n",
-                         name, g_type_name (types[i]));
-                spec = g_object_interface_find_property (g_iface, name);
-            }
-        }
-        g_free (types);
-    }
-    if (spec) {
-        g_print ("property '%s' found: %s %#x %s %s\n",
-                 name, spec->name, spec->flags,
-                 g_type_name (spec->value_type),
-                 g_type_name (spec->owner_type));
-    } else {
-        g_print ("property '%s' not found\n", name);
-    }
-    return spec;
-}
-
 static char *
 widget_get_attribute (GomElement *elem, const char *name)
 {
-    return NULL;
+    GParamSpec *spec;
+    GValue gval = { 0 };
+    const char *ret = NULL;
+
+    spec = g_object_class_find_property (G_OBJECT_GET_CLASS (elem), name);
+    if (spec) {
+        g_value_init (&gval, G_TYPE_STRING);
+        g_object_get_property (G_OBJECT (elem), name, &gval);
+        if (G_VALUE_HOLDS (&gval, G_TYPE_STRING)) {
+            ret = g_value_get_string (&gval);
+        }
+    } else {
+        GomWidgetPrivate *priv = PRIV (elem);
+        if (priv) {
+            ret = g_hash_table_lookup (priv->attrs, name);
+        }
+    }
+
+    return g_strdup (ret);
 }
 
 static void
@@ -338,47 +370,59 @@ widget_set_attribute (GomElement *elem, const char *name, const char *value, GEr
     GParamSpec *spec;
     GValue gval = { 0 };
 
-    spec = widget_find_property (elem, name);
+    spec = g_object_class_find_property (G_OBJECT_GET_CLASS (elem), name);
     if (spec) {
         if (gtk_builder_value_from_string (builder, spec, value, &gval, NULL)) {
             g_object_set_property (G_OBJECT (elem), name, &gval);
             g_value_unset (&gval);
         }
     } else {
-        g_object_set_data_full (G_OBJECT (elem), name, g_strdup (value), g_free);
+        GomWidgetPrivate *priv;
+        priv = PRIV (elem);
+        if (!priv) {
+            priv = init_priv (elem);
+        }
+        g_print ("property '%s' not found; setting data instead\n", name);
+        g_hash_table_insert (priv->attrs, g_strdup (name), g_strdup (value));
     }
 }
 
 static void
 widget_remove_attribute (GomElement *elem, const char *name, GError **error)
 {
+    GOM_NOT_IMPLEMENTED;
 }
 
 static GomAttr *
 widget_get_attribute_node (GomElement *elem, const char *name)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static void
 widget_set_attribute_node (GomElement *elem, GomAttr *new_atr, GError **error)
 {
+    GOM_NOT_IMPLEMENTED;
 }
 
 static void
 widget_remove_attribute_node (GomElement *elem, GomAttr *old_attr, GError **error)
 {
+    GOM_NOT_IMPLEMENTED;
 }
 
 static GomNodeList *
 widget_get_elements_by_tag_name (GomElement *elem, const char *name)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static void
 widget_normalize (GomElement *elem)
 {
+    GOM_NOT_IMPLEMENTED;
 }
 
 static void
@@ -424,31 +468,39 @@ GOM_DEFINE_JS_OBJECT(widget, GomJSElementClass)
 #define GTK_TYPE_TREE 0
 #define GTK_TYPE_TREE_ITEM 0
 
+static gpointer
+init_once_cb (gpointer data)
+{
+    GType type = 0;
+    static const GInterfaceInfo node_info = {
+        widget_node_init,
+        NULL, /* interface_finalize */
+        NULL  /* interface_data */
+    };
+    static const GInterfaceInfo element_info = {
+        widget_element_init,
+        NULL, /* interface_finalize */
+        NULL  /* interface_data */
+    };
+    static const GInterfaceInfo js_object_info = {
+        widget_js_object_init,
+        NULL, /* interface_finalize */
+        NULL /* interface_data */
+    };
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE, &node_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT, &element_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_JS_OBJECT, &js_object_info);
+
+    gom_widget_private_quark = g_quark_from_static_string ("gom-widget-private");
+
+#include "gomwidgets.c"
+
+    return NULL;
+}
+
 void
 gom_widget_init (void)
 {
-    gboolean initialized = FALSE;
-    GType type;
-    if (!initialized) {
-        static const GInterfaceInfo node_info = {
-            widget_node_init,
-            NULL, /* interface_finalize */
-            NULL  /* interface_data */
-        };
-        static const GInterfaceInfo element_info = {
-            widget_element_init,
-            NULL, /* interface_finalize */
-            NULL  /* interface_data */
-        };
-        static const GInterfaceInfo js_object_info = {
-            widget_js_object_init,
-            NULL, /* interface_finalize */
-            NULL /* interface_data */
-        };
-        g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE, &node_info);
-        g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT, &element_info);
-        g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_JS_OBJECT, &js_object_info);
-
-#include "gomwidgets.c"
-    }
+    static GOnce init_once = G_ONCE_INIT;
+    g_once (&init_once, init_once_cb, NULL);
 }

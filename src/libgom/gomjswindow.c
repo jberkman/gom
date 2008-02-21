@@ -41,6 +41,32 @@ static JSPropertySpec window_props[] = {
 };
 
 static JSBool
+window_alert (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GtkWidget *dialog;
+    JSString *str;
+
+    if (argc < 1) {
+        return JS_FALSE;
+    }
+
+    str = JS_ValueToString (cx, argv[0]);
+    if (!str) {
+        g_printerr ("could not convert to a string\n");
+        return JS_FALSE;
+    }
+
+    dialog = gtk_message_dialog_new (NULL, 0,
+                                     GTK_MESSAGE_WARNING, GTK_BUTTONS_OK,
+                                     "JavaScript Message:\n\n%s", JS_GetStringBytes (str));
+    gtk_window_set_title (GTK_WINDOW (dialog), "Gom "VERSION);
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy (dialog);
+
+    return JS_TRUE;
+}
+
+static JSBool
 window_quit (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     gtk_main_quit ();
@@ -48,6 +74,7 @@ window_quit (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 }
 
 static JSFunctionSpec window_funcs[] = {
+    { "alert", window_alert, 1 },
     { "quit", window_quit, 0 },
     { NULL }
 };

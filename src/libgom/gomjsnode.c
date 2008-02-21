@@ -25,6 +25,8 @@ THE SOFTWARE.
 
 #include <gom/gomjsnode.h>
 
+#include <gommacros.h>
+
 #include <gom/dom/gomnode.h>
 #include <gom/gomjsobject.h>
 
@@ -44,36 +46,42 @@ struct JSClass GomJSNodeClass = {
 static JSBool
 node_get_node_name (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_get_node_value (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_set_node_value (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_get_node_type (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_get_parent_node (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_get_child_nodes (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
@@ -97,30 +105,35 @@ node_get_first_child (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 static JSBool
 node_get_last_child (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_get_previous_sibling (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_get_next_sibling (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_get_attributes (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_get_owner_document (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
@@ -142,36 +155,42 @@ static JSPropertySpec gom_js_node_props[] = {
 static JSBool
 node_insert_before (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_replace_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_remove_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_append_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_has_child_nodes (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 node_clone_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 

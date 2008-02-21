@@ -25,6 +25,8 @@ THE SOFTWARE.
 
 #include <gom/gomjsdocument.h>
 
+#include <gommacros.h>
+
 #include <gom/gomdoc.h>
 #include <gom/gomjsnode.h>
 
@@ -40,18 +42,21 @@ struct JSClass GomJSDocumentClass = {
 static JSBool
 document_get_doctype (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 document_get_implementation (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 document_get_document_element (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
@@ -65,54 +70,63 @@ static JSPropertySpec document_props[] = {
 static JSBool
 document_create_element(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 document_create_document_fragment (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 document_create_text_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 document_create_comment (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 document_create_cdata_section (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 document_create_processing_instruction (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 document_create_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 document_create_entity_reference (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 document_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 

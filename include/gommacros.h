@@ -24,9 +24,11 @@ THE SOFTWARE.
 #ifndef GOM_MACROS_H
 #define GOM_MACROS_H
 
-#include <glib/gmacros.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
+
+#define GOM_NOT_IMPLEMENTED (g_printerr ("%s:%d:%s(): Not implemented yet.\n", __FILE__, __LINE__, __FUNCTION__))
 
 #define GOM_DEFINE_INTERFACE(IN, i_n)               \
     _GOM_DEFINE_INTERFACE_BEGIN(IN, i_n)            \
@@ -41,31 +43,36 @@ G_BEGIN_DECLS
     GOM_DEFINE_INTERFACE_WITH_CODE (IN, i_n, g_type_interface_add_prerequisite (type, P_N))
 
 #define _GOM_DEFINE_INTERFACE_BEGIN(TypeName, type_name)                \
+    static gpointer type_name##_get_type_once (gpointer data);          \
+                                                                        \
     GType                                                               \
     type_name##_get_type (void)                                         \
     {                                                                   \
-        static volatile gpointer type_volatile = 0;                     \
-        if (g_once_init_enter (&type_volatile)) {                       \
-            static const GTypeInfo info = {                             \
-                sizeof (TypeName##Interface),                           \
-                NULL, /* base_init */                                   \
-                NULL, /* base_finalize */                               \
-                NULL, /* class_init */                                  \
-                NULL, /* class_finalize */                              \
-                NULL, /* class_data */                                  \
-                0,                                                      \
-                0,    /* n_preallocs */                                 \
-                NULL  /* instance_init */                               \
-            };                                                          \
-            GType type = g_type_register_static (G_TYPE_INTERFACE, #TypeName, &info, 0); \
-            { /* custom code follows */
+        static GOnce type_once = G_ONCE_INIT;                           \
+        g_once (&type_once, type_name##_get_type_once, NULL);           \
+        return GPOINTER_TO_SIZE (type_once.retval);                     \
+    } /* closes type_name##_get_type() */                               \
+                                                                        \
+    static gpointer                                                     \
+    type_name##_get_type_once (gpointer data)                           \
+    {                                                                   \
+        static const GTypeInfo info = {                                 \
+            sizeof (TypeName##Interface),                               \
+            NULL, /* base_init */                                       \
+            NULL, /* base_finalize */                                   \
+            NULL, /* class_init */                                      \
+            NULL, /* class_finalize */                                  \
+            NULL, /* class_data */                                      \
+            0,                                                          \
+            0,    /* n_preallocs */                                     \
+            NULL  /* instance_init */                                   \
+        };                                                              \
+        GType type = g_type_register_static (G_TYPE_INTERFACE, #TypeName, &info, 0); \
+        { /* custom code follows */
 #define _GOM_DEFINE_INTERFACE_END()                                     \
-            } /* following custom code */                               \
-            g_once_init_leave (&type_volatile, (gpointer)type);         \
-        }                                                               \
-        return (GType)type_volatile;                                    \
-    } /* closes type_name##_get_type() */
-
+        } /* following custom code */                                   \
+        return GSIZE_TO_POINTER (type);                                 \
+    }
 
 #define GOM_STUB_VOID(I_N, i_n, func, args_in, args_passed)             \
     void                                                                \

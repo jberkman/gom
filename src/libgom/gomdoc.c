@@ -25,6 +25,8 @@ THE SOFTWARE.
 
 #include <gom/gomdoc.h>
 
+#include <gommacros.h>
+
 #include <gom/gomjsdocument.h>
 #include <gom/gomjsobject.h>
 
@@ -51,12 +53,14 @@ gom_doc_get_node_name (GomNode *node)
 static char *
 gom_doc_get_node_value (GomNode *node, GError **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static void
 gom_doc_set_node_value (GomNode *node, const char *value, GError **error)
 {
+    GOM_NOT_IMPLEMENTED;
 }
 
 static GomNodeType
@@ -68,12 +72,14 @@ gom_doc_get_node_type (GomNode *node)
 static GomNode *
 gom_doc_get_parent_node (GomNode *node)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static GomNodeList *
 gom_doc_get_child_nodes (GomNode *node)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -88,30 +94,35 @@ gom_doc_get_first_child (GomNode *node)
 static GomNode *
 gom_doc_get_last_child (GomNode *node)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static GomNode *
 gom_doc_get_previous_sibling (GomNode *node)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static GomNode *
 gom_doc_get_next_sibling (GomNode *node)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static GomNamedNodeMap *
 gom_doc_get_attributes (GomNode *node)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static GomDocument *
 gom_doc_get_owner_document (GomNode *node)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -121,6 +132,7 @@ gom_doc_insert_before (GomNode *node,
                       GomNode *ref_child,
                       GError  **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -130,6 +142,7 @@ gom_doc_replace_child (GomNode *node,
                       GomNode *ref_child,
                       GError  **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -138,6 +151,7 @@ gom_doc_remove_child (GomNode *node,
                      GomNode *old_child,
                      GError  **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -164,6 +178,7 @@ gom_doc_has_child_nodes (GomNode *node)
 static GomNode *
 gom_doc_clone_node (GomNode *node, gboolean deep)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -202,18 +217,21 @@ gom_doc_node_init (gpointer g_iface, gpointer iface_data)
 static GomDocumentType *
 gom_doc_get_doctype (GomDocument *doc)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static GomDOMImplementation *
 gom_doc_get_implementation (GomDocument *doc)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static GomElement *
 gom_doc_get_document_element (GomDocument *doc)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -240,6 +258,7 @@ gom_doc_create_element (GomDocument *doc,
 static GomDocumentFragment *
 gom_doc_create_document_fragment (GomDocument *doc)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -247,6 +266,7 @@ static GomText *
 gom_doc_create_text_node (GomDocument *doc,
                           const char  *data)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -254,6 +274,7 @@ static GomComment *
 gom_doc_create_comment (GomDocument *doc,
                         const char  *data)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -262,6 +283,7 @@ gom_doc_create_cdata_section (GomDocument *doc,
                               const char  *data,
                               GError     **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -271,6 +293,7 @@ gom_doc_create_processing_instruction (GomDocument *doc,
                                        const char  *data,
                                        GError     **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -279,6 +302,7 @@ gom_doc_create_attribute (GomDocument *doc,
                           const char  *name,
                           GError     **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -287,6 +311,7 @@ gom_doc_create_entity_reference (GomDocument *doc,
                                  const char  *name,
                                  GError     **error)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -294,6 +319,7 @@ static GomNodeList *
 gom_doc_get_elements_by_tag_name (GomDocument *doc,
                                   const char  *tagname)
 {
+    GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
@@ -460,28 +486,14 @@ gom_dom_parser_text (GMarkupParseContext *context,
 
     if (data->script) {
         g_string_append_len (data->script, text, text_len);
-    } else {
-        g_print ("ignoring some text: %.*s\n", (int)text_len, text);
     }
-}
-
-/* Called on error, including one set by other
- * methods in the vtable. The GError should not be freed.
- */
-static void
-gom_dom_parser_error (GMarkupParseContext *context,
-                      GError              *error,
-                      gpointer             user_data)
-{
-    g_print ("oh, we got a parse error\n");
 }
 
 static GMarkupParser gom_dom_parser = {
     gom_dom_parser_start_element,
     gom_dom_parser_end_element,
     gom_dom_parser_text,
-    NULL,
-    gom_dom_parser_error
+    NULL, NULL
 };
 
 gboolean

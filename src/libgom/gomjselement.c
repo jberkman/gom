@@ -25,6 +25,8 @@ THE SOFTWARE.
 
 #include <gom/gomjselement.h>
 
+#include <gommacros.h>
+
 #include <gom/dom/gomelement.h>
 #include <gom/gomjsnode.h>
 #include <gom/gomjsobject.h>
@@ -63,10 +65,21 @@ static JSBool
 element_get_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GomElement *elem;
+    JSString *str;
     char *attr;
 
+    if (argc < 1) {
+        return JS_FALSE;
+    }
+
+    str = JS_ValueToString (cx, argv[0]);
+    if (!str) {
+        g_printerr ("could not convert to a string\n");
+        return JS_FALSE;
+    }
+
     elem = gom_js_object_get_g_object (cx, obj);
-    attr = gom_element_get_attribute (elem, JS_GetStringBytes (JSVAL_TO_STRING (argv[0])));
+    attr = gom_element_get_attribute (elem, JS_GetStringBytes (str));
     *rval = STRING_TO_JSVAL (JS_NewStringCopyZ (cx, attr));
 
     return TRUE;
@@ -145,36 +158,42 @@ element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, js
 static JSBool
 element_remove_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 element_get_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 element_set_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 element_remove_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 element_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
 element_normalize (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
+    GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
