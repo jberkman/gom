@@ -389,50 +389,53 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
 
     if (!strcmp (element_name, "script")) {
         data->script = g_string_sized_new (1024);
-    } else {
-        elem = gom_document_create_element (data->doc, element_name, error);
-        g_print ("start_element: %s -> %p\n", element_name, elem);
-        if (elem) {
-            for (i = 0; attribute_names[i]; i++) {
-                if (attribute_names[i][0] == 'o' && 
-                    attribute_names[i][1] == 'n' && 
-                    g_signal_lookup (&attribute_names[i][2], G_TYPE_FROM_INSTANCE (elem))) {
-                    JSObject *jsobj;
-                    JSFunction *fun;
-                    int lineno;
+        return;
+    }
 
-                    jsobj = gom_js_object_get_or_create_js_object (data->cx, elem);
-                    if (!jsobj) {
-                        g_printerr ("coudn't get jsobj for %s\n", element_name);
-                        continue;
-                    }
+    elem = gom_document_create_element (data->doc, element_name, error);
+    g_print ("start_element: %s -> %p\n", element_name, elem);
+    if (!elem) {
+        return;
+    }
 
-                    g_markup_parse_context_get_position (context, &lineno, NULL);
-                    fun = JS_CompileFunction (data->cx, data->jsobj, NULL, 0, NULL,
-                                              attribute_values[i], strlen (attribute_values[i]),
-                                              data->filename, lineno);
+    for (i = 0; attribute_names[i]; i++) {
+        if (attribute_names[i][0] == 'o' && 
+            attribute_names[i][1] == 'n' && 
+            g_signal_lookup (&attribute_names[i][2], G_TYPE_FROM_INSTANCE (elem))) {
+            JSObject *jsobj;
+            JSFunction *fun;
+            int lineno;
 
-                    if (!fun) {
-                        g_printerr ("couldn't compile script: %s\n", attribute_values[i]);
-                        continue;
-                    }
-
-                    if (!gom_js_object_connect (data->cx, jsobj,
-                                                &attribute_names[i][2],
-                                                fun)) {
-                        g_printerr ("couldn't connect script for signal %s\n", attribute_names[i]);
-                        continue;
-                    }
-                } else {
-                    gom_element_set_attribute (elem, attribute_names[i], attribute_values[i], error);
-                }
-                if (error && *error) {
-                    return;
-                }
+            jsobj = gom_js_object_get_or_create_js_object (data->cx, elem);
+            if (!jsobj) {
+                g_printerr ("coudn't get jsobj for %s\n", element_name);
+                continue;
             }
-            data->elems = g_slist_prepend (data->elems, elem);
+            
+            g_markup_parse_context_get_position (context, &lineno, NULL);
+            fun = JS_CompileFunction (data->cx, data->jsobj, NULL, 0, NULL,
+                                      attribute_values[i], strlen (attribute_values[i]),
+                                      data->filename, lineno);
+            
+            if (!fun) {
+                g_printerr ("couldn't compile script: %s\n", attribute_values[i]);
+                continue;
+            }
+            
+            if (!gom_js_object_connect (data->cx, jsobj,
+                                        &attribute_names[i][2],
+                                        fun)) {
+                g_printerr ("couldn't connect script for signal %s\n", attribute_names[i]);
+                continue;
+            }
+        } else {
+            gom_element_set_attribute (elem, attribute_names[i], attribute_values[i], error);
+        }
+        if (error && *error) {
+            return;
         }
     }
+    data->elems = g_slist_prepend (data->elems, elem);
 }
 
 /* Called for close tags </foo> */

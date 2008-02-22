@@ -65,33 +65,23 @@ static JSBool
 element_get_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GomElement *elem;
-    JSString *str;
-    char *attr;
-
-    if (argc < 1) {
-        return JS_FALSE;
-    }
-
-    str = JS_ValueToString (cx, argv[0]);
-    if (!str) {
-        g_printerr ("could not convert to a string\n");
-        return JS_FALSE;
-    }
+    char *attr, *name;
 
     elem = gom_js_object_get_g_object (cx, obj);
-    attr = gom_element_get_attribute (elem, JS_GetStringBytes (str));
+    if (!elem) {
+        return JS_FALSE;
+    }
+
+    if (!JS_ConvertArguments (cx, argc, argv, "s", &name)) {
+        return JS_FALSE;
+    }
+
+    attr = gom_element_get_attribute (elem, name);
     *rval = STRING_TO_JSVAL (JS_NewStringCopyZ (cx, attr));
+    g_free (attr);
 
     return TRUE;
 }
-
-typedef struct {
-    JSContext *cx;
-    JSScript  *script;
-    JSObject  *scriptobj;
-} SignalData;
-
-
 
 static JSBool
 element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
@@ -100,54 +90,28 @@ element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, js
     char *name;
     char *value;
 
-    if (argc != 2) {
-        return JS_FALSE;
-    }
-
     elem = gom_js_object_get_g_object (cx, obj);
     if (!elem) {
         return JS_FALSE;
     }
 
-    name = JS_GetStringBytes (JSVAL_TO_STRING (argv[0]));
-    value = JS_GetStringBytes (JSVAL_TO_STRING (argv[1]));
-
-    if (!name || !value) {
+    if (!JS_ConvertArguments (cx, argc, argv, "ss", &name, &value)) {
         return JS_FALSE;
     }
 
     if (name[0] == 'o' && name[1] == 'n' && g_signal_lookup (&name[2], G_TYPE_FROM_INSTANCE (elem))) {
-        SignalData *data = NULL;
-        JSScript *script = NULL;
+        JSFunction *fun  = NULL;
 
-        script = JS_CompileScript (cx, obj, value, strlen (value), "<script>", 0);
-        if (!script) {
+        fun = JS_CompileFunction (cx, obj, NULL, 0, NULL,
+                                  value, strlen (value), NULL, 0);
+        if (!fun) {
             g_printerr ("Error compiling script '%s'\n", value);
             return JS_FALSE;
         }
 
-        data = g_new0 (SignalData, 1);
-        data->cx     = cx;
-        data->script = script;
-        data->scriptobj = JS_NewScriptObject (cx, script);
-        if (!data->scriptobj || !JS_AddRoot (cx, &data->scriptobj)) {
-            /*goto script_fail*/;
+        if (!gom_js_object_connect (cx, obj, &name[2], fun)) {
+            g_printerr ("couldn't connect function for signal %s\n", name);
         }
-#if 0
-        g_signal_connect_data (elem, &name[2], 
-            
-        mod = g_module_open (NULL, 0);
-        g_print ("found signal '%s' on '%s'\n", &name[2], g_type_name _from_instance ((GTypeInstance *)elem));
-        if (g_module_symbol (mod, value, &c_handler)) {
-            g_print ("found handler for signal '%s' -> '%s' '%p'\n",
-                     &name[2], value, c_handler);
-            g_signal_connect (elem, &name[2], c_handler, NULL);
-        } else {
-            g_print ("could not find handler for signal '%s' -> '%s'\n",
-                     &name[2], value);
-        }
-        g_module_close (mod);
-#endif
     } else {
         gom_element_set_attribute (elem, name, value, NULL);
     }

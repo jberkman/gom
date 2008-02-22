@@ -1,3 +1,18 @@
+2008-02-22  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomjselement.c (element_get_attribute): use
+	JS_ConvertArguments() as below
+	(element_set_attribute): finish a correct implementation for
+	setting event handlers via setAttribute(); this will probably be
+	removed soon
+
+	* src/libgom/gomdoc.c (gom_dom_parser_start_element): refactor to
+	reduce indenting levels
+
+	* src/libgom/gomjswindow.c (window_alert): use
+	JS_ConvertArguments() instead of manually marshaling the js
+	arguments
+
 2008-02-21  jacob berkman  <jacob@ilovegom.org>
 
 	* examples/console.gom: quit when the window is closed

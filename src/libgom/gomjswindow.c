@@ -44,21 +44,15 @@ static JSBool
 window_alert (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GtkWidget *dialog;
-    JSString *str;
+    char *str;
 
-    if (argc < 1) {
-        return JS_FALSE;
-    }
-
-    str = JS_ValueToString (cx, argv[0]);
-    if (!str) {
-        g_printerr ("could not convert to a string\n");
+    if (!JS_ConvertArguments (cx, argc, argv, "s", &str)) {
         return JS_FALSE;
     }
 
     dialog = gtk_message_dialog_new (NULL, 0,
                                      GTK_MESSAGE_WARNING, GTK_BUTTONS_OK,
-                                     "JavaScript Message:\n\n%s", JS_GetStringBytes (str));
+                                     "JavaScript Message:\n\n%s", str);
     gtk_window_set_title (GTK_WINDOW (dialog), "Gom "VERSION);
     gtk_dialog_run (GTK_DIALOG (dialog));
     gtk_widget_destroy (dialog);
