@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([gom], [0.0], [http://code.google.com/p/loolixbodes/issues/list])
+AC_INIT([gom], [0.0], [http://code.google.com/p/ilovegom/issues/entry])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/gom/gom.c])
 AC_CONFIG_HEADER([config.h])

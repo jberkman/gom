@@ -50,10 +50,6 @@ gom_g_value (JSContext *cx, GValue *gval, jsval jval, GError **error)
         }
         break;
     }
-    case JSVAL_INT:
-        g_value_init (gval, G_TYPE_INT);
-        g_value_set_int (gval, JSVAL_TO_INT (jval));
-        break;
     case JSVAL_DOUBLE:
         g_value_init (gval, G_TYPE_DOUBLE);
         g_value_set_double (gval, *JSVAL_TO_DOUBLE (jval));
@@ -67,6 +63,15 @@ gom_g_value (JSContext *cx, GValue *gval, jsval jval, GError **error)
         g_value_set_boolean (gval, JSVAL_TO_BOOLEAN (jval));
         break;
     default:
+        /* since these are 31-bit, they can have multiple tag values;
+         * only the lsb is significant in determining if it's a
+         * JSVAL_INT */
+        if (JSVAL_IS_INT (jval)) {
+            g_value_init (gval, G_TYPE_INT);
+            g_value_set_int (gval, JSVAL_TO_INT (jval));
+            break;
+        }
+
         g_set_error (error, GOM_VALUE_ERROR, GOM_VALUE_ERROR_UNKNOWN_JSVAL_TAG,
                      "Unknown jsval tag: %#x in jsval %p",
                      (int)JSVAL_TAG (jval), GINT_TO_POINTER (jval));

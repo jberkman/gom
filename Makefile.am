@@ -63,6 +63,7 @@ include include/gom/dom/Makefile.inc
 include include/gom/Makefile.inc
 include src/libgom/Makefile.inc
 include src/gom/Makefile.inc
+include tests/Makefile.inc
 
 update-makefiles:
 	@for dir in $(include_subdirs) ; do \

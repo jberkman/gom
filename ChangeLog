@@ -1,5 +1,18 @@
 2008-02-24  jacob berkman  <jacob@ilovegom.org>
 
+	* tests/checkgomvalue.[ch]: test gomvalue.h functions (so far only
+	some of gom_g_value() is covered, but it has turned up some bugs;
+	more expected in gom_jsval())
+
+	* tests/checkgom.[ch]: beginnings of a test suite
+
+	* src/libgom/gomvalue.c (gom_g_value): unit test bug fix #1: since
+	JSVAL_INTs are 31 bits, their lsb (the tag mask) can have multiple
+	values, since only the most lsb signifies JSVAL_INT
+
+	* autogen.sh: remove dependency on gnome-common; just use
+	autoreconf -im
+
 	* include/gom/dom/Makefile.inc: 
 	* include/gom/Makefile.inc: 
 	* src/libgom/Makefile.inc: 
