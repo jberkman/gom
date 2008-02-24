@@ -13,9 +13,17 @@ ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 # Checks for packages
 GTK_REQVER="2.6.0"
 
-PKG_CHECK_MODULES(GOM, [gtk+-2.0 >= $GTK_REQVER gthread-2.0])
+GOM_MODULES="gtk+-2.0 >= $GTK_REQVER gthread-2.0"
+PKG_CHECK_MODULES(GOM, [$GOM_MODULES])
 AC_SUBST(GOM_CFLAGS)
 AC_SUBST(GOM_LIBS)
+
+has_check="false"
+TEST_MODULES="$GOM_MODULES check >= 0.9.5"
+PKG_CHECK_MODULES(TEST, [$TEST_MODULES], [has_check="true"], [AC_MSG_WARN([Check framework not found; make check disabled])])
+AC_SUBST(TEST_CFLAGS)
+AC_SUBST(TEST_LIBS)
+AM_CONDITIONAL([HAVE_CHECK],[test x$has_check = xtrue])
 
 # Checks for programs.
 AC_PROG_CC
@@ -34,7 +42,6 @@ AC_ARG_WITH([mozilla-source],
 	[AS_HELP_STRING([--with-mozilla-source],
 		[path to checked-out and built Mozilla JavaScript source tree])],
 	[mozilla_source=$withval])
-echo "mozilla_source: $mozilla_source"
 if test -z "$mozilla_source" ; then
 	AC_MSG_ERROR([You must specify the path to a checked-out and built Mozilla JavaScript source tree with the --with-mozilla-source option.])
 fi

@@ -46,10 +46,10 @@ TESTS :=
 
 AM_CPPFLAGS :=
 
-dist_noinst_DATA += Makefile.am.subdir
+dist_noinst_DATA += Makefile.am.subdir Makefile.configure
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA := 
+pkgconfig_DATA := gom-0.pc
 
 # pkglibexecdir = $(libexecdir)/$(PACKAGE)
 
@@ -59,7 +59,10 @@ include_subdirs :=
 
 DIST_SUBDIRS := $(SUBDIRS) $(include_subdirs)
 
-include Makefile.inc
+include include/gom/dom/Makefile.inc
+include include/gom/Makefile.inc
+include src/libgom/Makefile.inc
+include src/gom/Makefile.inc
 
 update-makefiles:
 	@for dir in $(include_subdirs) ; do \

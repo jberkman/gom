@@ -1,5 +1,14 @@
 2008-02-24  jacob berkman  <jacob@ilovegom.org>
 
+	* include/gom/dom/Makefile.inc: 
+	* include/gom/Makefile.inc: 
+	* src/libgom/Makefile.inc: 
+	* src/gom/Makefile.inc: 
+	* Makefile.am:
+	* Makefile.inc: split Makefile.inc into its component pieces
+
+	* configure.ac: look for check
+
 	* examples/console.gom: use some of the new stuff below
 
 	* src/libgom/gomjsobject.c (object_get_closure_prop)
