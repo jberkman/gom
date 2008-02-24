@@ -1,3 +1,37 @@
+2008-02-24  jacob berkman  <jacob@ilovegom.org>
+
+	* examples/console.gom: use some of the new stuff below
+
+	* src/libgom/gomjsobject.c (object_get_closure_prop)
+	(object_set_closure_prop): add a lookup for closures stored as
+	properties named onsignal
+	(gom_js_object_resolve): look up the GParamSpec or signal id on an
+	object for a named property
+	(object_get_prop): if the property is a gobject property, return
+	its value.  if it's a signal, look up the func associated with its
+	closure, if it exists
+	(object_set_prop): setter as above
+	(object_resolve): if the property exists, add it as a property to
+	this object
+	(gom_js_object_construct, gom_js_object_init_class): as below
+
+	* src/libgom/gomjselement.c (element_construct)
+	(gom_js_element_init_class): as below
+
+	* src/libgom/gomjsnode.c (node_construct, gom_js_node_init_class):
+	same as below
+
+	* src/libgom/gomjsdocument.c (document_construct): add dummy
+	constructor
+	(gom_js_document_init_class): the proto should be constructed,
+	pass our constructor to JS_InitClass
+
+	* src/gom/gom.c (parse_idle): run in window's context, not jsdoc's
+
+	* src/libgom/gomvalue.[ch] (gom_jsval): convert a GValue to a
+	jsval
+	(gom_g_value): convert a jsval to a GValue
+
 2008-02-22  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomjselement.c (element_get_attribute): use

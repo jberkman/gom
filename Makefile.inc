@@ -36,6 +36,7 @@ gominclude_HEADERS :=				\
 	include/gom/gomjsobject.h		\
 	include/gom/gomjsnode.h			\
 	include/gom/gomjswindow.h		\
+	include/gom/gomvalue.h			\
 	include/gom/gomwidget.h
 
 libgom_la_SOURCES :=				\
@@ -49,6 +50,7 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomjsobject.c		\
 	src/libgom/gomjsnode.c			\
 	src/libgom/gomjswindow.c		\
+	src/libgom/gomvalue.c			\
 	src/libgom/gomwidget.c
 
 src/libgom/gomwidget.c: gomwidgets.c

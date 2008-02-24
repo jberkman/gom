@@ -173,10 +173,17 @@ static JSFunctionSpec gom_js_element_funcs[] = {
     { NULL }
 };
 
+static JSBool
+element_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_NOT_IMPLEMENTED;
+    return JS_TRUE;
+}
+
 JSObject *
 gom_js_element_init_class (JSContext *cx, JSObject *obj)
 {
-    JSObject *proto = JS_NewObject (cx, &GomJSNodeClass, NULL, obj);
-    return JS_InitClass (cx, obj, proto, &GomJSElementClass, NULL, 0,
+    JSObject *proto = JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL);
+    return JS_InitClass (cx, obj, proto, &GomJSElementClass, element_construct, 0,
                          gom_js_element_props, gom_js_element_funcs, NULL, NULL);
 }

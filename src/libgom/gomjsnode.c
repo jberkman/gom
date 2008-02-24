@@ -204,10 +204,17 @@ static JSFunctionSpec gom_js_node_funcs[] = {
     { NULL }
 };
 
+static JSBool
+node_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_NOT_IMPLEMENTED;
+    return JS_TRUE;
+}
+
 JSObject *
 gom_js_node_init_class (JSContext *cx, JSObject *obj)
 {
-    JSObject *proto = JS_NewObject (cx, &GomJSObjectClass, NULL, obj);
-    return JS_InitClass (cx, obj, proto, &GomJSNodeClass, NULL, 0,
+    JSObject *proto = JS_ConstructObject (cx, &GomJSObjectClass, NULL, NULL);
+    return JS_InitClass (cx, obj, proto, &GomJSNodeClass, node_construct, 0,
                          gom_js_node_props, gom_js_node_funcs, NULL, NULL);
 }

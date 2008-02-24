@@ -61,7 +61,7 @@ parse_idle (gpointer data)
                        OBJECT_TO_JSVAL (jsdoc), NULL, NULL,
                        JSPROP_PERMANENT | JSPROP_READONLY);
 
-    if (!gom_doc_parse_file (doc, d->cx, jsdoc, d->filename, &error)) {
+    if (!gom_doc_parse_file (doc, d->cx, d->window, d->filename, &error)) {
         g_printerr ("Error parsing %s: %s\n", d->filename, error->message);
         gtk_main_quit ();
     }
@@ -72,8 +72,6 @@ parse_idle (gpointer data)
 int
 main (int argc, char *argv[])
 {
-    GError *error = NULL;
-
     MainData d = { NULL };
 
     JSRuntime *rt; 
