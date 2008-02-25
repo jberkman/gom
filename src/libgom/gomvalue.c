@@ -85,16 +85,25 @@ gboolean
 gom_jsval (JSContext *cx, jsval *jval, GValue *gval, GError **error)
 {
     gboolean ret = FALSE;
+    JSString *jstr;
+    jschar jc;
+    char c;
 
     g_return_val_if_fail (jval != NULL, FALSE);
     g_return_val_if_fail (gval != NULL, FALSE);
 
     switch (G_VALUE_TYPE (gval)) {
     case G_TYPE_CHAR:
-        ret = JS_NewNumberValue (cx, g_value_get_char (gval), jval);
+        c = g_value_get_char (gval);
+        jstr = JS_NewStringCopyN (cx, &c, 1);
+        ret = jstr != NULL;
+        *jval = STRING_TO_JSVAL (jstr);
         break;
     case G_TYPE_UCHAR:
-        ret = JS_NewNumberValue (cx, g_value_get_uchar (gval), jval);
+        jc = g_value_get_uchar (gval);
+        jstr = JS_NewUCStringCopyN (cx, &jc, 1);
+        ret = jstr != NULL;
+        *jval = STRING_TO_JSVAL (jstr);
         break;
     case G_TYPE_BOOLEAN:
         *jval = BOOLEAN_TO_JSVAL (g_value_get_boolean (gval));
