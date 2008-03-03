@@ -472,7 +472,7 @@ gom_widget_init_once (gpointer data)
 
 #include "gomwidgets.c"
 
-    return NULL;
+    return GSIZE_TO_POINTER (type);
 }
 
 void

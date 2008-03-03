@@ -1,5 +1,9 @@
 2008-03-03  jacob berkman  <jacob@ilovegom.org>
 
+	* src/libgom/gomwidget.c (gom_widget_init_once): return our fake
+	type variable so that it all doesn't get optimized out (fixes
+	issue #1)
+
 	* src/libgom/gomjselement.c (element_get_prop, element_set_prop):
 	use gom_object_[gs]et_attribute() for non-GObject properties
 	(element_resolve): define non-GObject properties
