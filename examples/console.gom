@@ -3,7 +3,7 @@
     <GtkScrolledWindow expand="true" fill="true" hscrollbar-policy="2" vscrollbar-policy="1" shadow-type="1">
       <GtkTextView wrap-mode="2" editable="false"/>
     </GtkScrolledWindow>
-    <GtkEntry expand="false" fill="false" onactivate="alert (this.text);"/>
+    <GtkEntry expand="false" fill="false" onactivate="alert (this.text + ' (' + this.expand + ')');"/>
   </GtkVBox>
 </GtkWindow>
 <script><![CDATA[

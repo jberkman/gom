@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include <gom/gomglist.h>
 #include <gom/gomjselement.h>
 #include <gom/gomjsobject.h>
+#include <gom/gomobject.h>
 
 #include <gtk/gtk.h>
 
@@ -40,39 +41,6 @@ THE SOFTWARE.
 #include <limits.h>
 
 static GtkBuilder *builder = NULL;
-
-static GQuark gom_widget_private_quark = 0;
-
-typedef struct {
-    GHashTable *attrs;
-} GomWidgetPrivate;
-
-#define PRIV(o) ((GomWidgetPrivate *)g_object_get_qdata (G_OBJECT (o), gom_widget_private_quark))
-
-static void
-free_priv (gpointer data)
-{
-    GomWidgetPrivate *priv = data;
-
-    if (priv->attrs) {
-        g_hash_table_destroy (priv->attrs);
-        priv->attrs = NULL;
-    }
-    g_free (priv);
-}
-
-static GomWidgetPrivate *
-init_priv (gpointer w)
-{
-    GomWidgetPrivate *priv;
-
-    priv = g_new0 (GomWidgetPrivate, 1);
-    priv->attrs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-
-    g_object_set_qdata_full (G_OBJECT (w), gom_widget_private_quark, priv, free_priv);
-
-    return priv;
-}
 
 /* attributes */
 
@@ -217,16 +185,52 @@ widget_remove_child (GomNode *node,
     return NULL;
 }
 
+typedef struct {
+    GomNode *node;
+    GomNode *new_child;
+    GError **error;
+} AppendChildData;
+
+static void
+append_child_attrs_foreach (gpointer key, gpointer value, gpointer user_data)
+{
+    AppendChildData *data = user_data;
+    GParamSpec *spec;
+    GError *error = NULL;
+    GValue gval = { 0 };
+
+    spec = gtk_container_class_find_child_property (G_OBJECT_GET_CLASS (data->node), key);
+    if (!spec) {
+        return;
+    }
+    g_print ("found child property %s.%s on %s\n",
+             g_type_name (G_TYPE_FROM_INSTANCE (data->node)),
+             spec->name,
+             g_type_name (G_TYPE_FROM_INSTANCE (data->new_child)));
+    
+    if (gtk_builder_value_from_string (builder, spec, g_value_get_string (value), &gval, &error)) {
+        gtk_container_child_set_property (GTK_CONTAINER (data->node),
+                                          GTK_WIDGET (data->new_child),
+                                          spec->name, 
+                                          &gval);
+        g_value_unset (&gval);
+    } else {
+        g_print ("Error getting value_from_string: %s\n",
+                 error->message);
+        if (data->error && *data->error) {
+            g_error_free (error);
+        } else {
+            g_propagate_error (data->error, error);
+        }
+    }
+}
+
 static GomNode *
 widget_append_child (GomNode *node,
                      GomNode *new_child,
                      GError  **error)
 {
-    GomWidgetPrivate *priv;
-    GParamSpec *spec;
-    GList *keys, *values;
-    GList *key, *value;
-    GValue gval = { 0 };
+    AppendChildData data;
 
     if (!GTK_IS_CONTAINER (node)) {
         g_set_error (error,
@@ -246,36 +250,13 @@ widget_append_child (GomNode *node,
 
     gtk_container_add (GTK_CONTAINER (node), GTK_WIDGET (new_child));
 
-    priv = PRIV (new_child);
-    if (!priv) {
-        /* no unknown attributes that might be child props, so return
-         * now */
-        return new_child;
-    }
+    data.node = node;
+    data.new_child = new_child;
+    data.error = error;
 
-    keys   = g_hash_table_get_keys (priv->attrs);
-    values = g_hash_table_get_values (priv->attrs);
+    gom_object_attributes_foreach (G_OBJECT (new_child), append_child_attrs_foreach, &data);
 
-    for (key = keys, value = values; key; key = key->next, value = value->next) {
-        spec = gtk_container_class_find_child_property (G_OBJECT_GET_CLASS (node), key->data);
-        if (!spec) {
-            continue;
-        }
-        g_print ("found child property '%s' = '%s' on %s for %s\n",
-                 spec->name, (char *)value->data,
-                 g_type_name (G_TYPE_FROM_INSTANCE (new_child)),
-                 g_type_name (G_TYPE_FROM_INSTANCE (node)));
-        if (gtk_builder_value_from_string (builder, spec, value->data, &gval, error)) {
-            gtk_container_child_set_property (GTK_CONTAINER (node), GTK_WIDGET (new_child),
-                                              spec->name, &gval);
-            g_value_unset (&gval);
-        }
-    }
-
-    g_list_free (keys);
-    g_list_free (values);
-
-    return new_child;
+    return error && *error ? NULL : new_child;
 }
 
 static gboolean
@@ -345,6 +326,7 @@ widget_get_attribute (GomElement *elem, const char *name)
 {
     GParamSpec *spec;
     GValue gval = { 0 };
+    GValue *gvalp;
     const char *ret = NULL;
 
     spec = g_object_class_find_property (G_OBJECT_GET_CLASS (elem), name);
@@ -355,9 +337,9 @@ widget_get_attribute (GomElement *elem, const char *name)
             ret = g_value_get_string (&gval);
         }
     } else {
-        GomWidgetPrivate *priv = PRIV (elem);
-        if (priv) {
-            ret = g_hash_table_lookup (priv->attrs, name);
+        gvalp = gom_object_get_attribute (G_OBJECT (elem), name);
+        if (gvalp && G_VALUE_HOLDS_STRING (gvalp)) {
+            ret = g_value_get_string (gvalp);
         }
     }
 
@@ -377,13 +359,10 @@ widget_set_attribute (GomElement *elem, const char *name, const char *value, GEr
             g_value_unset (&gval);
         }
     } else {
-        GomWidgetPrivate *priv;
-        priv = PRIV (elem);
-        if (!priv) {
-            priv = init_priv (elem);
-        }
-        g_print ("property '%s' not found; setting data instead\n", name);
-        g_hash_table_insert (priv->attrs, g_strdup (name), g_strdup (value));
+        g_value_init (&gval, G_TYPE_STRING);
+        g_value_set_string (&gval, value);
+        gom_object_set_attribute (G_OBJECT (elem), name, &gval);
+        g_value_unset (&gval);
     }
 }
 
@@ -469,7 +448,7 @@ GOM_DEFINE_JS_OBJECT(widget, GomJSElementClass)
 #define GTK_TYPE_TREE_ITEM 0
 
 static gpointer
-init_once_cb (gpointer data)
+gom_widget_init_once (gpointer data)
 {
     GType type = 0;
     static const GInterfaceInfo node_info = {
@@ -491,8 +470,6 @@ init_once_cb (gpointer data)
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT, &element_info);
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_JS_OBJECT, &js_object_info);
 
-    gom_widget_private_quark = g_quark_from_static_string ("gom-widget-private");
-
 #include "gomwidgets.c"
 
     return NULL;
@@ -502,5 +479,5 @@ void
 gom_widget_init (void)
 {
     static GOnce init_once = G_ONCE_INIT;
-    g_once (&init_once, init_once_cb, NULL);
+    g_once (&init_once, gom_widget_init_once, NULL);
 }

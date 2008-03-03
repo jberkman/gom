@@ -13,6 +13,7 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomjsobject.c		\
 	src/libgom/gomjsnode.c			\
 	src/libgom/gomjswindow.c		\
+	src/libgom/gomobject.c			\
 	src/libgom/gomvalue.c			\
 	src/libgom/gomwidget.c
 

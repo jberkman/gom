@@ -1,3 +1,30 @@
+2008-03-03  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomjselement.c (element_get_prop, element_set_prop):
+	use gom_object_[gs]et_attribute() for non-GObject properties
+	(element_resolve): define non-GObject properties
+
+	* src/libgom/gomwidget.c (append_child_attrs_foreach): helper for
+	setting child attributes/properties
+	(widget_append_child): use helper now that we don't have direct
+	access to attributes
+	(widget_get_attribute, widget_set_attribute): use
+	gom_object_[gs]et_attribute()
+
+	* src/libgom/gomjsobject.c (gom_js_closure_marshal): convert
+	arguments using gom_jsval(), try to return something if
+	appropriate (untested)
+	(gom_js_object_resolve): move reusable bits to
+	gom_object_resolve()
+	(gom_js_object_init_once, gom_js_object_init_class): init
+	hashtables once
+
+	* include/gom/gomvalue.[ch] (gom_jsval): declare the src GValue as
+	const
+
+	* include/gom/gomobject.[ch]: add some object utility functions
+	shared by some js classes
+
 2008-02-25  jacob berkman  <jacob@ilovegom.org>
 
 	* tests/checkgomvalue.c: add checks for gom_jsval()

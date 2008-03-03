@@ -25,11 +25,28 @@ THE SOFTWARE.
 
 #include <gom/gomjsobject.h>
 
+#include <gom/gomobject.h>
 #include <gom/gomvalue.h>
 
 #include <gommacros.h>
 
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
+
+#define GOM_JS_OBJECT_CLOSURES_QUARK (closures_quark ())
+#define CLOSURES(o) ((GHashTable *)g_object_get_qdata (G_OBJECT (o), GOM_JS_OBJECT_CLOSURES_QUARK));
+
+static gpointer
+closures_quark_once (gpointer data)
+{
+    return GUINT_TO_POINTER (g_quark_from_static_string ("gom-object-closures-quark"));
+}
+
+static GQuark
+closures_quark (void)
+{
+    static GOnce closures_once = G_ONCE_INIT;
+    return GPOINTER_TO_UINT (g_once (&closures_once, closures_quark_once, NULL));
+}
 
 static GHashTable *g2js = NULL;
 static GHashTable *js2g = NULL;
@@ -57,28 +74,31 @@ gom_js_closure_marshal (GClosure *closure,
                         gpointer marshal_data)
 {
     GomJSClosure *jsclosure = (GomJSClosure *)closure;
+    GError *error = NULL;
     int i;
     jsval *argv;
     jsval  rval;
+    GValue tmp_ret = { 0 };
     const char *rettype = NULL;
+
     if (return_value) {
         rettype = G_VALUE_TYPE_NAME (return_value);
     }
     if (!rettype) {
         rettype = "void";
     }
-    g_print ("running closure; returns %s, %d arguments:\n", 
+    g_print ("running closure; returns %s, %d arguments\n", 
              rettype, n_param_values);
     argv = g_new0 (jsval, n_param_values);
     for (i = 0; i < n_param_values; i++) {
-        if (g_type_is_a (G_VALUE_TYPE (&param_values[i]), GOM_TYPE_JS_OBJECT)) {
-            JSObject *jsobj = gom_js_object_get_or_create_js_object (jsclosure->cx,
-                                                                     g_value_get_object (&param_values[i]));
-            argv[i] = OBJECT_TO_JSVAL (jsobj);
-        } else {
+        if (!gom_jsval (jsclosure->cx, &argv[i], &param_values[i], &error)) {
+            g_printerr ("Error converting param of type '%s': %s\n",
+                        G_VALUE_TYPE_NAME (&param_values[i]),
+                        error->message);
+            g_error_free (error);
+            error = NULL;
             argv[i] = JSVAL_NULL;
         }
-        g_print ("\t%s: %#lx\n", G_VALUE_TYPE_NAME (&param_values[i]), argv[i]);
     }
 
     if (!JS_CallFunction (jsclosure->cx, jsclosure->obj,
@@ -86,6 +106,22 @@ gom_js_closure_marshal (GClosure *closure,
                           n_param_values, argv,
                           &rval)) {
         g_printerr ("Error calling function!\n");
+        return;
+    }
+    
+    if (return_value && G_VALUE_TYPE (return_value) != G_TYPE_NONE) {
+        if (!gom_g_value (jsclosure->cx, &tmp_ret, rval, &error)) {
+            g_printerr ("Error converting return type to g_value: %s\n", error->message);
+            return;
+        }
+        if (!g_value_transform (&tmp_ret, return_value)) {
+            g_printerr ("Could not convert js return type '%s' to desired '%s'\n",
+                        G_VALUE_TYPE_NAME (&tmp_ret),
+                        G_VALUE_TYPE_NAME (return_value));
+            g_value_unset (&tmp_ret);
+            return;
+        }
+        g_value_unset (&tmp_ret);
     }
 }
 
@@ -131,32 +167,21 @@ gom_js_object_connect (JSContext *cx, JSObject *jsobj,
     return g_signal_connect_closure (gobj, signal_name, closure, FALSE);
 }
 
-
-static GQuark
-object_get_closure_quark (void)
-{
-    return g_quark_from_static_string ("gom-js-object-closure-quark");
-}
-
 static GomJSClosure *
 object_get_closure_prop (GObject *gobj, guint signal_id)
 {
-    GHashTable *closures;
-    closures = g_object_get_qdata (gobj, object_get_closure_quark ());
+    GHashTable *closures = CLOSURES (gobj);
     return closures ? (GomJSClosure *)g_hash_table_lookup (closures, GUINT_TO_POINTER (signal_id)) : NULL;
 }
 
 static void
-object_set_closure_prop (GObject *obj, guint signal_id, GomJSClosure *closure)
+object_set_closure_prop (GObject *gobj, guint signal_id, GomJSClosure *closure)
 {
-    GHashTable *closures;
-
-    closures = g_object_get_qdata (obj, object_get_closure_quark ());
+    GHashTable *closures = CLOSURES (gobj);
     if (!closures) {
         closures = g_hash_table_new (NULL, NULL);
-        g_object_set_qdata (obj, object_get_closure_quark (), closures);
+        g_object_set_qdata_full (gobj, GOM_JS_OBJECT_CLOSURES_QUARK, closures, (GDestroyNotify)g_hash_table_destroy);
     }
-
     g_hash_table_insert (closures, GUINT_TO_POINTER (signal_id), closure);
 }
 
@@ -174,22 +199,7 @@ gom_js_object_resolve (JSContext *cx, JSObject *obj, const char *name,
         g_warning ("JSObject %p (%s) is not a GomJSObject (%s)",
                    obj, JS_GET_CLASS (cx, obj)->name, g_type_name (G_TYPE_FROM_INSTANCE (*gobj)));
     }
-
-    if (name[0] == 'o' && name[1] == 'n' &&
-        (*signal_id = g_signal_lookup (&name[2], G_TYPE_FROM_INSTANCE (*gobj)))) {
-        g_print ("resolve %s.%s -> signal %u\n", JS_GET_CLASS (cx, obj)->name, name, *signal_id);
-        *spec = NULL;
-        return TRUE;
-    }
-
-    *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (*gobj), name);
-    *signal_id = 0;
-    g_print ("resolve %s.%s -> %s\n", 
-             JS_GET_CLASS (cx, obj)->name, name,
-             *spec ? g_type_name (G_PARAM_SPEC_VALUE_TYPE (*spec)) : "FAIL");
-
-    return *spec != NULL;
- 
+    return gom_object_resolve (*gobj, name, spec, signal_id);
 }
 
 static JSBool
@@ -346,7 +356,7 @@ struct JSClass GomJSObjectClass = {
     JSCLASS_NEW_RESOLVE | JSCLASS_NEW_RESOLVE_GETS_START,
 
     JS_PropertyStub, JS_PropertyStub,
-    object_get_prop, object_set_prop,
+    JS_PropertyStub, JS_PropertyStub,
     JS_EnumerateStub,
     (JSResolveOp)object_resolve,
     JS_ConvertStub,
@@ -363,15 +373,22 @@ gom_js_object_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
     return JS_TRUE;
 }
 
+static gpointer
+gom_js_object_init_once (gpointer data)
+{
+    g2js = g_hash_table_new (NULL, NULL);
+    js2g = g_hash_table_new (NULL, NULL);
+    return NULL;
+}
+
 JSObject *
 gom_js_object_init_class (JSContext *cx, JSObject *obj)
 {
+    static GOnce init_once = G_ONCE_INIT;
     JSObject *proto;
-    static gboolean initialized = FALSE;
-    g_assert (!initialized);
-    initialized = TRUE;
-    g2js = g_hash_table_new (NULL, NULL);
-    js2g = g_hash_table_new (NULL, NULL);
+
+    g_once (&init_once, gom_js_object_init_once, NULL);
+    
     proto = JS_ConstructObject (cx, NULL, NULL, NULL);
     return JS_InitClass (cx, obj, proto, &GomJSObjectClass, gom_js_object_construct, 0,
                          gom_js_object_props, gom_js_object_funcs, 

@@ -82,7 +82,7 @@ gom_g_value (JSContext *cx, GValue *gval, jsval jval, GError **error)
 }
 
 gboolean
-gom_jsval (JSContext *cx, jsval *jval, GValue *gval, GError **error)
+gom_jsval (JSContext *cx, jsval *jval, const GValue *gval, GError **error)
 {
     gboolean ret = FALSE;
     JSString *jstr;

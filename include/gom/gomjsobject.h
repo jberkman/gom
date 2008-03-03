@@ -83,7 +83,6 @@ gboolean  gom_js_object_resolve (JSContext *cx, JSObject *obj, const char *name,
 gulong    gom_js_object_connect (JSContext *cx, JSObject *jsobj,
                                  const char *signal, JSFunction *func);
                                  
-
 G_END_DECLS
 
 #endif /* GOM_JS_H */

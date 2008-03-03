@@ -21,28 +21,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef GOM_VALUE_H
-#define GOM_VALUE_H
+#ifndef GOM_OBJECT_H
+#define GOM_OBJECT_H
 
 #include <glib-object.h>
-#include <jsapi.h>
 
 G_BEGIN_DECLS
 
-#define GOM_VALUE_ERROR (gom_value_error_quark ())
+gboolean  gom_object_resolve (GObject *gobj, const char *name, GParamSpec **spec, guint *signal_id);
 
-typedef enum {
-    GOM_VALUE_ERROR_UNKNOWN_JSVAL_TAG = 1,
-    GOM_VALUE_ERROR_G_OBJECT_NOT_FOUND,
-    GOM_VALUE_ERROR_UNHANDLED_G_TYPE,
-    GOM_VALUE_ERROR_JS_OBJECT_NOT_FOUND,
-} GomValueError;
-
-GQuark gom_value_error_quark (void);
-
-gboolean gom_g_value (JSContext *cx, GValue *gval, jsval   jval, GError **error);
-gboolean gom_jsval   (JSContext *cx, jsval  *jval, const GValue *gval, GError **error);
+GValue   *gom_object_get_attribute (GObject *obj, const char *name);
+void      gom_object_set_attribute (GObject *obj, const char *name, GValue *value);
+void      gom_object_attributes_foreach (GObject *obj, GHFunc func, gpointer user_data);
 
 G_END_DECLS
 
-#endif /* GOM_VALUE_H */
+#endif /* GOM_OBJECT_H */

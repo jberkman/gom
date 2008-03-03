@@ -30,15 +30,120 @@ THE SOFTWARE.
 #include <gom/dom/gomelement.h>
 #include <gom/gomjsnode.h>
 #include <gom/gomjsobject.h>
+#include <gom/gomobject.h>
+#include <gom/gomvalue.h>
 
 #include <string.h>
 
+#define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
+
+static JSBool
+element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+{
+    GObject *gobj;
+    GParamSpec *spec;
+    const char *name;
+    guint signal_id;
+
+    GValue *gval;
+    GError *error = NULL;
+
+    if (JSVAL_IS_INT (id)) {
+        return JS_TRUE;
+    }
+
+    g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+    name = JSVAL_CHARS (id);
+
+    /* let handled properties fall through */
+    if (gom_js_object_resolve (cx, obj, name, &gobj, &spec, &signal_id)) {
+        return JS_TRUE;
+    }
+
+    gval = gom_object_get_attribute (gobj, name);
+    if (!gom_jsval (cx, vp, gval, &error)) {
+        g_printerr ("Could not get jsval: %s\n", error->message);
+        g_error_free (error);
+        return JS_FALSE;
+    }
+    return JS_TRUE;
+}
+
+static JSBool
+element_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+{
+    GObject *gobj;
+    GParamSpec *spec;
+    const char *name;
+    guint signal_id;
+
+    GValue gval = { 0 };
+    GError *error = NULL;
+
+    if (JSVAL_IS_INT (id)) {
+        return JS_TRUE;
+    }
+
+    g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+    name = JSVAL_CHARS (id);
+
+    /* let resolvable properties fall through */
+    if (gom_js_object_resolve (cx, obj, name, &gobj, &spec, &signal_id)) {
+        return JS_TRUE;
+    }
+
+    if (!gom_g_value (cx, &gval, *vp, &error)) {
+        g_printerr ("Could not get GValue: %s\n", error->message);
+        g_error_free (error);
+        return JS_FALSE;
+    }
+
+    gom_object_set_attribute (gobj, name, &gval);
+    g_value_unset (&gval);
+
+    return JS_TRUE;
+}
+
+static JSBool
+element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSObject **objp)
+{
+    GObject *gobj;
+    GParamSpec *spec;
+    const char *name;
+    guint signal_id;
+
+    if (JSVAL_IS_INT (id)) {
+        return JS_TRUE;
+    }
+
+    g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+    name = JSVAL_CHARS (id);
+
+    /* let GomJSObject pick it up for defined properties */
+    if (gom_js_object_resolve (cx, *objp, name, &gobj, &spec, &signal_id)) {
+        *objp = NULL;
+        return JS_TRUE;
+    }
+
+    if (!JS_DefineProperty (cx, *objp, name, JSVAL_VOID,
+                            element_get_prop, element_set_prop,
+                            JSPROP_ENUMERATE)) {
+        g_printerr ("Could not define a property for %s\n", name);
+        return JS_FALSE;
+    }
+    g_print ("%s:%d:%s(): defined new property: '%s'\n", __FILE__, __LINE__, __FUNCTION__, name);
+    return JS_TRUE;
+}
+
 struct JSClass GomJSElementClass = {
-    "GomElement", 0,
+    "GomElement",
+    JSCLASS_NEW_RESOLVE | JSCLASS_NEW_RESOLVE_GETS_START,
 
     JS_PropertyStub, JS_PropertyStub,
-    JS_PropertyStub, JS_PropertyStub,
-    JS_EnumerateStub, JS_ResolveStub,
+        JS_PropertyStub, JS_PropertyStub,
+
+    JS_EnumerateStub,
+    (JSResolveOp)element_resolve,
     JS_ConvertStub, JS_FinalizeStub
 };
 

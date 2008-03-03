@@ -10,5 +10,6 @@ gominclude_HEADERS :=				\
 	include/gom/gomjsobject.h		\
 	include/gom/gomjsnode.h			\
 	include/gom/gomjswindow.h		\
+	include/gom/gomobject.h			\
 	include/gom/gomvalue.h			\
 	include/gom/gomwidget.h
