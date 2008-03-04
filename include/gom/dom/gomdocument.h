@@ -82,7 +82,11 @@ struct _GomDocumentInterface {
                                                                 const char  *name,
                                                                 GError     **error);
     GomNodeList              *(*get_elements_by_tag_name)      (GomDocument *doc,
-                                                                const char  *tagname);
+                                                                const char  *tag_name);
+
+    /* introduced in DOM level 2: */
+    GomElement               *(*get_element_by_id)             (GomDocument *doc,
+                                                                const char  *element_id);
 };
 
 GType gom_document_get_type (void);
@@ -115,8 +119,11 @@ GomEntityReference       *gom_document_create_entity_reference       (GomDocumen
                                                                       const char  *name,
                                                                       GError     **error);
 GomNodeList              *gom_document_get_elements_by_tag_name      (GomDocument *doc,
-                                                                      const char  *tagname);
+                                                                      const char  *tag_name);
 
+/* Introduced in DOM Level 2: */
+GomElement               *gom_document_get_element_by_id             (GomDocument *doc,
+                                                                      const char  *element_id);
 G_END_DECLS
 
 #endif /* GOM_DOCUMENT_H */

@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include <gom/gomdoc.h>
 #include <gom/gomjsnode.h>
+#include <gom/gomjsobject.h>
 
 struct JSClass GomJSDocumentClass = {
     "GomDocument", 0,
@@ -40,111 +41,138 @@ struct JSClass GomJSDocumentClass = {
 };
 
 static JSBool
-document_get_doctype (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_document_get_doctype (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-document_get_implementation (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_document_get_implementation (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-document_get_document_element (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_document_get_document_element (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSPropertySpec document_props[] = {
-    { "docType",         -1, JSPROP_READONLY | JSPROP_PERMANENT, document_get_doctype },
-    { "implementation",  -1, JSPROP_READONLY | JSPROP_PERMANENT, document_get_implementation },
-    { "documentElement", -1, JSPROP_READONLY | JSPROP_PERMANENT, document_get_document_element },
+    { "docType",         -1, JSPROP_READONLY | JSPROP_PERMANENT, gom_js_document_get_doctype },
+    { "implementation",  -1, JSPROP_READONLY | JSPROP_PERMANENT, gom_js_document_get_implementation },
+    { "documentElement", -1, JSPROP_READONLY | JSPROP_PERMANENT, gom_js_document_get_document_element },
     { NULL }
 };
 
 static JSBool
-document_create_element(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_document_create_element(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-document_create_document_fragment (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_document_create_document_fragment (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-document_create_text_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_document_create_text_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-document_create_comment (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_document_create_comment (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-document_create_cdata_section (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_document_create_cdata_section (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-document_create_processing_instruction (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_document_create_processing_instruction (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-document_create_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_document_create_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-document_create_entity_reference (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_document_create_entity_reference (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-document_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_document_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
+}
+
+static JSBool
+gom_js_document_get_element_by_id (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GomDocument *doc;
+    GomElement *elem;
+    const char *element_id;
+
+    doc = gom_js_object_get_g_object (cx, obj);
+    if (!doc || !GOM_IS_DOCUMENT (doc)) {
+        return JS_FALSE;
+    }
+
+    if (!JS_ConvertArguments (cx, argc, argv, "s", &element_id)) {
+        return JS_FALSE;
+    }
+
+    elem = gom_document_get_element_by_id (doc, element_id);
+    if (elem && GOM_IS_JS_OBJECT (elem)) {
+        *rval = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, elem));
+    } else {
+        *rval = JSVAL_NULL;
+    }
+    return JS_TRUE;
 }
 
 static JSFunctionSpec document_funcs[] = {
-    { "createElement",               document_create_element, 1 },
-    { "createDocumentFragment",      document_create_document_fragment, 0 },
-    { "createTextNode",              document_create_text_node, 1 },
-    { "createComment",               document_create_comment, 1 },
-    { "createCDataSection",          document_create_cdata_section, 1 },
-    { "createProcessingInstruction", document_create_processing_instruction, 2 },
-    { "createAttribute",             document_create_attribute, 1 },
-    { "createEntityReference",       document_create_entity_reference, 1 },
-    { "getElementsByTagName",        document_get_elements_by_tag_name, 1 },
+    { "createElement",               gom_js_document_create_element, 1 },
+    { "createDocumentFragment",      gom_js_document_create_document_fragment, 0 },
+    { "createTextNode",              gom_js_document_create_text_node, 1 },
+    { "createComment",               gom_js_document_create_comment, 1 },
+    { "createCDataSection",          gom_js_document_create_cdata_section, 1 },
+    { "createProcessingInstruction", gom_js_document_create_processing_instruction, 2 },
+    { "createAttribute",             gom_js_document_create_attribute, 1 },
+    { "createEntityReference",       gom_js_document_create_entity_reference, 1 },
+    { "getElementsByTagName",        gom_js_document_get_elements_by_tag_name, 1 },
+    /* Introduced in DOM Level 2: */
+    { "getElementById",              gom_js_document_get_element_by_id, 1 },
     { NULL }
 };
 
 static JSBool
-document_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_document_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_TRUE;
@@ -154,6 +182,6 @@ JSObject *
 gom_js_document_init_class (JSContext *cx, JSObject *obj)
 {
     JSObject *proto = JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL);
-    return JS_InitClass (cx, obj, proto, &GomJSDocumentClass, document_construct, 0,
+    return JS_InitClass (cx, obj, proto, &GomJSDocumentClass, gom_js_document_construct, 0,
                          document_props, document_funcs, NULL, NULL);
 }

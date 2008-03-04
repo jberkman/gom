@@ -89,6 +89,7 @@ gom_js_closure_marshal (GClosure *closure,
     }
     g_print ("running closure; returns %s, %d arguments\n", 
              rettype, n_param_values);
+
     argv = g_new0 (jsval, n_param_values);
     for (i = 0; i < n_param_values; i++) {
         if (!gom_jsval (jsclosure->cx, &argv[i], &param_values[i], &error)) {
@@ -109,7 +110,7 @@ gom_js_closure_marshal (GClosure *closure,
         return;
     }
     
-    if (return_value && G_VALUE_TYPE (return_value) != G_TYPE_NONE) {
+    if (return_value && G_VALUE_TYPE (return_value) != G_TYPE_INVALID) {
         if (!gom_g_value (jsclosure->cx, &tmp_ret, rval, &error)) {
             g_printerr ("Error converting return type to g_value: %s\n", error->message);
             return;
@@ -168,14 +169,14 @@ gom_js_object_connect (JSContext *cx, JSObject *jsobj,
 }
 
 static GomJSClosure *
-object_get_closure_prop (GObject *gobj, guint signal_id)
+gom_js_object_get_closure_prop (GObject *gobj, guint signal_id)
 {
     GHashTable *closures = CLOSURES (gobj);
     return closures ? (GomJSClosure *)g_hash_table_lookup (closures, GUINT_TO_POINTER (signal_id)) : NULL;
 }
 
 static void
-object_set_closure_prop (GObject *gobj, guint signal_id, GomJSClosure *closure)
+gom_js_object_set_closure_prop (GObject *gobj, guint signal_id, GomJSClosure *closure)
 {
     GHashTable *closures = CLOSURES (gobj);
     if (!closures) {
@@ -195,15 +196,17 @@ gom_js_object_resolve (JSContext *cx, JSObject *obj, const char *name,
         return FALSE;
     }
     g_assert (G_IS_OBJECT (*gobj));
+#if 0
     if (!GOM_IS_JS_OBJECT (*gobj)) {
         g_warning ("JSObject %p (%s) is not a GomJSObject (%s)",
                    obj, JS_GET_CLASS (cx, obj)->name, g_type_name (G_TYPE_FROM_INSTANCE (*gobj)));
     }
+#endif
     return gom_object_resolve (*gobj, name, spec, signal_id);
 }
 
 static JSBool
-object_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_object_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GObject *gobj;
     GParamSpec *spec;
@@ -225,7 +228,7 @@ object_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     }
 
     if (signal_id) {
-        closure = object_get_closure_prop (gobj, signal_id);
+        closure = gom_js_object_get_closure_prop (gobj, signal_id);
         g_print ("closure: %p\n", closure);
         *vp = closure ? OBJECT_TO_JSVAL (JS_GetFunctionObject (closure->fun)) : JSVAL_VOID;
         return JS_TRUE;
@@ -247,7 +250,7 @@ object_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 }
 
 static JSBool
-object_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_object_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GObject *gobj;
     GParamSpec *spec;
@@ -280,12 +283,12 @@ object_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
             g_printerr ("could not get function from value\n");
             return JS_FALSE;
         }
-        closure = object_get_closure_prop (gobj, signal_id);
+        closure = gom_js_object_get_closure_prop (gobj, signal_id);
         if (closure) {
             closure->fun = fun;
         } else {
             closure = (GomJSClosure *)gom_js_closure_new (cx, obj, fun);
-            object_set_closure_prop (gobj, signal_id, closure);
+            gom_js_object_set_closure_prop (gobj, signal_id, closure);
             g_signal_connect_closure_by_id (gobj, signal_id, 0, &closure->closure, FALSE);
         }
         return JS_TRUE;
@@ -306,7 +309,7 @@ object_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 }
 
 static JSBool
-object_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSObject **objp)
+gom_js_object_resolve_priv (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSObject **objp)
 {
     GObject *gobj;
     GParamSpec *spec;
@@ -327,17 +330,21 @@ object_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSObject **
     }
 
     if (!JS_DefineProperty (cx, *objp, name, JSVAL_VOID,
-                            object_get_prop, object_set_prop, 
+                            gom_js_object_get_prop, gom_js_object_set_prop, 
                             spec ? JSPROP_ENUMERATE|JSPROP_PERMANENT : 0)) {
         g_printerr ("Could not define a property for %s\n", name);
         return JS_FALSE;
     }
+
+    g_print ("%s:%d:%s(): defined new property: %s.%s (%s)\n", 
+             __FILE__, __LINE__, __FUNCTION__,
+             JS_GET_CLASS (cx, *objp)->name, name, JS_GET_CLASS (cx, obj)->name);
     
     return JS_TRUE;
 }
 
 static void
-object_finalize (JSContext *cx, JSObject *obj)
+gom_js_object_finalize (JSContext *cx, JSObject *obj)
 {
     GObject *gobj = gom_js_object_get_g_object (cx, obj);
     g_print ("Finalizing JSObject %p: unref %s %p\n",
@@ -358,9 +365,9 @@ struct JSClass GomJSObjectClass = {
     JS_PropertyStub, JS_PropertyStub,
     JS_PropertyStub, JS_PropertyStub,
     JS_EnumerateStub,
-    (JSResolveOp)object_resolve,
+    (JSResolveOp)gom_js_object_resolve_priv,
     JS_ConvertStub,
-    object_finalize
+    gom_js_object_finalize
 };
 
 static JSPropertySpec gom_js_object_props[] = { { NULL } };
@@ -423,7 +430,10 @@ gom_js_object_get_or_create_js_object (JSContext *cx, gpointer gobj)
     JSObject *jsobj;
     jsobj = gom_js_object_get_js_object (gobj);
     if (!jsobj) {
-        jsobj = JS_ConstructObject (cx, gom_js_object_get_js_class (GOM_JS_OBJECT (gobj)), NULL, NULL);
+        jsobj = JS_ConstructObject (cx, GOM_IS_JS_OBJECT (gobj) 
+                                    ? gom_js_object_get_js_class (GOM_JS_OBJECT (gobj))
+                                    : &GomJSObjectClass,
+                                    NULL, NULL);
         gom_js_object_set_g_object (cx, jsobj, gobj);
     }
 

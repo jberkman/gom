@@ -36,12 +36,12 @@ static struct JSClass GomJSWindowClass = {
     JS_ConvertStub, JS_FinalizeStub
 };
 
-static JSPropertySpec window_props[] = {
+static JSPropertySpec gom_js_window_props[] = {
     { NULL }
 };
 
 static JSBool
-window_alert (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_window_alert (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GtkWidget *dialog;
     char *str;
@@ -61,23 +61,24 @@ window_alert (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval
 }
 
 static JSBool
-window_quit (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_window_quit (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     gtk_main_quit ();
     return JS_TRUE;
 }
 
-static JSFunctionSpec window_funcs[] = {
-    { "alert", window_alert, 1 },
-    { "quit", window_quit, 0 },
+static JSFunctionSpec gom_js_window_funcs[] = {
+    { "alert", gom_js_window_alert, 1 },
+    { "quit",  gom_js_window_quit,  0 },
     { NULL }
 };
+
 #if 0
 JSObject *
 gom_js_window_init_class (JSContext *cx, JSObject *obj)
 {
     return JS_InitClass (cx, obj, NULL, &GomJSWindowClass, NULL, 0,
-                         window_props, window_funcs, NULL, NULL);
+                         gom_js_window_props, gom_js_window_funcs, NULL, NULL);
 }
 #endif
 
@@ -91,8 +92,8 @@ gom_js_window_new_global (JSContext *cx)
 
     JS_InitStandardClasses (cx, window);
 
-    JS_DefineProperties (cx, window, window_props);
-    JS_DefineFunctions (cx, window, window_funcs);
+    JS_DefineProperties (cx, window, gom_js_window_props);
+    JS_DefineFunctions (cx, window, gom_js_window_funcs);
     
     JS_DefineProperty (cx, window, "window", OBJECT_TO_JSVAL (window), NULL, NULL,
                        JSPROP_READONLY | JSPROP_PERMANENT);

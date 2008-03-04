@@ -1,26 +1,27 @@
-<GtkWindow title="Gom Console" default-width="400" default-height="50" border-width="6">
+<GtkWindow title="Gom Console" default-width="400" default-height="50" border-width="6" ondelete-event="quit();">
   <GtkVBox spacing="6">
     <GtkScrolledWindow expand="true" fill="true" hscrollbar-policy="2" vscrollbar-policy="1" shadow-type="1">
-      <GtkTextView wrap-mode="2" editable="false"/>
+      <GtkTextView id="output" wrap-mode="2" editable="false"/>
     </GtkScrolledWindow>
-    <GtkEntry expand="false" fill="false" onactivate="alert (this.text + ' (' + this.expand + ')');"/>
+    <GtkEntry id="entry" expand="false" fill="false"/>
   </GtkVBox>
 </GtkWindow>
 <script><![CDATA[
-  document.firstChild.default_width;
-]]></script>
-<script><![CDATA[
-  document.firstChild.default_height;
-]]></script>
-<script><![CDATA[
-  document.firstChild.title = "set by js";
-]]></script>
-<script><![CDATA[
-  document.firstChild.ondestroy;
-]]></script>
-<script><![CDATA[
-  document.firstChild.ondestroy = quit;
-]]></script>
-<script><![CDATA[
-  document.firstChild.ondestroy;
+  var entry = document.getElementById ('entry');
+  if (!entry) {
+    alert ('Could not look up entry.');
+    quit ();
+  }
+  var output = document.getElementById ('output');
+  if (!output) {
+    alert ('Could not look up output.');
+    quit ();
+  }
+  entry.onactivate = function () {
+    if (entry.text) {
+   	output.buffer.text += eval (entry.text) + '\n';
+	entry.text = '';
+    }
+    return true;
+  };
 ]]></script>

@@ -44,49 +44,49 @@ struct JSClass GomJSNodeClass = {
 };
 
 static JSBool
-node_get_node_name (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_node_name (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_get_node_value (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_node_value (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_set_node_value (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_set_node_value (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_get_node_type (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_node_type (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_get_parent_node (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_parent_node (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_get_child_nodes (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_child_nodes (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_get_first_child (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_first_child (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GomNode *node;
     GomNode *child;
@@ -103,109 +103,109 @@ node_get_first_child (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 }
 
 static JSBool
-node_get_last_child (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_last_child (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_get_previous_sibling (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_previous_sibling (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_get_next_sibling (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_next_sibling (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_get_attributes (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_attributes (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_get_owner_document (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_node_get_owner_document (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSPropertySpec gom_js_node_props[] = {
-    { "nodeName",        -1, JSPROP_PERMANENT | JSPROP_READONLY, node_get_node_name },
-    { "nodeValue",       -1, JSPROP_PERMANENT,                   node_get_node_value, node_set_node_value },
-    { "nodeType",        -1, JSPROP_PERMANENT | JSPROP_READONLY, node_get_node_type },
-    { "parentNode",      -1, JSPROP_PERMANENT | JSPROP_READONLY, node_get_parent_node },
-    { "childNodes",      -1, JSPROP_PERMANENT | JSPROP_READONLY, node_get_child_nodes },
-    { "firstChild",      -1, JSPROP_PERMANENT | JSPROP_READONLY, node_get_first_child },
-    { "lastChild",       -1, JSPROP_PERMANENT | JSPROP_READONLY, node_get_last_child },
-    { "previousSibling", -1, JSPROP_PERMANENT | JSPROP_READONLY, node_get_previous_sibling },
-    { "nextSibling",     -1, JSPROP_PERMANENT | JSPROP_READONLY, node_get_next_sibling },
-    { "attributes",      -1, JSPROP_PERMANENT | JSPROP_READONLY, node_get_attributes },
-    { "ownerDocument",   -1, JSPROP_PERMANENT | JSPROP_READONLY, node_get_owner_document },
+    { "nodeName",        -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_node_get_node_name },
+    { "nodeValue",       -1, JSPROP_PERMANENT,                   gom_js_node_get_node_value, gom_js_node_set_node_value },
+    { "nodeType",        -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_node_get_node_type },
+    { "parentNode",      -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_node_get_parent_node },
+    { "childNodes",      -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_node_get_child_nodes },
+    { "firstChild",      -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_node_get_first_child },
+    { "lastChild",       -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_node_get_last_child },
+    { "previousSibling", -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_node_get_previous_sibling },
+    { "nextSibling",     -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_node_get_next_sibling },
+    { "attributes",      -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_node_get_attributes },
+    { "ownerDocument",   -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_node_get_owner_document },
     { NULL }
 };
 
 static JSBool
-node_insert_before (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_node_insert_before (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_replace_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_node_replace_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_remove_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_node_remove_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_append_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_node_append_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_has_child_nodes (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_node_has_child_nodes (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-node_clone_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_node_clone_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSFunctionSpec gom_js_node_funcs[] = {
-    { "insertBefore",  node_insert_before,   2 },
-    { "replaceChild",  node_replace_child,   2 },
-    { "removeChild",   node_remove_child,    1 },
-    { "appendChild",   node_append_child,    1 },
-    { "hasChildNodes", node_has_child_nodes, 0 },
-    { "cloneNode",     node_clone_node,      1 },
+    { "insertBefore",  gom_js_node_insert_before,   2 },
+    { "replaceChild",  gom_js_node_replace_child,   2 },
+    { "removeChild",   gom_js_node_remove_child,    1 },
+    { "appendChild",   gom_js_node_append_child,    1 },
+    { "hasChildNodes", gom_js_node_has_child_nodes, 0 },
+    { "cloneNode",     gom_js_node_clone_node,      1 },
     { NULL }
 };
 
 static JSBool
-node_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_node_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_TRUE;
@@ -215,6 +215,6 @@ JSObject *
 gom_js_node_init_class (JSContext *cx, JSObject *obj)
 {
     JSObject *proto = JS_ConstructObject (cx, &GomJSObjectClass, NULL, NULL);
-    return JS_InitClass (cx, obj, proto, &GomJSNodeClass, node_construct, 0,
+    return JS_InitClass (cx, obj, proto, &GomJSNodeClass, gom_js_node_construct, 0,
                          gom_js_node_props, gom_js_node_funcs, NULL, NULL);
 }

@@ -140,11 +140,11 @@ gom_jsval (JSContext *cx, jsval *jval, const GValue *gval, GError **error)
 
     case G_TYPE_STRING:
         *jval = STRING_TO_JSVAL (JS_NewStringCopyZ (cx, g_value_get_string (gval)));
-        ret = JS_TRUE;
+        ret = TRUE;
         break;
 
     default:
-        if (G_VALUE_HOLDS (gval, GOM_TYPE_JS_OBJECT)) {
+        if (G_VALUE_HOLDS (gval, G_TYPE_OBJECT)) {
             GObject  *gobj;
             JSObject *jsobj;
             gobj = g_value_get_object (gval);
@@ -155,6 +155,8 @@ gom_jsval (JSContext *cx, jsval *jval, const GValue *gval, GError **error)
                              gobj, g_type_name (G_TYPE_FROM_INSTANCE (gobj)));
                 return FALSE;
             }
+            *jval = OBJECT_TO_JSVAL (jsobj);
+            ret = TRUE;
         }
     }
 

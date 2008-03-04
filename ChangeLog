@@ -1,4 +1,42 @@
+2008-03-04  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomjselement.c (gom_js_element_get_prop): return if
+	there was no attribute
+	(gom_js_element_resolve): if the prototype object has a property
+	already, don't create one here
+
+	* src/libgom/gomdoc.c (element_get_element_by_id): poor but
+	functional implementation
+	(gom_doc_get_element_by_id): call above method
+
+	* src/libgom/gomjsobject.c (gom_js_closure_marshal): don't set the
+	return value if it's G_TYPE_INVALID (not sure if this is right
+	yet...)
+	(gom_js_object_resolve): remove warning if the object is not a
+	GomJSObject
+	(gom_js_object_get_or_create_js_object): if the object doesn't
+	support GomJSObject, just create a js GomJSObject for it anyway
+
+	* src/libgom/gominterfaces.c: add get_element_by_id stub
+
+	* src/libgom/gomvalue.c (gom_jsval): allow GObjects now that
+	_get_or_create_js_object() handles non-GomJSObjects; also set the
+	return jsval to the object and return success on success
+
+	* src/libgom/gomjsdocument.c (gom_js_document_get_element_by_id):
+	use new DOM Level 2 Core method
+
 2008-03-03  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomdom.c (gom_dom_exception_error_quark): use a GOnce
+	here
+
+	* src/libgom/gomdoc.c (gom_doc_create_element): if the object
+	could not be instantiated, set an error (fixes a secondary cause
+	of the crash in issue #1)
+
+	* include/gom/dom/gomdomexception.h: add an exception for unknown
+	tags
 
 	* src/libgom/gomwidget.c (gom_widget_init_once): return our fake
 	type variable so that it all doesn't get optimized out (fixes

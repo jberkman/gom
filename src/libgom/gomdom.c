@@ -27,10 +27,17 @@ THE SOFTWARE.
 #include <gom/gomdoc.h>
 #include <gom/dom/gomdomexception.h>
 
+static gpointer
+gom_dom_exception_error_quark_once (gpointer data)
+{
+    return GUINT_TO_POINTER (g_quark_from_static_string ("gom-dom-exception-error-quark"));
+}
+
 GQuark
 gom_dom_exception_error_quark (void)
 {
-    return g_quark_from_static_string ("gom-dom-exception-error-quark");
+    GOnce dom_ex_once = G_ONCE_INIT;
+    return GPOINTER_TO_UINT (g_once (&dom_ex_once, gom_dom_exception_error_quark_once, NULL));
 }
 
 static gboolean

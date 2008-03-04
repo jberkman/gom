@@ -38,7 +38,7 @@ THE SOFTWARE.
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
 
 static JSBool
-element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GObject *gobj;
     GParamSpec *spec;
@@ -61,6 +61,10 @@ element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     }
 
     gval = gom_object_get_attribute (gobj, name);
+    if (!gval) {
+        *vp = JSVAL_VOID;
+        return JS_TRUE;
+    }
     if (!gom_jsval (cx, vp, gval, &error)) {
         g_printerr ("Could not get jsval: %s\n", error->message);
         g_error_free (error);
@@ -70,7 +74,7 @@ element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 }
 
 static JSBool
-element_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_element_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GObject *gobj;
     GParamSpec *spec;
@@ -105,18 +109,20 @@ element_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 }
 
 static JSBool
-element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSObject **objp)
+gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSObject **objp)
 {
     GObject *gobj;
     GParamSpec *spec;
     const char *name;
     guint signal_id;
+    JSBool has_prop;
+    JSObject *proto;
 
     if (JSVAL_IS_INT (id)) {
         return JS_TRUE;
     }
 
-    g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+    g_print ("%s:%d:%s(%p, %p): ", __FILE__, __LINE__, __FUNCTION__, obj, *objp);
     name = JSVAL_CHARS (id);
 
     /* let GomJSObject pick it up for defined properties */
@@ -125,13 +131,28 @@ element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSObject *
         return JS_TRUE;
     }
 
+    proto = JS_GetPrototype (cx, obj);
+    if (!JS_HasProperty (cx, proto, name, &has_prop)) {
+        g_printerr ("Could not determine if %s has a property '%s'\n",
+                    JS_GET_CLASS (cx, proto)->name, name);
+        return JS_FALSE;
+    }
+    if (has_prop) {
+        g_print ("%s:%d:%s(): %s.%s already exists\n",
+                 __FILE__, __LINE__, __FUNCTION__,
+                 JS_GET_CLASS (cx, proto)->name, name);
+        return JS_TRUE;
+    }
+
     if (!JS_DefineProperty (cx, *objp, name, JSVAL_VOID,
-                            element_get_prop, element_set_prop,
+                            gom_js_element_get_prop, gom_js_element_set_prop,
                             JSPROP_ENUMERATE)) {
         g_printerr ("Could not define a property for %s\n", name);
         return JS_FALSE;
     }
-    g_print ("%s:%d:%s(): defined new property: '%s'\n", __FILE__, __LINE__, __FUNCTION__, name);
+    g_print ("%s:%d:%s(): defined new property: %s.%s (%s)\n", 
+             __FILE__, __LINE__, __FUNCTION__,
+             JS_GET_CLASS (cx, *objp)->name, name, JS_GET_CLASS (cx, obj)->name);
     return JS_TRUE;
 }
 
@@ -140,15 +161,15 @@ struct JSClass GomJSElementClass = {
     JSCLASS_NEW_RESOLVE | JSCLASS_NEW_RESOLVE_GETS_START,
 
     JS_PropertyStub, JS_PropertyStub,
-        JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub,
 
     JS_EnumerateStub,
-    (JSResolveOp)element_resolve,
+    (JSResolveOp)gom_js_element_resolve,
     JS_ConvertStub, JS_FinalizeStub
 };
 
 static JSBool
-element_get_tag_name (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+gom_js_element_get_tag_name (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GomElement *elem;
     const char *tag_name;
@@ -162,12 +183,12 @@ element_get_tag_name (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 }
 
 static JSPropertySpec gom_js_element_props[] = {
-    { "tagName", -1, JSPROP_PERMANENT | JSPROP_READONLY, element_get_tag_name },
+    { "tagName", -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_element_get_tag_name },
     { NULL }
 };
 
 static JSBool
-element_get_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_element_get_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GomElement *elem;
     char *attr, *name;
@@ -189,7 +210,7 @@ element_get_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, js
 }
 
 static JSBool
-element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GomElement *elem;
     char *name;
@@ -225,61 +246,61 @@ element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, js
 }
 
 static JSBool
-element_remove_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_element_remove_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-element_get_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_element_get_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-element_set_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_element_set_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-element_remove_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_element_remove_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-element_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_element_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSBool
-element_normalize (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_element_normalize (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_FALSE;
 }
 
 static JSFunctionSpec gom_js_element_funcs[] = {
-    { "getAttribute",         element_get_attribute, 1 },
-    { "setAttribute",         element_set_attribute, 2 },
-    { "removeAttribute",      element_remove_attribute, 1 },
-    { "getAttributeNode",     element_get_attribute_node, 1 },
-    { "setAttributeNode",     element_set_attribute_node, 1 },
-    { "removeAttributeNode",  element_remove_attribute_node, 1 },
-    { "getElementsByTagName", element_get_elements_by_tag_name, 1 },
-    { "normalize",            element_normalize, 0 },
+    { "getAttribute",         gom_js_element_get_attribute, 1 },
+    { "setAttribute",         gom_js_element_set_attribute, 2 },
+    { "removeAttribute",      gom_js_element_remove_attribute, 1 },
+    { "getAttributeNode",     gom_js_element_get_attribute_node, 1 },
+    { "setAttributeNode",     gom_js_element_set_attribute_node, 1 },
+    { "removeAttributeNode",  gom_js_element_remove_attribute_node, 1 },
+    { "getElementsByTagName", gom_js_element_get_elements_by_tag_name, 1 },
+    { "normalize",            gom_js_element_normalize, 0 },
     { NULL }
 };
 
 static JSBool
-element_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_element_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_NOT_IMPLEMENTED;
     return JS_TRUE;
@@ -289,6 +310,6 @@ JSObject *
 gom_js_element_init_class (JSContext *cx, JSObject *obj)
 {
     JSObject *proto = JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL);
-    return JS_InitClass (cx, obj, proto, &GomJSElementClass, element_construct, 0,
+    return JS_InitClass (cx, obj, proto, &GomJSElementClass, gom_js_element_construct, 0,
                          gom_js_element_props, gom_js_element_funcs, NULL, NULL);
 }

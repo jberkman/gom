@@ -127,6 +127,11 @@ GOM_STUB_FUNC (GOM_DOCUMENT, gom_document, get_elements_by_tag_name,
                (GomDocument *gom_document, const char *tag_name),
                (gom_document, tag_name), GomNodeList *);
 
+/* Introduced in DOM Level 2: */
+GOM_STUB_FUNC (GOM_DOCUMENT, gom_document, get_element_by_id,
+               (GomDocument *gom_document, const char *element_id),
+               (gom_document, element_id), GomElement *);
+
 #include <gom/dom/gomdocumentfragment.h>
 
 GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomDocumentFragment, gom_document_fragment, GOM_TYPE_NODE);

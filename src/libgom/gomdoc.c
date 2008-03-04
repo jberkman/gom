@@ -27,8 +27,10 @@ THE SOFTWARE.
 
 #include <gommacros.h>
 
+#include <gom/dom/gomdomexception.h>
 #include <gom/gomjsdocument.h>
 #include <gom/gomjsobject.h>
+#include <gom/gomobject.h>
 
 #include <glib/gmarkup.h>
 
@@ -248,11 +250,19 @@ gom_doc_create_element (GomDocument *doc,
     if (type != 0 && g_type_is_a (type, GOM_TYPE_ELEMENT)) {
         obj = g_object_new (type, NULL);
     }
+    if (!obj) {
+        g_set_error (error, gom_dom_exception_error_quark (), 
+                     GOM_DOM_EXCEPTION_ERROR_UNKNOWN_TAG_NAME,
+                     "%s is not a registered type name",
+                     tag_name);
+        return NULL;
+    }
+
     if (GTK_IS_WIDGET (obj)) {
         gtk_widget_show (GTK_WIDGET (obj));
     }
 
-    return obj ? GOM_ELEMENT (obj) : NULL;
+    return GOM_ELEMENT (obj);
 }
 
 static GomDocumentFragment *
@@ -317,10 +327,46 @@ gom_doc_create_entity_reference (GomDocument *doc,
 
 static GomNodeList *
 gom_doc_get_elements_by_tag_name (GomDocument *doc,
-                                  const char  *tagname)
+                                  const char  *tag_name)
 {
     GOM_NOT_IMPLEMENTED;
     return NULL;
+}
+
+static GomElement *
+element_get_element_by_id (GomElement *elem,
+                           const char *element_id)
+{
+    const char *id;
+    GValue *gval;
+    GomNode *node;
+    GomElement *ret;
+
+    gval = gom_object_get_attribute (G_OBJECT (elem), "id");
+    if (gval && G_VALUE_HOLDS_STRING (gval) && !strcmp (g_value_get_string (gval), element_id)) {
+        return elem;
+    }
+
+    for (node = gom_node_get_first_child (GOM_NODE (elem)); node; node = gom_node_get_next_sibling (node)) {
+        if (GOM_IS_ELEMENT (node)) {
+            ret = element_get_element_by_id (GOM_ELEMENT (node), element_id);
+            if (ret) {
+                return ret;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+/* Introduced in DOM Level 2: */
+static GomElement *
+gom_doc_get_element_by_id (GomDocument *doc,
+                           const char *element_id)
+{
+    GomDocPrivate *priv = PRIV (doc);
+
+    return priv->children ? element_get_element_by_id (GOM_ELEMENT (priv->children->data), element_id) : NULL;
 }
 
 static void
@@ -345,6 +391,9 @@ gom_doc_document_init (gpointer g_iface, gpointer iface_data)
     IFACE (create_attribute);
     IFACE (create_entity_reference);
     IFACE (get_elements_by_tag_name);
+
+    /* Introduced in DOM Level 2: */
+    IFACE (get_element_by_id);
 #undef IFACE
 }
 
