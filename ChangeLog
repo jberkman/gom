@@ -1,5 +1,8 @@
 2008-03-04  jacob berkman  <jacob@ilovegom.org>
 
+	* src/libgom/gomjsobject.c (gom_js_object_to_string): print the
+	gtype for gom objects in toString
+
 	* src/libgom/gomjselement.c (gom_js_element_get_prop): return if
 	there was no attribute
 	(gom_js_element_resolve): if the prototype object has a property

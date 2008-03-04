@@ -371,7 +371,31 @@ struct JSClass GomJSObjectClass = {
 };
 
 static JSPropertySpec gom_js_object_props[] = { { NULL } };
-static JSFunctionSpec gom_js_object_funcs[] = { { NULL } };
+
+static JSBool
+gom_js_object_to_string (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GObject *gobj;
+    char *str;
+    
+    gobj = gom_js_object_get_g_object (cx, obj);
+
+    str = g_strdup_printf ("[gomobject %s %s]", 
+                           JS_GET_CLASS (cx, obj)->name,
+                           gobj
+                           ? g_type_name (G_TYPE_FROM_INSTANCE (gobj)) 
+                           : "<NULL GObject>");
+
+    *rval = STRING_TO_JSVAL (JS_NewStringCopyZ (cx, str));
+    g_free (str);
+
+    return JS_TRUE;
+}
+
+static JSFunctionSpec gom_js_object_funcs[] = { 
+    { "toString", gom_js_object_to_string, 0 },
+    { NULL } 
+};
 
 static JSBool
 gom_js_object_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
