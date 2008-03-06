@@ -425,8 +425,6 @@ widget_element_init (gpointer g_iface, gpointer iface_data)
 #undef IFACE
 }
 
-GOM_DEFINE_JS_OBJECT(widget, GomJSElementClass)
-
 #undef GTK_TYPE_FILE_INFO
 #undef GTK_TYPE_FILE_SYSTEM_HANDLE
 #undef GTK_TYPE_FILE_SYSTEM
@@ -461,14 +459,8 @@ gom_widget_init_once (gpointer data)
         NULL, /* interface_finalize */
         NULL  /* interface_data */
     };
-    static const GInterfaceInfo js_object_info = {
-        widget_js_object_init,
-        NULL, /* interface_finalize */
-        NULL /* interface_data */
-    };
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE, &node_info);
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT, &element_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_JS_OBJECT, &js_object_info);
 
 #include "gomwidgets.c"
 

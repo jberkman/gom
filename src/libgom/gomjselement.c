@@ -33,6 +33,8 @@ THE SOFTWARE.
 #include <gom/gomobject.h>
 #include <gom/gomvalue.h>
 
+#include <gtk/gtkwidget.h>
+
 #include <string.h>
 
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
@@ -309,7 +311,11 @@ gom_js_element_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
 JSObject *
 gom_js_element_init_class (JSContext *cx, JSObject *obj)
 {
-    JSObject *proto = JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL);
+    JSObject *proto;
+
+    gom_js_object_register_js_class (cx, GTK_TYPE_WIDGET, &GomJSElementClass);
+
+    proto = JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL);
     return JS_InitClass (cx, obj, proto, &GomJSElementClass, gom_js_element_construct, 0,
                          gom_js_element_props, gom_js_element_funcs, NULL, NULL);
 }

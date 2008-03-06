@@ -25,31 +25,90 @@ THE SOFTWARE.
 
 #include <gom/gomjsobject.h>
 
+#include <gom/gomjscontext.h>
 #include <gom/gomobject.h>
 #include <gom/gomvalue.h>
 
 #include <gommacros.h>
 
-#define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
+GQuark gom_js_object_closures_quark (void);
+GQuark gom_js_object_g2js_quark (void);
+GQuark gom_js_object_js2g_quark (void);
+GQuark gom_js_object_gt2jsc_quark (void);
 
-#define GOM_JS_OBJECT_CLOSURES_QUARK (closures_quark ())
-#define CLOSURES(o) ((GHashTable *)g_object_get_qdata (G_OBJECT (o), GOM_JS_OBJECT_CLOSURES_QUARK));
+GOM_DEFINE_QUARK (js_object_closures);
+#define CLOSURES_QUARK (gom_js_object_closures_quark ())
+#define CLOSURES(o) ((GHashTable *)g_object_get_qdata (G_OBJECT (o), CLOSURES_QUARK));
 
-static gpointer
-closures_quark_once (gpointer data)
+GOM_DEFINE_QUARK (js_object_g2js);
+#define G2JS_QUARK (gom_js_object_g2js_quark ())
+#define G2JS(cx) ((GHashTable *)GOM_JS_CONTEXT_GET_QDATA (cx, G2JS_QUARK))
+
+GOM_DEFINE_QUARK (js_object_js2g);
+#define JS2G_QUARK (gom_js_object_js2g_quark ())
+#define JS2G(cx) ((GHashTable *)GOM_JS_CONTEXT_GET_QDATA (cx, JS2G_QUARK))
+
+GOM_DEFINE_QUARK (js_object_gt2jsc);
+#define GT2JSC_QUARK (gom_js_object_gt2jsc_quark ())
+#define GT2JSC(cx) ((GHashTable *)GOM_JS_CONTEXT_GET_QDATA (cx, GT2JSC_QUARK))
+
+void
+gom_js_object_register_js_class (JSContext *cx, GType objtype, JSClass *jsclass)
 {
-    return GUINT_TO_POINTER (g_quark_from_static_string ("gom-object-closures-quark"));
+    g_hash_table_insert (GT2JSC (cx), GSIZE_TO_POINTER (objtype), jsclass);
 }
 
-static GQuark
-closures_quark (void)
+static JSClass *
+get_js_class (GHashTable *table, GType type)
 {
-    static GOnce closures_once = G_ONCE_INIT;
-    return GPOINTER_TO_UINT (g_once (&closures_once, closures_quark_once, NULL));
+    JSClass *klass;
+
+    if (!type) {
+        return NULL;
+    }
+
+    g_print ("type: %s\n", g_type_name (type));
+
+    klass = g_hash_table_lookup (table, GSIZE_TO_POINTER (type));
+    if (klass) {
+        g_print ("%s:%d:%s(): GType %s -> JSClass %s\n",
+                 __FILE__, __LINE__, __FUNCTION__,
+                 g_type_name (type), klass->name);
+        return klass;
+    }
+
+
+    return get_js_class (table, g_type_parent (type));
 }
 
-static GHashTable *g2js = NULL;
-static GHashTable *js2g = NULL;
+JSClass *
+gom_js_object_get_js_class (JSContext *cx, gpointer gobj)
+{
+    GHashTable *table;
+    GType type;
+    GType *types;
+    JSClass *klass;
+    guint n_interfaces;
+    guint i;
+    
+    type = G_TYPE_FROM_INSTANCE (gobj);
+    table = GT2JSC (cx);
+
+    klass = get_js_class (table, type);
+    if (!klass) {
+        types = g_type_interfaces (type, &n_interfaces);
+        for (i = 0; i < n_interfaces; i++) {
+            g_print ("iface: %s\n", g_type_name (types[i]));
+            klass = get_js_class (table, types[i]);
+            if (klass) {
+                return klass;
+            }
+        }
+        g_free (types);
+    }
+
+    return klass ? klass : &GomJSObjectClass;
+}
 
 typedef struct {
     GClosure    closure;
@@ -181,7 +240,7 @@ gom_js_object_set_closure_prop (GObject *gobj, guint signal_id, GomJSClosure *cl
     GHashTable *closures = CLOSURES (gobj);
     if (!closures) {
         closures = g_hash_table_new (NULL, NULL);
-        g_object_set_qdata_full (gobj, GOM_JS_OBJECT_CLOSURES_QUARK, closures, (GDestroyNotify)g_hash_table_destroy);
+        g_object_set_qdata_full (gobj, CLOSURES_QUARK, closures, (GDestroyNotify)g_hash_table_destroy);
     }
     g_hash_table_insert (closures, GUINT_TO_POINTER (signal_id), closure);
 }
@@ -196,12 +255,6 @@ gom_js_object_resolve (JSContext *cx, JSObject *obj, const char *name,
         return FALSE;
     }
     g_assert (G_IS_OBJECT (*gobj));
-#if 0
-    if (!GOM_IS_JS_OBJECT (*gobj)) {
-        g_warning ("JSObject %p (%s) is not a GomJSObject (%s)",
-                   obj, JS_GET_CLASS (cx, obj)->name, g_type_name (G_TYPE_FROM_INSTANCE (*gobj)));
-    }
-#endif
     return gom_object_resolve (*gobj, name, spec, signal_id);
 }
 
@@ -352,8 +405,8 @@ gom_js_object_finalize (JSContext *cx, JSObject *obj)
              gobj);
     if (gobj) {
         g_assert (G_IS_OBJECT (gobj));
-        g_hash_table_remove (g2js, gobj);
-        g_hash_table_remove (js2g, obj);
+        g_hash_table_remove (G2JS (cx), gobj);
+        g_hash_table_remove (JS2G (cx), obj);
         g_object_unref (gobj);
     }
 }
@@ -404,22 +457,15 @@ gom_js_object_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
     return JS_TRUE;
 }
 
-static gpointer
-gom_js_object_init_once (gpointer data)
-{
-    g2js = g_hash_table_new (NULL, NULL);
-    js2g = g_hash_table_new (NULL, NULL);
-    return NULL;
-}
-
 JSObject *
 gom_js_object_init_class (JSContext *cx, JSObject *obj)
 {
-    static GOnce init_once = G_ONCE_INIT;
     JSObject *proto;
 
-    g_once (&init_once, gom_js_object_init_once, NULL);
-    
+    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, G2JS_QUARK, g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
+    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, JS2G_QUARK, g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
+    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, GT2JSC_QUARK, g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
+
     proto = JS_ConstructObject (cx, NULL, NULL, NULL);
     return JS_InitClass (cx, obj, proto, &GomJSObjectClass, gom_js_object_construct, 0,
                          gom_js_object_props, gom_js_object_funcs, 
@@ -432,32 +478,29 @@ gom_js_object_set_g_object (JSContext *cx, JSObject *jsobj, gpointer gobject)
     g_print ("Binding %s %p to JSObject %p\n",
              g_type_name (G_TYPE_FROM_INSTANCE (gobject)),
              gobject, jsobj);
-    g_hash_table_insert (js2g, jsobj, g_object_ref (gobject));
-    g_hash_table_insert (g2js, gobject, jsobj);
+    g_hash_table_insert (JS2G (cx), jsobj, g_object_ref (gobject));
+    g_hash_table_insert (G2JS (cx), gobject, jsobj);
 }
 
 gpointer
 gom_js_object_get_g_object (JSContext *cx, JSObject *jsobj)
 {
-    return g_hash_table_lookup (js2g, jsobj);
+    return g_hash_table_lookup (JS2G (cx), jsobj);
 }
 
 JSObject *
-gom_js_object_get_js_object (gpointer gobj)
+gom_js_object_get_js_object (JSContext *cx, gpointer gobj)
 {
-    return g_hash_table_lookup (g2js, gobj);
+    return g_hash_table_lookup (G2JS (cx), gobj);
 }
 
 JSObject *
 gom_js_object_get_or_create_js_object (JSContext *cx, gpointer gobj)
 {
     JSObject *jsobj;
-    jsobj = gom_js_object_get_js_object (gobj);
+    jsobj = gom_js_object_get_js_object (cx, gobj);
     if (!jsobj) {
-        jsobj = JS_ConstructObject (cx, GOM_IS_JS_OBJECT (gobj) 
-                                    ? gom_js_object_get_js_class (GOM_JS_OBJECT (gobj))
-                                    : &GomJSObjectClass,
-                                    NULL, NULL);
+        jsobj = JS_ConstructObject (cx, gom_js_object_get_js_class (cx, gobj), NULL, NULL);
         gom_js_object_set_g_object (cx, jsobj, gobj);
     }
 

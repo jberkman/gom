@@ -148,11 +148,7 @@ gom_js_document_get_element_by_id (JSContext *cx, JSObject *obj, uintN argc, jsv
     }
 
     elem = gom_document_get_element_by_id (doc, element_id);
-    if (elem && GOM_IS_JS_OBJECT (elem)) {
-        *rval = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, elem));
-    } else {
-        *rval = JSVAL_NULL;
-    }
+    *rval = elem ? OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, elem)) : JSVAL_NULL;
     return JS_TRUE;
 }
 
@@ -181,7 +177,11 @@ gom_js_document_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv
 JSObject *
 gom_js_document_init_class (JSContext *cx, JSObject *obj)
 {
-    JSObject *proto = JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL);
+    JSObject *proto;
+
+    gom_js_object_register_js_class (cx, GOM_TYPE_DOCUMENT, &GomJSDocumentClass);
+
+    proto = JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL);
     return JS_InitClass (cx, obj, proto, &GomJSDocumentClass, gom_js_document_construct, 0,
                          document_props, document_funcs, NULL, NULL);
 }

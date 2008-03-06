@@ -24,11 +24,27 @@ THE SOFTWARE.
 #ifndef GOM_MACROS_H
 #define GOM_MACROS_H
 
-#include <glib-object.h>
+#include <glib/gmacros.h>
 
 G_BEGIN_DECLS
 
+#define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
+
 #define GOM_NOT_IMPLEMENTED (g_printerr ("%s:%d:%s(): Not implemented yet.\n", __FILE__, __LINE__, __FUNCTION__))
+
+#define GOM_DEFINE_QUARK(n)                                             \
+    static gpointer                                                     \
+    gom_##n##_quark_once (gpointer data)                                \
+    {                                                                   \
+        return GUINT_TO_POINTER (g_quark_from_static_string ("gom-"#n"-quark")); \
+    }                                                                   \
+                                                                        \
+    GQuark                                                              \
+    gom_##n##_quark (void)                                              \
+    {                                                                   \
+        static GOnce once = G_ONCE_INIT;                                \
+        return GPOINTER_TO_UINT (g_once (&once, gom_##n##_quark_once, NULL)); \
+    }
 
 #define GOM_DEFINE_INTERFACE(IN, i_n)               \
     _GOM_DEFINE_INTERFACE_BEGIN(IN, i_n)            \

@@ -26,10 +26,8 @@ THE SOFTWARE.
 
 #include <gom/gomdoc.h>
 #include <gom/gomjsdocument.h>
-#include <gom/gomjselement.h>
-#include <gom/gomjsnode.h>
 #include <gom/gomjsobject.h>
-#include <gom/gomjswindow.h>
+#include <gom/gomjscontext.h>
 #include <gom/gomwidget.h>
 
 #include <gtk/gtk.h>
@@ -73,7 +71,7 @@ int
 main (int argc, char *argv[])
 {
     MainData d = { NULL };
-
+    GObject *cxpriv;
     JSRuntime *rt; 
 
     gtk_init (&argc, &argv);
@@ -90,20 +88,22 @@ main (int argc, char *argv[])
     rt = JS_NewRuntime(0x100000); 
     d.cx = JS_NewContext(rt, 0x1000); 
 
-    d.window = gom_js_window_new_global (d.cx);
-
     JS_SetErrorReporter (d.cx, gom_error_reporter);
 
-    gom_js_object_init_class (d.cx, d.window);
-    gom_js_node_init_class (d.cx, d.window);
-    gom_js_element_init_class (d.cx, d.window);
-    gom_js_document_init_class (d.cx, d.window);
+    d.window = gom_js_context_init (d.cx);
 
-    /* parse the file in an idle so that scripts can exit */
+    if (!d.window) {
+        g_printerr ("Could not initialize the window object.\n");
+        return 1;
+    }
+
+    /* parse the file in an idle so that scripts can quit() */
     g_idle_add (parse_idle, &d);
     gtk_main ();
 
+    cxpriv = GOM_JS_CONTEXT_PRIV (d.cx);
     JS_DestroyContext (d.cx);
+    g_object_unref (cxpriv);
     JS_DestroyRuntime (rt);
     JS_ShutDown ();
 

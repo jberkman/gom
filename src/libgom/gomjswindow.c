@@ -25,9 +25,20 @@ THE SOFTWARE.
 
 #include <gom/gomjswindow.h>
 
+#include <gom/gomjscontext.h>
+#include <gommacros.h>
+
 #include <gtk/gtk.h>
 
-static struct JSClass GomJSWindowClass = {
+#include <string.h>
+
+GQuark gom_js_window_sources_quark (void);
+
+GOM_DEFINE_QUARK (js_window_sources);
+#define SOURCES_QUARK (gom_js_window_sources_quark ())
+#define SOURCES(cx) ((GPtrArray *)GOM_JS_CONTEXT_GET_QDATA (cx, SOURCES_QUARK))
+
+struct JSClass GomJSWindowClass = {
     "Window", 0,
 
     JS_PropertyStub, JS_PropertyStub,
@@ -60,6 +71,138 @@ gom_js_window_alert (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsva
     return JS_TRUE;
 }
 
+typedef struct {
+    jsval       fun;
+    JSContext  *cx;
+    JSObject   *obj;
+    guint       gid;
+    guint       jsid;
+} GomJSSourceData;
+
+#define SOURCE_MAX (MIN (JSVAL_INT_MAX, G_MAXUINT))
+
+static guint
+source_slot (JSContext *cx)
+{
+    GPtrArray *a;
+    guint i;
+
+    a = SOURCES (cx);
+    g_assert (a->len <= SOURCE_MAX);
+    /* try to reuse old slots every 32 instead of growing? */
+    if (!(a->len % 32) || a->len == SOURCE_MAX) {
+        for (i = 1; i < a->len; i++) {
+            if (!g_ptr_array_index (a, i)) {
+                return i;
+            }
+        }
+        if (a->len == SOURCE_MAX) {
+            return 0;
+        }
+    }
+    /* if it's 0 and theres an error later it will get reused above */
+    g_ptr_array_add (a, NULL);
+    return a->len - 1;
+}
+
+static void
+source_data_free (gpointer data)
+{
+    GomJSSourceData *sd = data;
+    GPtrArray *a = SOURCES (sd->cx);
+    g_assert (g_ptr_array_index (a, sd->jsid) == sd);
+    g_ptr_array_index (a, sd->jsid) = NULL;
+    g_free (sd);
+}
+
+static gboolean
+source_cb (gpointer data)
+{
+    GomJSSourceData *sd = data;
+    jsval r;
+
+    JS_CallFunctionValue (sd->cx, sd->obj, sd->fun, 0, NULL, &r);
+
+    return TRUE;
+}
+
+static JSBool
+gom_js_window_set_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GomJSSourceData *data;
+    JSFunction *fun = NULL;
+    jsval funv = JSVAL_VOID;
+    jsdouble dub;
+    guint jsid;
+
+    if (argc < 2) {
+        return JS_FALSE;
+    }
+
+    if (!JS_ValueToNumber (cx, argv[1], &dub)) {
+        return JS_FALSE;
+    }
+
+    jsid = source_slot (cx);
+    if (!jsid) {
+        return JS_FALSE;
+    }
+
+    if (JSVAL_IS_STRING (argv[0])) {
+        char *funstr = JSVAL_CHARS (argv[0]);
+        fun = JS_CompileFunction (cx, obj, NULL, 0, NULL,
+                                  funstr, strlen (funstr),
+                                  NULL, 0);
+        if (!fun) {
+            return JS_FALSE;
+        }
+        funv = OBJECT_TO_JSVAL (JS_GetFunctionObject (fun));
+    } else if (JSVAL_IS_OBJECT (argv[0]) &&
+               JS_ObjectIsFunction (cx, JSVAL_TO_OBJECT (argv[0]))) {
+        funv = argv[0];
+    } else {
+        return JS_FALSE;
+    }
+
+    data = g_new0 (GomJSSourceData, 1);
+
+    data->cx  = cx;
+    data->obj = obj;
+    data->fun = funv;
+    data->jsid = jsid;
+    data->gid = g_timeout_add_full (G_PRIORITY_LOW, dub, source_cb, data, source_data_free);
+
+    *rval = INT_TO_JSVAL (jsid);
+
+    g_ptr_array_index (SOURCES (cx), jsid) = data;
+
+    return JS_TRUE;
+}
+
+static JSBool
+gom_js_window_clear_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GPtrArray *a = SOURCES (cx);
+    GomJSSourceData *sd;
+    guint32 jsid;
+
+    if (!JS_ConvertArguments (cx, argc, argv, "u", &jsid)) {
+        return JS_FALSE;
+    }
+
+    if (jsid >= a->len) {
+        g_printerr ("%s:%d:%s(): invalid interval id: %u\n", __FILE__, __LINE__, __FUNCTION__, jsid);
+        return JS_FALSE;
+    }
+
+    sd = g_ptr_array_index (a, jsid);
+    if (sd) {
+        g_source_remove (sd->gid);
+    }
+
+    return JS_TRUE;
+}
+
 static JSBool
 gom_js_window_quit (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
@@ -68,29 +211,34 @@ gom_js_window_quit (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval
 }
 
 static JSFunctionSpec gom_js_window_funcs[] = {
-    { "alert", gom_js_window_alert, 1 },
-    { "quit",  gom_js_window_quit,  0 },
+    { "alert",         gom_js_window_alert, 1 },
+    { "quit",          gom_js_window_quit,  0 },
+    { "setInterval",   gom_js_window_set_interval, 2 },
+    { "clearInterval", gom_js_window_clear_interval, 1 },
     { NULL }
 };
 
-#if 0
-JSObject *
-gom_js_window_init_class (JSContext *cx, JSObject *obj)
+static void
+sources_free (gpointer data)
 {
-    return JS_InitClass (cx, obj, NULL, &GomJSWindowClass, NULL, 0,
-                         gom_js_window_props, gom_js_window_funcs, NULL, NULL);
-}
-#endif
-
-JSObject *
-gom_js_window_new_global (JSContext *cx)
-{
-    JSObject *window = JS_NewObject (cx, &GomJSWindowClass, NULL, NULL);
-    if (!window) {
-        return NULL;
+    GPtrArray *a = data;
+    GomJSSourceData *sd;
+    guint i;
+    for (i = 0; i < a->len; i++) {
+        sd = g_ptr_array_index (a, i);
+        if (sd) {
+            g_source_remove (sd->gid);
+        }
     }
+    g_ptr_array_free (data, TRUE);
+}
 
-    JS_InitStandardClasses (cx, window);
+JSObject *
+gom_js_window_init_object (JSContext *cx, JSObject *window)
+{
+    GPtrArray *a = g_ptr_array_new ();
+    g_ptr_array_add (a, NULL);
+    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, SOURCES_QUARK, a, sources_free);
 
     JS_DefineProperties (cx, window, gom_js_window_props);
     JS_DefineFunctions (cx, window, gom_js_window_funcs);

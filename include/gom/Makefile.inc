@@ -5,6 +5,7 @@ gominclude_HEADERS :=				\
 	include/gom/gomdoc.h			\
 	include/gom/gomdom.h			\
 	include/gom/gomglist.h			\
+	include/gom/gomjscontext.h		\
 	include/gom/gomjsdocument.h		\
 	include/gom/gomjselement.h		\
 	include/gom/gomjsobject.h		\

@@ -251,7 +251,8 @@ gom_doc_create_element (GomDocument *doc,
         obj = g_object_new (type, NULL);
     }
     if (!obj) {
-        g_set_error (error, gom_dom_exception_error_quark (), 
+        g_set_error (error,
+                     GOM_DOM_EXCEPTION_ERROR,
                      GOM_DOM_EXCEPTION_ERROR_UNKNOWN_TAG_NAME,
                      "%s is not a registered type name",
                      tag_name);
@@ -397,13 +398,10 @@ gom_doc_document_init (gpointer g_iface, gpointer iface_data)
 #undef IFACE
 }
 
-GOM_DEFINE_JS_OBJECT (gom_doc, GomJSDocumentClass)
-
 G_DEFINE_TYPE_WITH_CODE (GomDoc, gom_doc, G_TYPE_OBJECT,
                          {
                              G_IMPLEMENT_INTERFACE (GOM_TYPE_NODE, gom_doc_node_init);
                              G_IMPLEMENT_INTERFACE (GOM_TYPE_DOCUMENT, gom_doc_document_init);
-                             G_IMPLEMENT_INTERFACE (GOM_TYPE_JS_OBJECT, gom_doc_js_object_init);
                          });
 
 static void gom_doc_init (GomDoc *doc) { }

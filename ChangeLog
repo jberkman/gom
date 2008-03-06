@@ -1,3 +1,52 @@
+2008-03-06  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomjswindow.c (gom_js_window_set_interval): implement
+	(the variant with a string as the first method seems to be broken,
+	though)
+	(gom_js_window_clear_interval): implement
+
+	* src/gom/gom.c (main): that... wasn't quite the right way to free
+	our context private data
+
+2008-03-05  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomjselement.c (gom_js_element_init_class): register
+	as a handler for GtkWidgets
+
+	* src/libgom/gomjswindow.c (gom_js_window_init_object): initialize
+	a global Window object
+
+	* src/libgom/gomdoc.c: 
+	* src/libgom/gomwidget.c (gom_widget_init_once): remove
+	GomJSObject implementation
+
+	* src/libgom/gomjsobject.c (gom_js_object_register_js_class):
+	instead of being an interface that objects support, JSClasses
+	should register their GType in their init function
+	(gom_js_object_get_js_class): look up an object's JSClass; if none
+	are found in its parents or interfaces, just return a GomJSObject
+	(gom_js_object_resolve): fully remove bogus GomJSObject check
+	(gom_js_object_init_class): store GObject <-> JSObject hashes
+	per-context rather than globally; also, create a GType -> JSClass
+	table
+	(gom_js_object_get_or_create_js_object): use new class lookup
+	method
+
+	* src/libgom/gominterfaces.c: remove GomJSObject definition
+
+	* src/libgom/gomdom.c (gom_dom_exception_error_quark): use quark
+	macro
+
+	* src/libgom/gomjsdocument.c (gom_js_document_get_element_by_id):
+	remove check for GOM_IS_JS_OBJECT()
+	(gom_js_document_init_class): register as a class for GomDocument
+
+	* src/gom/gom.c (main): use new gom_js_context_* funcs
+
+	* src/libgom/gomjscontext.c (gom_js_context_init): merge
+	gom.c:main() and gomjswindow.c:gom_js_window_new_global(), and
+	initialize a private GObject as the JSContext's private data
+
 2008-03-04  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomjsobject.c (gom_js_object_to_string): print the

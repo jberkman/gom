@@ -23,40 +23,50 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomdom.h>
-#include <gom/gomdoc.h>
-#include <gom/dom/gomdomexception.h>
+#include <gom/gomjscontext.h>
 
-GOM_DEFINE_QUARK (dom_exception_error);
+#include <gom/gomjsdocument.h>
+#include <gom/gomjselement.h>
+#include <gom/gomjsnode.h>
+#include <gom/gomjsobject.h>
+#include <gom/gomjswindow.h>
 
-static gboolean
-gom_dom_has_feature (GomDOMImplementation *dom, const char *feature, const char *version)
+#include <glib-object.h>
+
+static void
+gom_js_context_init_standard_classes (JSContext *cx, JSObject *obj)
 {
-    return !g_ascii_strcasecmp (feature, "xml") && !g_ascii_strcasecmp (version, "1.0");
+    gom_js_object_init_class (cx, obj);
+    gom_js_node_init_class (cx, obj);
+    gom_js_element_init_class (cx, obj);
+    gom_js_document_init_class (cx, obj);
 }
 
 static void
-gom_dom_interface_init (gpointer g_iface, gpointer iface_data)
+gom_js_context_init_private (JSContext *cx)
 {
-    GomDOMImplementationInterface *iface = (GomDOMImplementationInterface *)g_iface;
-
-    iface->has_feature = gom_dom_has_feature;
+    g_assert (!JS_GetContextPrivate (cx));
+    JS_SetContextPrivate (cx, g_object_new (G_TYPE_OBJECT, NULL));
 }
 
-G_DEFINE_TYPE_WITH_CODE (GomDOM, gom_dom, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (GOM_TYPE_DOM_IMPLEMENTATION, gom_dom_interface_init));
-
-GomDOMImplementation *
-gom_dom_get_implementation (void)
+JSObject *
+gom_js_context_init (JSContext *cx)
 {
-    static GomDOMImplementation *dom = NULL;
+    JSObject *window;
 
-    if (dom == NULL) {
-        dom = g_object_new (GOM_TYPE_DOM, NULL);
+    gom_js_context_init_private (cx);
+
+    window = JS_NewObject (cx, &GomJSWindowClass, NULL, NULL);
+    if (!window) {
+        g_object_unref (GOM_JS_CONTEXT_PRIV (cx));
+        JS_SetContextPrivate (cx, NULL);
+        return NULL;
     }
 
-    return dom;
-}
+    JS_InitStandardClasses (cx, window);
 
-static void gom_dom_init (GomDOM *dom) { }
-static void gom_dom_class_init (GomDOMClass *klass) { }
+    gom_js_window_init_object (cx, window);
+    gom_js_context_init_standard_classes (cx, window);
+
+    return window;
+}

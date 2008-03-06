@@ -29,13 +29,9 @@ THE SOFTWARE.
 
 G_BEGIN_DECLS
 
-JSObject *gom_js_window_new_global (JSContext *cx);
-
-#if 0
-JSObject *gom_js_window_init_class (JSContext *cx, JSObject *obj);
+JSObject *gom_js_window_init_object (JSContext *cx, JSObject *window);
 
 extern JSClass GomJSWindowClass;
-#endif
 
 G_END_DECLS
 

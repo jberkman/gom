@@ -203,13 +203,6 @@ GOM_STUB_VOID (GOM_ELEMENT, gom_element, normalize,
 
 GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomEntityReference, gom_entity_reference, GOM_TYPE_NODE);
 
-#include <gom/gomjsobject.h>
-
-GOM_DEFINE_INTERFACE (GomJSObject, gom_js_object);
-
-GOM_STUB_FUNC (GOM_JS_OBJECT, gom_js_object, get_js_class,
-               (GomJSObject *gom_js_object), (gom_js_object), JSClass *);
-
 #include <gom/dom/gomnode.h>
 
 GOM_DEFINE_INTERFACE (GomNode, gom_node);

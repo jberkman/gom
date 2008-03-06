@@ -25,23 +25,16 @@ THE SOFTWARE.
 #include "config.h"
 
 #include <gom/gomobject.h>
+
+#include <gommacros.h>
+
 #include <jsapi.h>
 
-#define GOM_OBJECT_ATTRS_QUARK (attrs_quark ())
-#define ATTRS(o) ((GHashTable *)g_object_get_qdata (G_OBJECT (o), GOM_OBJECT_ATTRS_QUARK));
+GQuark gom_object_attrs_quark (void);
 
-static gpointer
-attrs_quark_once (gpointer data)
-{
-    return GUINT_TO_POINTER (g_quark_from_static_string ("gom-object-attrs-quark"));
-}
-
-static GQuark
-attrs_quark (void)
-{
-    static GOnce attrs_once = G_ONCE_INIT;
-    return GPOINTER_TO_UINT (g_once (&attrs_once, attrs_quark_once, NULL));
-}
+GOM_DEFINE_QUARK (object_attrs);
+#define ATTRS_QUARK (gom_object_attrs_quark ())
+#define ATTRS(o) ((GHashTable *)g_object_get_qdata (G_OBJECT (o), ATTRS_QUARK));
 
 gboolean
 gom_object_resolve (GObject *gobj, const char *name, GParamSpec **spec, guint *signal_id)
@@ -84,7 +77,7 @@ gom_object_set_attribute (GObject *obj, const char *name, GValue *value)
     GValue *newval;
     if (!attrs) {
         attrs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, free_value);
-        g_object_set_qdata_full (obj, GOM_OBJECT_ATTRS_QUARK, attrs, (GDestroyNotify)g_hash_table_destroy);
+        g_object_set_qdata_full (obj, ATTRS_QUARK, attrs, (GDestroyNotify)g_hash_table_destroy);
     }
     newval = g_new0 (GValue, 1);
     g_value_init (newval, G_VALUE_TYPE (value));
