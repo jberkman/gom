@@ -4,6 +4,7 @@
 	(the variant with a string as the first method seems to be broken,
 	though)
 	(gom_js_window_clear_interval): implement
+	(gom_js_window_set_timeout, gom_js_window_clear_timeout): implement
 
 	* src/gom/gom.c (main): that... wasn't quite the right way to free
 	our context private data

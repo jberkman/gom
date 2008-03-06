@@ -77,6 +77,7 @@ typedef struct {
     JSObject   *obj;
     guint       gid;
     guint       jsid;
+    gboolean    retval;
 } GomJSSourceData;
 
 #define SOURCE_MAX (MIN (JSVAL_INT_MAX, G_MAXUINT))
@@ -123,11 +124,11 @@ source_cb (gpointer data)
 
     JS_CallFunctionValue (sd->cx, sd->obj, sd->fun, 0, NULL, &r);
 
-    return TRUE;
+    return sd->retval;
 }
 
 static JSBool
-gom_js_window_set_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+_gom_js_window_set_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval, gboolean retval)
 {
     GomJSSourceData *data;
     JSFunction *fun = NULL;
@@ -171,6 +172,7 @@ gom_js_window_set_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *arg
     data->fun = funv;
     data->jsid = jsid;
     data->gid = g_timeout_add_full (G_PRIORITY_LOW, dub, source_cb, data, source_data_free);
+    data->retval = retval;
 
     *rval = INT_TO_JSVAL (jsid);
 
@@ -180,7 +182,19 @@ gom_js_window_set_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *arg
 }
 
 static JSBool
-gom_js_window_clear_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_window_set_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    return _gom_js_window_set_interval (cx, obj, argc, argv, rval, TRUE);
+}
+
+static JSBool
+gom_js_window_set_timeout (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    return _gom_js_window_set_interval (cx, obj, argc, argv, rval, FALSE);
+}
+
+static JSBool
+_gom_js_window_clear_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval, gboolean retval)
 {
     GPtrArray *a = SOURCES (cx);
     GomJSSourceData *sd;
@@ -196,11 +210,24 @@ gom_js_window_clear_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *a
     }
 
     sd = g_ptr_array_index (a, jsid);
-    if (sd) {
-        g_source_remove (sd->gid);
+    if (!sd || sd->retval != retval) {
+        return JS_FALSE;
     }
 
+    g_source_remove (sd->gid);
     return JS_TRUE;
+}
+
+static JSBool
+gom_js_window_clear_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    return _gom_js_window_clear_interval (cx, obj, argc, argv, rval, TRUE);
+}
+
+static JSBool
+gom_js_window_clear_timeout (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    return _gom_js_window_clear_interval (cx, obj, argc, argv, rval, FALSE);
 }
 
 static JSBool
@@ -215,6 +242,8 @@ static JSFunctionSpec gom_js_window_funcs[] = {
     { "quit",          gom_js_window_quit,  0 },
     { "setInterval",   gom_js_window_set_interval, 2 },
     { "clearInterval", gom_js_window_clear_interval, 1 },
+    { "setTimeout",    gom_js_window_set_timeout, 2 },
+    { "lcearTimeout",  gom_js_window_clear_timeout, 1 },
     { NULL }
 };
 
