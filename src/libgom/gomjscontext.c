@@ -42,11 +42,15 @@ gom_js_context_init_standard_classes (JSContext *cx, JSObject *obj)
     gom_js_document_init_class (cx, obj);
 }
 
-static void
+static gboolean
 gom_js_context_init_private (JSContext *cx)
 {
-    g_assert (!JS_GetContextPrivate (cx));
+    if (JS_GetContextPrivate (cx)) {
+        JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "Context already has private data")));
+        return FALSE;
+    }
     JS_SetContextPrivate (cx, g_object_new (G_TYPE_OBJECT, NULL));
+    return TRUE;
 }
 
 JSObject *
@@ -54,7 +58,9 @@ gom_js_context_init (JSContext *cx)
 {
     JSObject *window;
 
-    gom_js_context_init_private (cx);
+    if (!gom_js_context_init_private (cx)) {
+        return NULL;
+    }
 
     window = JS_NewObject (cx, &GomJSWindowClass, NULL, NULL);
     if (!window) {

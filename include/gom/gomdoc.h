@@ -45,6 +45,11 @@ G_BEGIN_DECLS
 #define GOM_IS_DOC_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_DOC))
 #define GOM_DOC_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_DOC, GomDocClass))
 
+#define GOM_DOC_ERROR (gom_doc_error_quark ())
+typedef enum {
+    GOM_DOC_ERROR_UNKNOWN,
+} GomDocError;
+
 struct _GomDoc {
     GObject parent;
 };
@@ -54,6 +59,8 @@ struct _GomDocClass {
 };
 
 GType gom_doc_get_type (void);
+
+GQuark gom_doc_error_quark (void);
 
 gboolean gom_doc_parse_file (GomDocument *doc, JSContext *cx, JSObject *global,
                              const char *filename, GError **error);

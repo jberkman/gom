@@ -1,3 +1,25 @@
+2008-03-07  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomjsexception.c (gom_js_exception_get_error)
+	(gom_js_exception_set_error): convert between GError and js
+	exceptions
+
+	* src/libgom/gomjselement.c: throw exceptions on error
+
+	* src/libgom/gomdoc.c (gom_dom_parser_start_element): throw
+	exceptions for errors
+	(gom_dom_parser_end_element): throw an exception if <script>
+	evaluation fails
+
+	* src/libgom/gomjscontext.c (gom_js_context_init_private): throw
+	an exception if the context already has private data
+
+	* src/libgom/gomjsdocument.c (gom_js_document_get_element_by_id):
+	throw exceptions when we return failure
+
+	* src/libgom/gomdoc.c: add an error quark for document parsing
+	errors
+
 2008-03-06  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomjswindow.c (gom_js_window_set_interval): implement

@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include <gom/dom/gomdomexception.h>
 #include <gom/gomjsdocument.h>
+#include <gom/gomjsexception.h>
 #include <gom/gomjsobject.h>
 #include <gom/gomobject.h>
 
@@ -43,6 +44,8 @@ typedef struct {
 } GomDocPrivate;
 
 #define PRIV(o) G_TYPE_INSTANCE_GET_PRIVATE ((o), GOM_TYPE_DOC, GomDocPrivate)
+
+GOM_DEFINE_QUARK(dom_exception_error)
 
 /* GomNodeInterface */
 /* attributes */
@@ -254,7 +257,7 @@ gom_doc_create_element (GomDocument *doc,
         g_set_error (error,
                      GOM_DOM_EXCEPTION_ERROR,
                      GOM_DOM_EXCEPTION_ERROR_UNKNOWN_TAG_NAME,
-                     "%s is not a registered type name",
+                     "%s is not a registered GType",
                      tag_name);
         return NULL;
     }
@@ -338,7 +341,6 @@ static GomElement *
 element_get_element_by_id (GomElement *elem,
                            const char *element_id)
 {
-    const char *id;
     GValue *gval;
     GomNode *node;
     GomElement *ret;
@@ -430,6 +432,7 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
                               gpointer             user_data,
                               GError             **error)
 {
+    JSObject *jsobj = NULL;
     GomElement *elem;
     GomDomParserData *data = user_data;
     int i;
@@ -449,14 +452,20 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
         if (attribute_names[i][0] == 'o' && 
             attribute_names[i][1] == 'n' && 
             g_signal_lookup (&attribute_names[i][2], G_TYPE_FROM_INSTANCE (elem))) {
-            JSObject *jsobj;
+
             JSFunction *fun;
             int lineno;
 
-            jsobj = gom_js_object_get_or_create_js_object (data->cx, elem);
             if (!jsobj) {
-                g_printerr ("coudn't get jsobj for %s\n", element_name);
-                continue;
+                jsobj = gom_js_object_get_or_create_js_object (data->cx, elem);
+                if (!jsobj) {
+                    if (!gom_js_exception_get_error (data->cx, error)) {
+                        g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
+                                     "Could not get JSObject for elem %s",
+                                     element_name);
+                    }
+                    return;
+                }
             }
             
             g_markup_parse_context_get_position (context, &lineno, NULL);
@@ -465,21 +474,28 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
                                       data->filename, lineno);
             
             if (!fun) {
-                g_printerr ("couldn't compile script: %s\n", attribute_values[i]);
-                continue;
+                if (!gom_js_exception_get_error (data->cx, error)) {
+                    g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
+                                 "Could not compile function at %s:%d", data->filename, lineno);
+                }
+                return;
             }
             
             if (!gom_js_object_connect (data->cx, jsobj,
                                         &attribute_names[i][2],
                                         fun)) {
-                g_printerr ("couldn't connect script for signal %s\n", attribute_names[i]);
-                continue;
+                if (!gom_js_exception_get_error (data->cx, error)) {
+                    g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
+                                 "Could not connect signal '%s' to a %s\n",
+                                 &attribute_names[i][2], g_type_name (G_TYPE_FROM_INSTANCE (elem)));
+                }
+                return;
             }
         } else {
             gom_element_set_attribute (elem, attribute_names[i], attribute_values[i], error);
-        }
-        if (error && *error) {
-            return;
+            if (*error) {
+                return;
+            }
         }
     }
     data->elems = g_slist_prepend (data->elems, elem);
@@ -497,13 +513,19 @@ gom_dom_parser_end_element (GMarkupParseContext *context,
     if (!strcmp (element_name, "script")) {
         jsval rval; 
         JSString *str; 
-        JSBool ok;
         int lineno;
-
+        
         g_markup_parse_context_get_position (context, &lineno, NULL);
-        ok = JS_EvaluateScript(data->cx, data->jsobj,
+        if (!JS_EvaluateScript(data->cx, data->jsobj,
                                data->script->str, data->script->len,
-                               data->filename, lineno, &rval);
+                               data->filename, lineno, &rval)) {
+            if (!gom_js_exception_get_error (data->cx, error)) {
+                g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
+                             "Unknown error encountered while running script at %s:%d\n",
+                             data->filename, lineno);
+            }
+            return;
+        }
         str = JS_ValueToString(data->cx, rval); 
         g_print ("script result: %s\n", JS_GetStringBytes(str));
         g_string_free (data->script, TRUE);

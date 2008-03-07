@@ -139,16 +139,23 @@ gom_js_document_get_element_by_id (JSContext *cx, JSObject *obj, uintN argc, jsv
     const char *element_id;
 
     doc = gom_js_object_get_g_object (cx, obj);
-    if (!doc || !GOM_IS_DOCUMENT (doc)) {
+    if (!GOM_IS_DOCUMENT (doc)) {
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "this is not a GomDocument")));
+        }
         return JS_FALSE;
     }
 
     if (!JS_ConvertArguments (cx, argc, argv, "s", &element_id)) {
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "invalid arguments")));
+        }
         return JS_FALSE;
     }
 
     elem = gom_document_get_element_by_id (doc, element_id);
     *rval = elem ? OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, elem)) : JSVAL_NULL;
+
     return JS_TRUE;
 }
 

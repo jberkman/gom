@@ -8,6 +8,7 @@ gominclude_HEADERS :=				\
 	include/gom/gomjscontext.h		\
 	include/gom/gomjsdocument.h		\
 	include/gom/gomjselement.h		\
+	include/gom/gomjsexception.h		\
 	include/gom/gomjsobject.h		\
 	include/gom/gomjsnode.h			\
 	include/gom/gomjswindow.h		\

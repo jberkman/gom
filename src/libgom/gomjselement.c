@@ -25,9 +25,8 @@ THE SOFTWARE.
 
 #include <gom/gomjselement.h>
 
-#include <gommacros.h>
-
 #include <gom/dom/gomelement.h>
+#include <gom/gomjsexception.h>
 #include <gom/gomjsnode.h>
 #include <gom/gomjsobject.h>
 #include <gom/gomobject.h>
@@ -36,6 +35,8 @@ THE SOFTWARE.
 #include <gtk/gtkwidget.h>
 
 #include <string.h>
+
+#include <gommacros.h>
 
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
 
@@ -68,7 +69,7 @@ gom_js_element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
         return JS_TRUE;
     }
     if (!gom_jsval (cx, vp, gval, &error)) {
-        g_printerr ("Could not get jsval: %s\n", error->message);
+        gom_js_exception_set_error (cx, error);
         g_error_free (error);
         return JS_FALSE;
     }
@@ -99,7 +100,7 @@ gom_js_element_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     }
 
     if (!gom_g_value (cx, &gval, *vp, &error)) {
-        g_printerr ("Could not get GValue: %s\n", error->message);
+        gom_js_exception_set_error (cx, error);
         g_error_free (error);
         return JS_FALSE;
     }
@@ -135,8 +136,9 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
 
     proto = JS_GetPrototype (cx, obj);
     if (!JS_HasProperty (cx, proto, name, &has_prop)) {
-        g_printerr ("Could not determine if %s has a property '%s'\n",
-                    JS_GET_CLASS (cx, proto)->name, name);
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "error looking up property")));
+        }
         return JS_FALSE;
     }
     if (has_prop) {
@@ -149,7 +151,9 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
     if (!JS_DefineProperty (cx, *objp, name, JSVAL_VOID,
                             gom_js_element_get_prop, gom_js_element_set_prop,
                             JSPROP_ENUMERATE)) {
-        g_printerr ("Could not define a property for %s\n", name);
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "error defining property")));
+        }
         return JS_FALSE;
     }
     g_print ("%s:%d:%s(): defined new property: %s.%s (%s)\n", 
@@ -177,6 +181,12 @@ gom_js_element_get_tag_name (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     const char *tag_name;
 
     elem = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_ELEMENT (elem)) {
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "this is not a GomElement")));
+        }
+        return JS_FALSE;
+    }
     tag_name = gom_element_get_tag_name (elem);
     
     *vp = STRING_TO_JSVAL (JS_NewStringCopyZ (cx, tag_name));
@@ -196,11 +206,17 @@ gom_js_element_get_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
     char *attr, *name;
 
     elem = gom_js_object_get_g_object (cx, obj);
-    if (!elem) {
+    if (!GOM_IS_ELEMENT (elem)) {
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "this is not a GomElement")));
+        }
         return JS_FALSE;
     }
 
     if (!JS_ConvertArguments (cx, argc, argv, "s", &name)) {
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "invalid arguments")));
+        }
         return JS_FALSE;
     }
 
@@ -217,13 +233,20 @@ gom_js_element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
     GomElement *elem;
     char *name;
     char *value;
+    GError *error = NULL;
 
     elem = gom_js_object_get_g_object (cx, obj);
-    if (!elem) {
+    if (!GOM_IS_ELEMENT (elem)) {
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "this is not a GomElement")));
+        }
         return JS_FALSE;
     }
 
     if (!JS_ConvertArguments (cx, argc, argv, "ss", &name, &value)) {
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "invalid arguments")));
+        }
         return JS_FALSE;
     }
 
@@ -233,15 +256,24 @@ gom_js_element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
         fun = JS_CompileFunction (cx, obj, NULL, 0, NULL,
                                   value, strlen (value), NULL, 0);
         if (!fun) {
-            g_printerr ("Error compiling script '%s'\n", value);
+            if (!JS_IsExceptionPending (cx)) {
+                JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "Unknown error while compiling function")));
+            }
             return JS_FALSE;
         }
 
         if (!gom_js_object_connect (cx, obj, &name[2], fun)) {
-            g_printerr ("couldn't connect function for signal %s\n", name);
+            if (!JS_IsExceptionPending (cx)) {
+                JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "Unknown error while connecting event handler")));
+            }
+            return JS_FALSE;
         }
     } else {
-        gom_element_set_attribute (elem, name, value, NULL);
+        gom_element_set_attribute (elem, name, value, &error);
+        if (error) {
+            gom_js_exception_set_error (cx, error);
+            return JS_FALSE;
+        }
     }
 
     return JS_TRUE;

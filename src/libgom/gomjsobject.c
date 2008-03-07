@@ -499,9 +499,12 @@ gom_js_object_get_or_create_js_object (JSContext *cx, gpointer gobj)
 {
     JSObject *jsobj;
     jsobj = gom_js_object_get_js_object (cx, gobj);
+
     if (!jsobj) {
         jsobj = JS_ConstructObject (cx, gom_js_object_get_js_class (cx, gobj), NULL, NULL);
-        gom_js_object_set_g_object (cx, jsobj, gobj);
+        if (jsobj) {
+            gom_js_object_set_g_object (cx, jsobj, gobj);
+        }
     }
 
     return jsobj;

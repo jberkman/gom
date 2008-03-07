@@ -26,6 +26,8 @@ THE SOFTWARE.
 
 #include <glib/gquark.h>
 
+G_BEGIN_DECLS
+
 #define GOM_DOM_EXCEPTION_ERROR (gom_dom_exception_error_quark ())
 
 typedef enum {
@@ -45,5 +47,7 @@ typedef enum {
 } GomDOMExceptionError;
 
 GQuark gom_dom_exception_error_quark (void);
+
+G_END_DECLS
 
 #endif /* GOM_DOM_EXCEPTION_H */
