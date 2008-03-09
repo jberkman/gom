@@ -6,8 +6,8 @@ libgom_la_SOURCES :=				\
 	include/gommacros.h			\
 	src/libgom/gomdoc.c			\
 	src/libgom/gomdom.c			\
+	src/libgom/gomdominterfaces.c		\
 	src/libgom/gomglist.c			\
-	src/libgom/gominterfaces.c		\
 	src/libgom/gomjscontext.c		\
 	src/libgom/gomjsdocument.c		\
 	src/libgom/gomjselement.c		\
