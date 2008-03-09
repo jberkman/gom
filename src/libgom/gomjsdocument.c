@@ -28,11 +28,12 @@ THE SOFTWARE.
 #include <gommacros.h>
 
 #include <gom/gomdoc.h>
+#include <gom/gomjsexception.h>
 #include <gom/gomjsnode.h>
 #include <gom/gomjsobject.h>
 
 struct JSClass GomJSDocumentClass = {
-    "GomDocument", 0,
+    "Document", 0,
     
     JS_PropertyStub, JS_PropertyStub,
     JS_PropertyStub, JS_PropertyStub,
@@ -71,8 +72,39 @@ static JSPropertySpec document_props[] = {
 static JSBool
 gom_js_document_create_element(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
+    GomDocument *doc;
+    GomElement *elem;
+    const char *tag_name;
+    GError *error = NULL;
+
+    doc = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_DOCUMENT (doc)) {
+#if 0
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "this is not a GomDocument")));
+        }
+#endif
+        return JS_FALSE;
+    }
+
+    if (!JS_ConvertArguments (cx, argc, argv, "s", &tag_name)) {
+#if 0
+        if (!JS_IsExceptionPending (cx)) {
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "invalid arguments")));
+        }
+#endif
+        return JS_FALSE;
+    }
+
+    elem = gom_document_create_element (doc, tag_name, &error);
+    if (!elem) {
+        gom_js_exception_set_error (cx, error);
+        g_error_free (error);
+        return JS_FALSE;
+    }
+    *rval = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, elem));
+
+    return JS_TRUE;
 }
 
 static JSBool
@@ -140,16 +172,20 @@ gom_js_document_get_element_by_id (JSContext *cx, JSObject *obj, uintN argc, jsv
 
     doc = gom_js_object_get_g_object (cx, obj);
     if (!GOM_IS_DOCUMENT (doc)) {
+#if 0
         if (!JS_IsExceptionPending (cx)) {
             JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "this is not a GomDocument")));
         }
+#endif
         return JS_FALSE;
     }
 
     if (!JS_ConvertArguments (cx, argc, argv, "s", &element_id)) {
+#if 0
         if (!JS_IsExceptionPending (cx)) {
             JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "invalid arguments")));
         }
+#endif
         return JS_FALSE;
     }
 

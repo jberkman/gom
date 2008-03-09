@@ -27,6 +27,7 @@ THE SOFTWARE.
 
 #include <gom/gomjsdocument.h>
 #include <gom/gomjselement.h>
+#include <gom/gomjsnavigator.h>
 #include <gom/gomjsnode.h>
 #include <gom/gomjsobject.h>
 #include <gom/gomjswindow.h>
@@ -40,6 +41,7 @@ gom_js_context_init_standard_classes (JSContext *cx, JSObject *obj)
     gom_js_node_init_class (cx, obj);
     gom_js_element_init_class (cx, obj);
     gom_js_document_init_class (cx, obj);
+    gom_js_navigator_init_class (cx, obj);
 }
 
 static gboolean
@@ -73,6 +75,11 @@ gom_js_context_init (JSContext *cx)
 
     gom_js_window_init_object (cx, window);
     gom_js_context_init_standard_classes (cx, window);
+
+    JS_DefineProperty (cx, window, "navigator",
+                       OBJECT_TO_JSVAL (JS_ConstructObject (cx, &GomJSNavigatorClass, NULL, NULL)),
+                       NULL, NULL,
+                       JSPROP_PERMANENT | JSPROP_READONLY);
 
     return window;
 }

@@ -59,10 +59,11 @@ include_subdirs :=
 
 DIST_SUBDIRS := $(SUBDIRS) $(include_subdirs)
 
-include include/gom/dom/Makefile.inc
+include examples/Makefile.inc
 include include/gom/Makefile.inc
-include src/libgom/Makefile.inc
+include include/gom/dom/Makefile.inc
 include src/gom/Makefile.inc
+include src/libgom/Makefile.inc
 include tests/Makefile.inc
 
 update-makefiles:

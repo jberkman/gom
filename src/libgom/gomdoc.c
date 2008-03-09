@@ -45,7 +45,7 @@ typedef struct {
 
 #define PRIV(o) G_TYPE_INSTANCE_GET_PRIVATE ((o), GOM_TYPE_DOC, GomDocPrivate)
 
-GOM_DEFINE_QUARK(dom_exception_error)
+GOM_DEFINE_QUARK(doc_error)
 
 /* GomNodeInterface */
 /* attributes */
@@ -169,7 +169,7 @@ gom_doc_append_child (GomNode *node,
 
     priv->children = g_list_append (priv->children, new_child);
 
-    return NULL;
+    return new_child;
 }
 
 static gboolean
@@ -368,8 +368,16 @@ gom_doc_get_element_by_id (GomDocument *doc,
                            const char *element_id)
 {
     GomDocPrivate *priv = PRIV (doc);
+    GomElement *elem;
+    GList *li;
 
-    return priv->children ? element_get_element_by_id (GOM_ELEMENT (priv->children->data), element_id) : NULL;
+    for (li = priv->children; li; li = li->next) {
+        elem = element_get_element_by_id (GOM_ELEMENT (li->data), element_id);
+        if (elem) {
+            return elem;
+        }
+    }
+    return NULL;
 }
 
 static void
@@ -423,6 +431,69 @@ typedef struct {
     GString *script;
 } GomDomParserData;
 
+static void
+gom_dom_parser_start_script (GMarkupParseContext *context,
+                             const gchar         *element_name,
+                             const gchar        **attribute_names,
+                             const gchar        **attribute_values,
+                             gpointer             user_data,
+                             GError             **error)
+{
+    GomDomParserData *data = user_data;
+    char *script;
+    gsize script_len;
+    jsval rval; 
+    JSString *str; 
+    const char **name, **value;
+    char *file;
+
+    for (name = attribute_names, value = attribute_values; *name; ++name, ++value) {
+        if (strcmp (*name, "src")) {
+            continue;
+        }
+        if (g_path_is_absolute (*value)) {
+            file = (char *)*value;
+        } else {
+            char *dir = g_path_get_dirname (data->filename);
+            file = g_build_filename (dir, *value, NULL);
+            g_free (dir);
+        }
+        if (!g_file_get_contents (file, &script, &script_len, error)) {
+            if (*value == file) {
+                g_free (file);
+            }
+            return;
+        }
+        
+        if (!JS_EvaluateScript(data->cx, data->jsobj,
+                               script, script_len,
+                               *value, 0, &rval)) {
+            if (!gom_js_exception_get_error (data->cx, error)) {
+                g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
+                             "Unknown error encountered while running script at %s\n",
+                             *value);
+            }
+            if (*value == file) {
+                g_free (file);
+            }
+            g_free (script);
+            return;
+        }
+        if (*value == file) {
+            g_free (file);
+        }
+        g_free (script);
+        str = JS_ValueToString(data->cx, rval); 
+        g_print ("script result: %s\n", JS_GetStringBytes(str));
+        /* Rhino 4th Ed. p. 189: "Any code that does appear between
+         * these tags is ignored by browsers that support the src
+         * attribute..."
+         */
+        return;
+    }
+    data->script = g_string_sized_new (1024);
+}
+
 /* Called for open tags <foo bar="baz"> */
 static void
 gom_dom_parser_start_element (GMarkupParseContext *context,
@@ -435,10 +506,10 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
     JSObject *jsobj = NULL;
     GomElement *elem;
     GomDomParserData *data = user_data;
-    int i;
+    const char **name, **value;
 
     if (!strcmp (element_name, "script")) {
-        data->script = g_string_sized_new (1024);
+        gom_dom_parser_start_script (context, element_name, attribute_names, attribute_values, user_data, error);
         return;
     }
 
@@ -448,10 +519,10 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
         return;
     }
 
-    for (i = 0; attribute_names[i]; i++) {
-        if (attribute_names[i][0] == 'o' && 
-            attribute_names[i][1] == 'n' && 
-            g_signal_lookup (&attribute_names[i][2], G_TYPE_FROM_INSTANCE (elem))) {
+    for (name = attribute_names, value = attribute_values; *name; name++, value++) {
+        if ((*name)[0] == 'o' && 
+            (*name)[1] == 'n' && 
+            g_signal_lookup (&(*name)[2], G_TYPE_FROM_INSTANCE (elem))) {
 
             JSFunction *fun;
             int lineno;
@@ -470,7 +541,7 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
             
             g_markup_parse_context_get_position (context, &lineno, NULL);
             fun = JS_CompileFunction (data->cx, data->jsobj, NULL, 0, NULL,
-                                      attribute_values[i], strlen (attribute_values[i]),
+                                      *value, strlen (*value),
                                       data->filename, lineno);
             
             if (!fun) {
@@ -482,17 +553,17 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
             }
             
             if (!gom_js_object_connect (data->cx, jsobj,
-                                        &attribute_names[i][2],
+                                        &(*name)[2],
                                         fun)) {
                 if (!gom_js_exception_get_error (data->cx, error)) {
                     g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
                                  "Could not connect signal '%s' to a %s\n",
-                                 &attribute_names[i][2], g_type_name (G_TYPE_FROM_INSTANCE (elem)));
+                                 &(*name)[2], g_type_name (G_TYPE_FROM_INSTANCE (elem)));
                 }
                 return;
             }
         } else {
-            gom_element_set_attribute (elem, attribute_names[i], attribute_values[i], error);
+            gom_element_set_attribute (elem, *name, *value, error);
             if (*error) {
                 return;
             }
@@ -514,7 +585,10 @@ gom_dom_parser_end_element (GMarkupParseContext *context,
         jsval rval; 
         JSString *str; 
         int lineno;
-        
+        /* src tag */
+        if (!data->script) {
+            return;
+        }
         g_markup_parse_context_get_position (context, &lineno, NULL);
         if (!JS_EvaluateScript(data->cx, data->jsobj,
                                data->script->str, data->script->len,

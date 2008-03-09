@@ -163,7 +163,7 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
 }
 
 struct JSClass GomJSElementClass = {
-    "GomElement",
+    "Element",
     JSCLASS_NEW_RESOLVE | JSCLASS_NEW_RESOLVE_GETS_START,
 
     JS_PropertyStub, JS_PropertyStub,
@@ -207,16 +207,20 @@ gom_js_element_get_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
 
     elem = gom_js_object_get_g_object (cx, obj);
     if (!GOM_IS_ELEMENT (elem)) {
+#if 0
         if (!JS_IsExceptionPending (cx)) {
             JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "this is not a GomElement")));
         }
+#endif
         return JS_FALSE;
     }
 
     if (!JS_ConvertArguments (cx, argc, argv, "s", &name)) {
+#if 0
         if (!JS_IsExceptionPending (cx)) {
             JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "invalid arguments")));
         }
+#endif
         return JS_FALSE;
     }
 
@@ -237,16 +241,20 @@ gom_js_element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
 
     elem = gom_js_object_get_g_object (cx, obj);
     if (!GOM_IS_ELEMENT (elem)) {
+#if 0
         if (!JS_IsExceptionPending (cx)) {
             JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "this is not a GomElement")));
         }
+#endif
         return JS_FALSE;
     }
 
     if (!JS_ConvertArguments (cx, argc, argv, "ss", &name, &value)) {
+#if 0
         if (!JS_IsExceptionPending (cx)) {
             JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "invalid arguments")));
         }
+#endif
         return JS_FALSE;
     }
 

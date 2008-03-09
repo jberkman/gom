@@ -10,6 +10,7 @@ gominclude_HEADERS :=				\
 	include/gom/gomjselement.h		\
 	include/gom/gomjsexception.h		\
 	include/gom/gomjsobject.h		\
+	include/gom/gomjsnavigator.h		\
 	include/gom/gomjsnode.h			\
 	include/gom/gomjswindow.h		\
 	include/gom/gomobject.h			\

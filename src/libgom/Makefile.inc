@@ -13,6 +13,7 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomjselement.c		\
 	src/libgom/gomjsexception.c		\
 	src/libgom/gomjsobject.c		\
+	src/libgom/gomjsnavigator.c		\
 	src/libgom/gomjsnode.c			\
 	src/libgom/gomjswindow.c		\
 	src/libgom/gomobject.c			\

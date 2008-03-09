@@ -1,3 +1,41 @@
+2008-03-09  jacob berkman  <jacob@ilovegom.org>
+
+	* examples/console.gom: include jquery for fun and profit, and use
+	the width-request and height-request properties instead of
+	default-width and default-height, as those don't work with gom
+	right now
+
+	* src/libgom/gomjsnode.c (gom_js_node_get_node_name): implement
+	(gom_js_node_get_node_type): implement
+	(gom_js_node_get_parent_node): implement
+	(gom_js_node_get_last_child): implement
+	(gom_js_node_get_previous_sibling): implement
+	(gom_js_node_get_next_sibling): implement
+	(gom_js_node_append_child): implement
+	(gom_js_node_has_child_nodes): implement
+
+	* src/libgom/gomjscontext.c
+	(gom_js_context_init_standard_classes): init the navigator class
+	(gom_js_context_init): create a navigator object
+
+	* src/libgom/gomjsdocument.c (gom_js_document_create_element):
+	implement
+
+	* src/libgom/gomdoc.c (gom_doc_error_quark): fix c/p error
+	(gom_doc_append_child): return new_child per spec
+	(gom_doc_get_element_by_id): loop through all children
+	(gom_dom_parser_start_script): support src attribute of script tag
+	(only local files so far)
+	(gom_dom_parser_start_element): split script tag to above
+	(gom_dom_parser_end_element): script tags with src attributes will
+	not have their contents parsed
+
+	* src/libgom/gomjsexception.[ch]: actually commit these files this
+	time
+
+	* src/libgom/gomjsnavigator.[ch]: add a window.navigator
+	implementation
+
 2008-03-07  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomjsexception.c (gom_js_exception_get_error)

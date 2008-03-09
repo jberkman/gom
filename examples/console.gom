@@ -1,4 +1,5 @@
-<GtkWindow title="Gom Console" default-width="400" default-height="50" border-width="6" ondelete-event="quit();">
+<script src="jquery-1.2.3.js"></script>
+<GtkWindow id="win" title="Gom Console" width-request="400" height-request="300" border-width="6" ondelete-event="quit();">
   <GtkVBox spacing="6">
     <GtkScrolledWindow expand="true" fill="true" hscrollbar-policy="2" vscrollbar-policy="1" shadow-type="1">
       <GtkTextView id="output" wrap-mode="2" editable="false"/>

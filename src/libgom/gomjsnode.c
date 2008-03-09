@@ -28,10 +28,11 @@ THE SOFTWARE.
 #include <gommacros.h>
 
 #include <gom/dom/gomnode.h>
+#include <gom/gomjsexception.h>
 #include <gom/gomjsobject.h>
 
 struct JSClass GomJSNodeClass = {
-    "GomNode", 0,
+    "Node", 0,
 
     JS_PropertyStub,
     JS_PropertyStub,
@@ -46,8 +47,21 @@ struct JSClass GomJSNodeClass = {
 static JSBool
 gom_js_node_get_node_name (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
+    GomNode *node;
+    const char *name;
+
+    node = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_NODE (node)) {
+        return JS_FALSE;
+    }
+
+    name = gom_node_get_node_name (node);
+    if (!name) {
+        return JS_FALSE;
+    }
+
+    *vp = STRING_TO_JSVAL (JS_NewStringCopyZ (cx, name));
+    return JS_TRUE;
 }
 
 static JSBool
@@ -67,15 +81,26 @@ gom_js_node_set_node_value (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 static JSBool
 gom_js_node_get_node_type (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
+    GomNode *node;
+    node = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_NODE (node)) {
+        return JS_FALSE;
+    }
+    *vp = INT_TO_JSVAL (gom_node_get_node_type (node));
+    return JS_TRUE;
 }
 
 static JSBool
 gom_js_node_get_parent_node (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
+    GomNode *node;
+    node = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_NODE (node)) {
+        return JS_FALSE;
+    }
+    node = gom_node_get_parent_node (node);
+    *vp = node ? OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, node)) : JSVAL_NULL;
+    return JS_TRUE;
 }
 
 static JSBool
@@ -90,37 +115,55 @@ gom_js_node_get_first_child (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
     GomNode *node;
     GomNode *child;
-    JSObject *jschild;
-
     node = gom_js_object_get_g_object (cx, obj);
-    child = gom_node_get_first_child (node);
-    if (child) {
-        jschild = gom_js_object_get_or_create_js_object (cx, child);
-        *vp = OBJECT_TO_JSVAL (jschild);
+    if (!GOM_IS_NODE (node)) {
+        return JS_FALSE;
     }
-
+    child = gom_node_get_first_child (node);
+    *vp = child ? OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, child)) : JSVAL_NULL; 
     return JS_TRUE;
 }
 
 static JSBool
 gom_js_node_get_last_child (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
+    GomNode *node;
+    GomNode *child;
+    node = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_NODE (node)) {
+        return JS_FALSE;
+    }
+    child = gom_node_get_last_child (node);
+    *vp = child ? OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, child)) : JSVAL_NULL; 
+    return JS_TRUE;
 }
 
 static JSBool
 gom_js_node_get_previous_sibling (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
+    GomNode *node;
+    GomNode *child;
+    node = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_NODE (node)) {
+        return JS_FALSE;
+    }
+    child = gom_node_get_previous_sibling (node);
+    *vp = child ? OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, child)) : JSVAL_NULL; 
+    return JS_TRUE;
 }
 
 static JSBool
 gom_js_node_get_next_sibling (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
+    GomNode *node;
+    GomNode *child;
+    node = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_NODE (node)) {
+        return JS_FALSE;
+    }
+    child = gom_node_get_next_sibling (node);
+    *vp = child ? OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, child)) : JSVAL_NULL; 
+    return JS_TRUE;
 }
 
 static JSBool
@@ -176,15 +219,44 @@ gom_js_node_remove_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
 static JSBool
 gom_js_node_append_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
+    GomNode *node;
+    JSObject *js_new_child;
+    GomNode *new_child;
+    GError *error = NULL;
+
+    node = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_NODE (node)) {
+        return JS_FALSE;
+    }
+    if (!JS_ConvertArguments (cx, argc, argv, "o", &js_new_child)) {
+        return JS_FALSE;
+    }
+    new_child = gom_js_object_get_g_object (cx, js_new_child);
+    if (!GOM_IS_NODE (new_child)) {
+        return JS_FALSE;
+    }
+    new_child = gom_node_append_child (node, new_child, &error);
+    if (!new_child) {
+        gom_js_exception_set_error (cx, error);
+        g_error_free (error);
+        return JS_FALSE;
+    }
+    *rval = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, new_child));
+    g_assert (*rval == OBJECT_TO_JSVAL (js_new_child));
+    return JS_TRUE;
 }
 
 static JSBool
 gom_js_node_has_child_nodes (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
+    GomNode *node;
+    
+    node = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_NODE (node)) {
+        return JS_FALSE;
+    }
+    *rval = BOOLEAN_TO_JSVAL (gom_node_has_child_nodes (node));
+    return JS_TRUE;
 }
 
 static JSBool
