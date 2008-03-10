@@ -453,7 +453,6 @@ static JSFunctionSpec gom_js_object_funcs[] = {
 static JSBool
 gom_js_object_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
     return JS_TRUE;
 }
 

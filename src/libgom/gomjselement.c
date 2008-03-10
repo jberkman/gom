@@ -262,42 +262,42 @@ gom_js_element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
 static JSBool
 gom_js_element_remove_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_element_get_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_element_set_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_element_remove_attribute_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_element_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_element_normalize (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
@@ -316,7 +316,6 @@ static JSFunctionSpec gom_js_element_funcs[] = {
 static JSBool
 gom_js_element_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
     return JS_TRUE;
 }
 

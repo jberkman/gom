@@ -8,11 +8,17 @@
   </GtkVBox>
 </GtkWindow>
 <script><![CDATA[
-  $('#entry').get (0).onactivate = function () {
-      if (this.text) {
-   	  $('#output').get (0).buffer.text += eval (this.text) + '\n';
-	  this.text = '';
-      }
-      return true;
-  };
+    $('#entry').get (0).onactivate = function () {
+        if (this.text) {
+            var res;
+	    try {
+                res = eval (this.text);
+            } catch (e) {
+                res = 'Exception: ' + e;
+            }
+   	    $('#output').get (0).buffer.text += res + '\n';
+	    this.text = '';
+        }
+        return true;
+    };
 ]]></script>

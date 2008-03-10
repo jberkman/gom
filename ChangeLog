@@ -1,3 +1,22 @@
+2008-03-10  jacob berkman  <jacob@ilovegom.org>
+
+	* examples/console.gom: display errors from the eval() call if
+	they occur as they are much better than what gets printed to
+	stderr
+	
+	* src/libgom/gomvalue.c (gom_jsval): handle NULL GObjects
+	
+	* src/libgom/gomjselement.c: 
+	* src/libgom/gomjsnode.c: 
+	* src/libgom/gomjsdocument.c: use new NOT_IMPLEMENTED macro
+
+	* src/libgom/gomjsnavigator.c (gom_js_navigator_construct): 
+	* src/libgom/gomjsobject.c (gom_js_object_construct): no need to
+	complain here, really
+
+	* include/gommacros.h (GOM_JS_NOT_IMPLEMENTED): throw an exception
+	if we hit an un-implemented function
+
 2008-03-09  jacob berkman  <jacob@ilovegom.org>
 
 	* configure.ac: bump to 0.1

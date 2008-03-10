@@ -148,14 +148,18 @@ gom_jsval (JSContext *cx, jsval *jval, const GValue *gval, GError **error)
             GObject  *gobj;
             JSObject *jsobj;
             gobj = g_value_get_object (gval);
-            jsobj = gom_js_object_get_or_create_js_object (cx, gobj);
-            if (!jsobj) {
-                g_set_error (error, GOM_VALUE_ERROR, GOM_VALUE_ERROR_JS_OBJECT_NOT_FOUND,
-                             "Cannot get JSObject from Object %p (%s)",
-                             gobj, g_type_name (G_TYPE_FROM_INSTANCE (gobj)));
-                return FALSE;
+            if (!gobj) {
+                *jval = JSVAL_NULL;
+            } else {
+                jsobj = gom_js_object_get_or_create_js_object (cx, gobj);
+                if (!jsobj) {
+                    g_set_error (error, GOM_VALUE_ERROR, GOM_VALUE_ERROR_JS_OBJECT_NOT_FOUND,
+                                 "Cannot get JSObject from Object %p (%s)",
+                                 gobj, g_type_name (G_TYPE_FROM_INSTANCE (gobj)));
+                    return FALSE;
+                }
+                *jval = OBJECT_TO_JSVAL (jsobj);
             }
-            *jval = OBJECT_TO_JSVAL (jsobj);
             ret = TRUE;
         }
     }

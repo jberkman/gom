@@ -86,56 +86,56 @@ gom_js_document_create_element(JSContext *cx, JSObject *obj, uintN argc, jsval *
 static JSBool
 gom_js_document_create_document_fragment (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_document_create_text_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_document_create_comment (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_document_create_cdata_section (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_document_create_processing_instruction (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_document_create_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_document_create_entity_reference (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_document_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
@@ -189,7 +189,6 @@ static JSFunctionSpec document_funcs[] = {
 static JSBool
 gom_js_document_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
     return JS_TRUE;
 }
 

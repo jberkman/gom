@@ -51,21 +51,21 @@ static JSPropertySpec gom_js_node_props[] = {
 static JSBool
 gom_js_node_insert_before (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_node_replace_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
 gom_js_node_remove_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
@@ -115,7 +115,7 @@ gom_js_node_has_child_nodes (JSContext *cx, JSObject *obj, uintN argc, jsval *ar
 static JSBool
 gom_js_node_clone_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
@@ -132,7 +132,6 @@ static JSFunctionSpec gom_js_node_funcs[] = {
 static JSBool
 gom_js_node_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
     return JS_TRUE;
 }
 

@@ -32,6 +32,15 @@ G_BEGIN_DECLS
 
 #define GOM_NOT_IMPLEMENTED (g_printerr ("\n%s:%d:%s(): Not implemented yet.\n", __FILE__, __LINE__, __FUNCTION__))
 
+#define GOM_JS_NOT_IMPLEMENTED(cx)                                      \
+    G_STMT_START {                                                      \
+        if (!JS_IsExceptionPending (cx)) {                              \
+            char *s = g_strdup_printf ("%s:%d:%s(): Not implemented yet.", __FILE__, __LINE__, __FUNCTION__); \
+            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, s))); \
+            g_free (s);                                                 \
+        }                                                               \
+    } G_STMT_END
+
 #define GOM_DEFINE_QUARK(n)                                             \
     static gpointer                                                     \
     gom_##n##_quark_once (gpointer data)                                \
