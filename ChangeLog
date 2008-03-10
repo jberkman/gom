@@ -1,5 +1,7 @@
 2008-03-10  jacob berkman  <jacob@ilovegom.org>
 
+	* 0.1 release
+
 	* examples/console.gom: display errors from the eval() call if
 	they occur as they are much better than what gets printed to
 	stderr
