@@ -54,12 +54,6 @@ G_BEGIN_DECLS
 struct _GomDocumentInterface {
     GTypeInterface parent;
 
-    /* attributes */
-    GomDocumentType          *(*get_doctype)                   (GomDocument *doc);
-    GomDOMImplementation     *(*get_implementation)            (GomDocument *doc);
-    GomElement               *(*get_document_element)          (GomDocument *doc);
-
-    /* methods */
     GomElement               *(*create_element)                (GomDocument *doc,
                                                                 const char  *tag_name,
                                                                 GError    **error);
@@ -91,12 +85,6 @@ struct _GomDocumentInterface {
 
 GType gom_document_get_type (void);
 
-/* attributes */
-GomDocumentType          *gom_document_get_doctype                   (GomDocument *doc);
-GomDOMImplementation     *gom_document_get_implementation            (GomDocument *doc);
-GomElement               *gom_document_get_document_element          (GomDocument *doc);
-
-/* methods */
 GomElement               *gom_document_create_element                (GomDocument *doc,
                                                                       const char  *tag_name,
                                                                       GError    **error);

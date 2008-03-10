@@ -32,6 +32,8 @@ THE SOFTWARE.
 
 #include <gtk/gtk.h>
 
+#include <string.h>
+
 static void
 gom_error_reporter (JSContext *cx, const char *message, JSErrorReport *report)
 {
@@ -83,7 +85,9 @@ main (int argc, char *argv[])
 
     d.filename = argv[1];
 
+    g_log_set_default_handler (gom_widget_init_log_func, NULL);
     gom_widget_init ();
+    g_log_set_default_handler (g_log_default_handler, NULL);
 
     rt = JS_NewRuntime(0x100000); 
     d.cx = JS_NewContext(rt, 0x1000); 

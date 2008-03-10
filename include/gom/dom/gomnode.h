@@ -64,30 +64,6 @@ typedef enum {
 struct _GomNodeInterface {
     GTypeInterface parent;
     
-    /* attributes */
-    G_CONST_RETURN char *(*get_node_name) (GomNode *node);
-
-    char *(*get_node_value) (GomNode *node, GError **error);
-    void  (*set_node_value) (GomNode *node, const char *value, GError **error);
-
-    GomNodeType (*get_node_type)   (GomNode *node);
-
-    GomNode   *(*get_parent_node) (GomNode *node);
-
-    GomNodeList *(*get_child_nodes) (GomNode *node);
-
-    GomNode   *(*get_first_child) (GomNode *node);
-    GomNode   *(*get_last_child)  (GomNode *node);
-
-    GomNode   *(*get_previous_sibling) (GomNode  *node);
-    GomNode   *(*get_next_sibling)     (GomNode  *node);
-
-    GomNamedNodeMap *(*get_attributes)       (GomNode  *node);
-
-    GomDocument     *(*get_owner_document)   (GomNode  *node);
-
-    /* methods */
-
     GomNode   *(*insert_before)        (GomNode  *node,
                                          GomNode  *new_child,
                                          GomNode  *ref_child,
@@ -114,27 +90,6 @@ struct _GomNodeInterface {
 
 GType gom_node_get_type (void);
 
-/* attributes */
-G_CONST_RETURN char *gom_node_get_node_name (GomNode *node);
-
-char *gom_node_get_node_value (GomNode *node, GError **error);
-void  gom_node_set_node_value (GomNode *node, const char *value, GError **error);
-
-GomNodeType gom_node_get_node_type (GomNode *node);
-
-GomNode *gom_node_get_parent_node (GomNode *node);
-
-GomNodeList *gom_node_get_child_nodes (GomNode *node);
-
-GomNode *gom_node_get_first_child (GomNode *node);
-GomNode *gom_node_get_last_child (GomNode *node);
-GomNode *gom_node_get_previous_sibling (GomNode *node);
-GomNode *gom_node_get_next_sibling (GomNode *node);
-
-GomNamedNodeMap *gom_node_get_attributes (GomNode *node);
-GomDocument     *gom_node_get_owner_document (GomNode *node);
-
-/* methods */
 GomNode *gom_node_insert_before (GomNode *node, GomNode *new_child, GomNode *ref_child, GError **error);
 GomNode *gom_node_replace_child (GomNode *node, GomNode *new_child, GomNode *ref_child, GError **error);
 GomNode *gom_node_remove_child  (GomNode *node, GomNode *old_child, GError **error);

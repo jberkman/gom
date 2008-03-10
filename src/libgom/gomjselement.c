@@ -174,28 +174,7 @@ struct JSClass GomJSElementClass = {
     JS_ConvertStub, JS_FinalizeStub
 };
 
-static JSBool
-gom_js_element_get_tag_name (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-    GomElement *elem;
-    const char *tag_name;
-
-    elem = gom_js_object_get_g_object (cx, obj);
-    if (!GOM_IS_ELEMENT (elem)) {
-        if (!JS_IsExceptionPending (cx)) {
-            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "this is not a GomElement")));
-        }
-        return JS_FALSE;
-    }
-    tag_name = gom_element_get_tag_name (elem);
-    
-    *vp = STRING_TO_JSVAL (JS_NewStringCopyZ (cx, tag_name));
-
-    return TRUE;
-}
-
 static JSPropertySpec gom_js_element_props[] = {
-    { "tagName", -1, JSPROP_PERMANENT | JSPROP_READONLY, gom_js_element_get_tag_name },
     { NULL }
 };
 
@@ -238,29 +217,22 @@ gom_js_element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
     char *name;
     char *value;
     GError *error = NULL;
+    GParamSpec *spec;
+    guint signal_id;
+    JSFunction *fun;
 
     elem = gom_js_object_get_g_object (cx, obj);
     if (!GOM_IS_ELEMENT (elem)) {
-#if 0
-        if (!JS_IsExceptionPending (cx)) {
-            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "this is not a GomElement")));
-        }
-#endif
         return JS_FALSE;
     }
 
     if (!JS_ConvertArguments (cx, argc, argv, "ss", &name, &value)) {
-#if 0
-        if (!JS_IsExceptionPending (cx)) {
-            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "invalid arguments")));
-        }
-#endif
         return JS_FALSE;
     }
 
-    if (name[0] == 'o' && name[1] == 'n' && g_signal_lookup (&name[2], G_TYPE_FROM_INSTANCE (elem))) {
-        JSFunction *fun  = NULL;
-
+    if (!gom_object_resolve (G_OBJECT (elem), name, &spec, &signal_id)) {
+        gom_element_set_attribute (elem, name, value, &error);
+    } else if (signal_id) {
         fun = JS_CompileFunction (cx, obj, NULL, 0, NULL,
                                   value, strlen (value), NULL, 0);
         if (!fun) {
@@ -270,18 +242,18 @@ gom_js_element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
             return JS_FALSE;
         }
 
-        if (!gom_js_object_connect (cx, obj, &name[2], fun)) {
+        if (!gom_js_object_connect (cx, obj, signal_id, fun)) {
             if (!JS_IsExceptionPending (cx)) {
                 JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, "Unknown error while connecting event handler")));
             }
             return JS_FALSE;
         }
     } else {
-        gom_element_set_attribute (elem, name, value, &error);
-        if (error) {
-            gom_js_exception_set_error (cx, error);
-            return JS_FALSE;
-        }
+        gom_element_set_attribute (elem, spec->name, value, &error);
+    }
+    if (error) {
+        gom_js_exception_set_error (cx, error);
+        return JS_FALSE;
     }
 
     return JS_TRUE;

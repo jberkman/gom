@@ -1,28 +1,18 @@
 <script src="jquery-1.2.3.js"></script>
-<GtkWindow id="win" title="Gom Console" width-request="400" height-request="300" border-width="6" ondelete-event="quit();">
+<GtkWindow id="win" title="Gom Console" widthRequest="400" heightRequest="300" borderWidth="6" ondeleteEvent="quit();">
   <GtkVBox spacing="6">
-    <GtkScrolledWindow expand="true" fill="true" hscrollbar-policy="2" vscrollbar-policy="1" shadow-type="1">
-      <GtkTextView id="output" wrap-mode="2" editable="false"/>
+    <GtkScrolledWindow expand="true" fill="true" hscrollbarPolicy="2" vscrollbarPolicy="1" shadowType="1">
+      <GtkTextView id="output" wrapMode="2" editable="false"/>
     </GtkScrolledWindow>
     <GtkEntry id="entry" expand="false" fill="false"/>
   </GtkVBox>
 </GtkWindow>
 <script><![CDATA[
-  var entry = document.getElementById ('entry');
-  if (!entry) {
-    alert ('Could not look up entry.');
-    quit ();
-  }
-  var output = document.getElementById ('output');
-  if (!output) {
-    alert ('Could not look up output.');
-    quit ();
-  }
-  entry.onactivate = function () {
-    if (entry.text) {
-   	output.buffer.text += eval (entry.text) + '\n';
-	entry.text = '';
-    }
-    return true;
+  $('#entry').get (0).onactivate = function () {
+      if (this.text) {
+   	  $('#output').get (0).buffer.text += eval (this.text) + '\n';
+	  this.text = '';
+      }
+      return true;
   };
 ]]></script>

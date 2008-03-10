@@ -45,22 +45,10 @@ G_BEGIN_DECLS
 struct _GomNodeListInterface {
     GTypeInterface parent;
 
-    /* attributes */
-
-    gulong    (*get_length) (GomNodeList *list);
-
-    /* methods */
-
     GomNode *(*item) (GomNodeList *list, gulong index);
 };
 
 GType gom_node_list_get_type (void);
-
-/* attributes */
-
-gulong gom_node_list_get_length (GomNodeList *list);
-
-/* methods */
 
 GomNode *gom_node_list_item (GomNodeList *list, gulong index);
 

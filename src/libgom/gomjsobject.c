@@ -207,7 +207,7 @@ gom_js_closure_new (JSContext *cx, JSObject *obj, JSFunction *fun)
 
 gulong
 gom_js_object_connect (JSContext *cx, JSObject *jsobj,
-                       const char *signal_name,
+                       guint signal_id,
                        JSFunction *fun)
 {
     GClosure *closure;
@@ -224,7 +224,7 @@ gom_js_object_connect (JSContext *cx, JSObject *jsobj,
         return 0;
     }
 
-    return g_signal_connect_closure (gobj, signal_name, closure, FALSE);
+    return g_signal_connect_closure_by_id (gobj, signal_id, 0, closure, FALSE);
 }
 
 static GomJSClosure *
@@ -290,7 +290,7 @@ gom_js_object_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     g_assert (spec);
     
     g_value_init (&gval, G_PARAM_SPEC_VALUE_TYPE (spec));
-    g_object_get_property (gobj, name, &gval);
+    g_object_get_property (gobj, spec->name, &gval);
     if (!gom_jsval (cx, vp, &gval, &error)) {
         g_printerr ("Could not get jsval: %s\n", error->message);
         g_value_unset (&gval);
@@ -355,7 +355,7 @@ gom_js_object_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
         return JS_FALSE;
     }
 
-    g_object_set_property (gobj, name, &gval);
+    g_object_set_property (gobj, spec->name, &gval);
     g_value_unset (&gval);
 
     return JS_TRUE;

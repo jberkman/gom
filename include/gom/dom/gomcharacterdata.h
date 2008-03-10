@@ -45,12 +45,6 @@ G_BEGIN_DECLS
 struct _GomCharacterDataInterface {
     GTypeInterface parent;
 
-    /* attributes */
-    const char *(*get_data)   (GomCharacterData *cdata, GError **error);
-    void        (*set_data)   (GomCharacterData *cdata, const char *data, GError **error);
-    gulong      (*get_length) (GomCharacterData *cdata);
-
-    /* methods */
     const char *(*substring_data) (GomCharacterData *cdata,
                                    gulong offset, gulong count,
                                    GError **error);
@@ -73,12 +67,6 @@ struct _GomCharacterDataInterface {
 
 GType gom_character_data_get_type (void);
 
-/* attributes */
-const char *gom_character_data_get_data   (GomCharacterData *cdata, GError **error);
-void        gom_character_data_set_data   (GomCharacterData *cdata, const char *data, GError **error);
-gulong      gom_character_data_get_length (GomCharacterData *cdata);
-
-/* methods */
 const char *gom_character_data_substring_data (GomCharacterData *cdata,
                                                gulong offset, gulong count,
                                                GError **error);

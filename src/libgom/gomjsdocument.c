@@ -41,31 +41,7 @@ struct JSClass GomJSDocumentClass = {
     JS_ConvertStub, JS_FinalizeStub
 };
 
-static JSBool
-gom_js_document_get_doctype (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
-}
-
-static JSBool
-gom_js_document_get_implementation (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
-}
-
-static JSBool
-gom_js_document_get_document_element (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-    GOM_NOT_IMPLEMENTED;
-    return JS_FALSE;
-}
-
 static JSPropertySpec document_props[] = {
-    { "docType",         -1, JSPROP_READONLY | JSPROP_PERMANENT, gom_js_document_get_doctype },
-    { "implementation",  -1, JSPROP_READONLY | JSPROP_PERMANENT, gom_js_document_get_implementation },
-    { "documentElement", -1, JSPROP_READONLY | JSPROP_PERMANENT, gom_js_document_get_document_element },
     { NULL }
 };
 

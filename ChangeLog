@@ -1,5 +1,66 @@
 2008-03-09  jacob berkman  <jacob@ilovegom.org>
 
+	* configure.ac: bump to 0.1
+
+	* src/libgom/gomobject.c (camel_uncase): turn some_thing_like_this
+	to someThingLikeThis
+	(gom_object_resolve): try to look up the attribute with camel
+	casing if it could not be found
+
+	* src/libgom/gomjselement.c (gom_js_element_set_attribute): 
+	* src/libgom/gomdoc.c (gom_dom_parser_start_element): refactor to
+	use new signal id and
+
+	* src/libgom/gomjsobject.c (gom_js_object_connect): take a signal
+	id instead of a signal name
+
+	* examples/console.gom: start using some jQuery syntax, for fun
+
+	* src/gom/gom.c (main): use gom_widget_init_log_func() while running
+	gom_widget_init()
+
+	* src/libgom/gomwidget.c (gom_widget_init_log_func): GObject
+	complains about some stuff we do in gom_widget_init(), so add a
+	log handler that doesn't print those messages
+
+	* src/libgom/gomdominterfaces.c: add stubs for GomNamedNodeMap
+
+	* src/libgom/gomdom.c: include header for GOM_DEFINE_QUARK
+
+	* src/libgom/gomjsnode.c (gom_js_node_props): 
+	* src/libgom/gomjsdocument.c (document_props): remove props as
+	they are all handled automatically now
+
+	* src/libgom/gomjselement.c (gom_js_element_props): 
+	* src/libgom/gomdominterfaces.c: 
+	* src/libgom/gomwidget.c (gom_widget_get_property)
+	(gom_widget_set_property, gom_widget_init_once): 
+	* src/libgom/gomglist.c (gom_g_list_get_property):
+	(gom_g_list_class_init):
+	* src/libgom/gomdoc.c (gom_doc_get_property)
+	(gom_doc_set_property, gom_doc_class_init): convert dom attributes
+	to GObject properties
+
+	* src/libgom/gomobject.c (gom_js_object_[gs]et_prop): use the
+	spec's name, as it has the proper casing
+
+	* include/gommacros.h (GOM_DEFINE_INTERFACE_WITH_CODE)
+	(GOM_DEFINE_INTERFACE_WITH_PREREQUISITE, GOM_DEFINE_INTERFACE):
+	add an argument for the body of a base_init function
+	(GOM_DEFINE_INTERFACE): make all interfaces GObjects
+
+	* include/gom/dom/gomnode.h (_GomNodeInterface): 
+	* include/gom/dom/gomnodelist.h (_GomNodeListInterface): 
+	* include/gom/dom/gomdocumenttype.h (_GomDocumentTypeInterface): 
+	* include/gom/dom/gomprocessinginstruction.h (_GomProcessingInstructionInterface): 
+	* include/gom/dom/gomdocument.h (_GomDocumentInterface): 
+	* include/gom/dom/gomattr.h (_GomAttrInterface): 
+	* include/gom/dom/gomnotation.h (_GomNotationInterface):
+	* include/gom/dom/gomelement.h (_GomElementInterface): 
+	* include/gom/dom/gomnamednodemap.h: (_GomNamedNodeMapInterface):
+	* include/gom/dom/gomcharacterdata.h (_GomCharacterDataInterface):
+	remove attribute methods
+
 	* examples/console.gom: include jquery for fun and profit, and use
 	the width-request and height-request properties instead of
 	default-width and default-height, as those don't work with gom

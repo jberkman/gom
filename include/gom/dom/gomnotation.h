@@ -44,16 +44,8 @@ G_BEGIN_DECLS
 
 struct _GomNotationInterface {
     GTypeInterface parent;
-
-    /* attributes */
-    const char *(*get_public_id) (GomNotation *note);
-    const char *(*get_system_id) (GomNotation *note);
 };
 
 GType gom_notation_get_type (void);
-
-/* attributes */
-const char *gom_notation_get_public_id (GomNotation *note);
-const char *gom_notation_get_system_id (GomNotation *note);
 
 #endif /* GOM_NOTATION_H */

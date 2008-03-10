@@ -44,8 +44,8 @@ JSObject *gom_js_object_get_or_create_js_object (JSContext *cx, gpointer gobj);
 gboolean  gom_js_object_resolve (JSContext *cx, JSObject *obj, const char *name, 
                                  GObject **gobj, GParamSpec **spec, guint *signal);
 
-gulong    gom_js_object_connect (JSContext *cx, JSObject *jsobj,
-                                 const char *signal, JSFunction *func);
+gulong    gom_js_object_connect (JSContext *cx,   JSObject   *jsobj,
+                                 guint signal_id, JSFunction *func);
                                  
 G_END_DECLS
 

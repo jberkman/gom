@@ -44,20 +44,8 @@ G_BEGIN_DECLS
 
 struct _GomProcessingInstructionInterface {
     GTypeInterface parent;
-
-    /* attributes */
-    const char *(*get_target) (GomProcessingInstruction *proc);
-    const char *(*get_data)   (GomProcessingInstruction *proc);
-    void        (*set_data)   (GomProcessingInstruction *proc,
-                               GError                  **error);
 };
 
 GType gom_processing_instruction_get_type (void);
-
-/* attributes */
-const char *gom_processing_instruction_get_target (GomProcessingInstruction *proc);
-const char *gom_processing_instruction_get_data   (GomProcessingInstruction *proc);
-void        gom_processing_instruction_set_data   (GomProcessingInstruction *proc,
-                                                   GError                  **error);
 
 #endif /* GOM_PROCESSING_INSTRUCTION_H */

@@ -46,10 +46,6 @@ G_BEGIN_DECLS
 struct _GomNamedNodeMapInterface {
     GTypeInterface parent;
 
-    /* attributes */
-    gulong  *(*get_length)        (GomNamedNodeMap *map);
-
-    /* methods */
     GomNode *(*get_named_item)    (GomNamedNodeMap *map,
                                    const char      *name);
     GomNode *(*set_named_item)    (GomNamedNodeMap *map,
@@ -59,15 +55,11 @@ struct _GomNamedNodeMapInterface {
                                    const char      *name,
                                    GError         **error);
     GomNode *(*item)              (GomNamedNodeMap *map,
-                                   gulong          *index);
+                                   gulong           index);
 };
 
 GType gom_named_node_map_get_type (void);
 
-/* attributes */
-gulong  *gom_named_node_map_get_length        (GomNamedNodeMap *map);
-
-/* methods */
 GomNode *gom_named_node_map_get_named_item    (GomNamedNodeMap *map,
                                                const char      *name);
 GomNode *gom_named_node_map_set_named_item    (GomNamedNodeMap *map,
@@ -77,6 +69,6 @@ GomNode *gom_named_node_map_remove_named_item (GomNamedNodeMap *map,
                                                const char      *name,
                                                GError         **error);
 GomNode *gom_named_node_map_item              (GomNamedNodeMap *map,
-                                               gulong          *index);
+                                               gulong           index);
 
 #endif /* GOM_NAMED_NODE_MAP_H */

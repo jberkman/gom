@@ -45,16 +45,8 @@ G_BEGIN_DECLS
 
 struct _GomDocumentTypeInterface {
     GTypeInterface parent;
-
-    const char      *(*get_name)      (GomDocumentType *doctype);
-    GomNamedNodeMap *(*get_entities)  (GomDocumentType *doctype);
-    GomNamedNodeMap *(*get_notations) (GomDocumentType *doctype);
 };
 
 GType gom_document_type_get_type (void);
-
-const char      *gom_document_type_get_name      (GomDocumentType *doctype);
-GomNamedNodeMap *gom_document_type_get_entities  (GomDocumentType *doctype);
-GomNamedNodeMap *gom_document_type_get_notations (GomDocumentType *doctype);
 
 #endif /* GOM_DOCUMENT_TYPE_H */

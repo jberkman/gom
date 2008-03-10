@@ -46,12 +46,6 @@ G_BEGIN_DECLS
 struct _GomElementInterface {
     GTypeInterface parent;
 
-    /* attributes */
-
-    G_CONST_RETURN char *(*get_tag_name) (GomElement *elem);
-
-    /* methods */
-    
     char  *(*get_attribute)    (GomElement *elem, const char *name);
     void   (*set_attribute)    (GomElement *elem, const char *name, const char *value, GError **error);
     void   (*remove_attribute) (GomElement *elem, const char *name, GError **error);
@@ -66,12 +60,6 @@ struct _GomElementInterface {
 };
 
 GType gom_element_get_type (void);
-
-/* attributes */
-
-G_CONST_RETURN char *gom_element_get_tag_name (GomElement *elem);
-
-/* methods */
 
 char  *gom_element_get_attribute    (GomElement *elem, const char *name);
 void   gom_element_set_attribute    (GomElement *elem, const char *name, const char *value, GError **error);

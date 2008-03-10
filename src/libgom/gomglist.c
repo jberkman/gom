@@ -27,6 +27,10 @@ THE SOFTWARE.
 
 #include <gom/dom/gomnodelist.h>
 
+enum {
+    PROP_LENGTH = 1
+};
+
 typedef struct {
     GList *glist;
     GList *last_node;
@@ -37,10 +41,20 @@ typedef struct {
 
 #define PRIV(i) (G_TYPE_INSTANCE_GET_PRIVATE ((i), GOM_TYPE_G_LIST, GomGListPrivate))
 
-static gulong
-gom_g_list_get_length (GomNodeList *list)
+static void
+gom_g_list_get_property (GObject        *object,
+                         guint           property_id,
+                         GValue         *value,
+                         GParamSpec     *pspec)
 {
-    return PRIV (list)->length;
+    switch (property_id) {
+    case PROP_LENGTH:
+        g_value_set_ulong (value, PRIV (object)->length);
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+        break;
+    }
 }
 
 static GomNode *
@@ -59,7 +73,6 @@ gom_g_list_interface_init (gpointer g_iface, gpointer iface_data)
 {
     GomNodeListInterface *iface = (GomNodeListInterface *)g_iface;
 
-    iface->get_length = gom_g_list_get_length;
     iface->item = gom_g_list_item;
 }
 
@@ -109,5 +122,8 @@ gom_g_list_class_init (GomGListClass *klass)
 
     g_type_class_add_private (klass, sizeof (GomGListPrivate));
 
+    g_class->get_property = gom_g_list_get_property;
     g_class->dispose = gom_g_list_dispose;
+
+    g_object_class_override_property (g_class, PROP_LENGTH, "length");
 }

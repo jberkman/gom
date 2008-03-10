@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 #include <gommacros.h>
 
-#include <jsapi.h>
+#include <string.h>
 
 GQuark gom_object_attrs_quark (void);
 
@@ -36,20 +36,80 @@ GOM_DEFINE_QUARK (object_attrs);
 #define ATTRS_QUARK (gom_object_attrs_quark ())
 #define ATTRS(o) ((GHashTable *)g_object_get_qdata (G_OBJECT (o), ATTRS_QUARK));
 
+#if 0
+static char *
+camel_case (const char *s)
+{
+    int si, ri;
+    char *r = g_malloc (strlen (s) + 1);
+    gboolean upper = FALSE;
+    for (ri = si = 0; s[si]; si++) {
+        switch (s[si]) {
+        case '-':
+        case '_':
+            upper = TRUE;
+            break;
+        default:
+            if (upper) {
+                r[ri++] = g_ascii_toupper (s[si]);
+                upper = FALSE;
+            } else {
+                r[ri++] = s[si];
+            }
+            break;
+        }
+    }
+    r[ri] = s[si];
+    g_print ("%s:%d:%s: %s -> %s\n", __FILE__, __LINE__, __FUNCTION__, s, r);
+    return r;
+}
+#endif
+
+static char *
+camel_uncase (const char *s)
+{
+    int si, ri;
+    char *r = g_malloc (2 * strlen (s) + 1);
+    for (ri = si = 0; s[si]; si++) {
+        if (g_ascii_isupper (s[si])) {
+            r[ri++] = '_';
+            r[ri++] = g_ascii_tolower (s[si]);
+        } else {
+            r[ri++] = s[si];
+        }
+    }
+    r[ri] = s[si];
+    g_print ("%s:%d:%s: %s -> %s\n", __FILE__, __LINE__, __FUNCTION__, s, r);
+    return r;
+}
+
 gboolean
 gom_object_resolve (GObject *gobj, const char *name, GParamSpec **spec, guint *signal_id)
 {
-    if (name[0] == 'o' && name[1] == 'n' &&
-        (*signal_id = g_signal_lookup (&name[2], G_TYPE_FROM_INSTANCE (gobj)))) {
-        g_print ("resolve %s.%s -> signal %u\n", g_type_name (G_TYPE_FROM_INSTANCE (gobj)), name, *signal_id);
+    char *n;
+    n = (char *)name;
+
+resolve_again:
+    if (n[0] == 'o' && n[1] == 'n' &&
+        (*signal_id = g_signal_lookup (&n[2], G_TYPE_FROM_INSTANCE (gobj)))) {
+        g_print ("resolve %s.%s -> signal %u\n", g_type_name (G_TYPE_FROM_INSTANCE (gobj)), n, *signal_id);
         *spec = NULL;
+        if (n != name) {
+            g_free (n);
+        }
         return TRUE;
     }
 
-    *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (gobj), name);
+    *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (gobj), n);
+    if (!*spec && n == name) {
+        n = camel_uncase (name);
+        goto resolve_again;
+    } else if (n != name) {
+        g_free (n);
+    }
     *signal_id = 0;
     g_print ("resolve %s.%s -> %s\n", 
-             g_type_name (G_TYPE_FROM_INSTANCE (gobj)), name,
+             g_type_name (G_TYPE_FROM_INSTANCE (gobj)), n,
              *spec ? g_type_name (G_PARAM_SPEC_VALUE_TYPE (*spec)) : "FAIL");
 
     return *spec != NULL;

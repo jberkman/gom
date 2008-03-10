@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
 
-#define GOM_NOT_IMPLEMENTED (g_printerr ("%s:%d:%s(): Not implemented yet.\n", __FILE__, __LINE__, __FUNCTION__))
+#define GOM_NOT_IMPLEMENTED (g_printerr ("\n%s:%d:%s(): Not implemented yet.\n", __FILE__, __LINE__, __FUNCTION__))
 
 #define GOM_DEFINE_QUARK(n)                                             \
     static gpointer                                                     \
@@ -46,19 +46,39 @@ G_BEGIN_DECLS
         return GPOINTER_TO_UINT (g_once (&once, gom_##n##_quark_once, NULL)); \
     }
 
-#define GOM_DEFINE_INTERFACE(IN, i_n)               \
-    _GOM_DEFINE_INTERFACE_BEGIN(IN, i_n)            \
-    _GOM_DEFINE_INTERFACE_END()
+#define GOM_DEFINE_INTERFACE_WITH_CODE(IN, i_n, b_i, _C_)      \
+    _GOM_DEFINE_INTERFACE_BEGIN(IN, i_n, b_i)                  \
+    { _C_; }                                                   \
+    _GOM_DEFINE_INTERFACE_END
 
-#define GOM_DEFINE_INTERFACE_WITH_CODE(IN, i_n, _C_)                    \
-    _GOM_DEFINE_INTERFACE_BEGIN(IN, i_n)                                \
-    { _C_; }                                                            \
-    _GOM_DEFINE_INTERFACE_END()
+#define GOM_DEFINE_INTERFACE_WITH_PREREQUISITE(IN, i_n, b_i, P_N)       \
+    GOM_DEFINE_INTERFACE_WITH_CODE (IN, i_n, b_i, g_type_interface_add_prerequisite (type, P_N))
 
-#define GOM_DEFINE_INTERFACE_WITH_PREREQUISITE(IN, i_n, P_N) \
-    GOM_DEFINE_INTERFACE_WITH_CODE (IN, i_n, g_type_interface_add_prerequisite (type, P_N))
+#define GOM_DEFINE_INTERFACE(IN, i_n, b_i)                              \
+    GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (IN, i_n, b_i, G_TYPE_OBJECT)
 
-#define _GOM_DEFINE_INTERFACE_BEGIN(TypeName, type_name)                \
+#define _GOM_DEFINE_BASE_INIT_BEGIN(type_name) \
+    static gpointer type_name##_base_init_once (gpointer g_iface);      \
+                                                                        \
+    static void                                                         \
+    type_name##_base_init (gpointer g_iface)                            \
+    {                                                                   \
+        static GOnce base_once = G_ONCE_INIT;                           \
+        g_once (&base_once, type_name##_base_init_once, g_iface);       \
+    }                                                                   \
+                                                                        \
+    static gpointer                                                     \
+    type_name##_base_init_once (gpointer g_iface)                       \
+    {
+#define _GOM_DEFINE_BASE_INIT_END               \
+        return NULL;                            \
+    }
+
+#define _GOM_DEFINE_INTERFACE_BEGIN(TypeName, type_name, base_init)     \
+    _GOM_DEFINE_BASE_INIT_BEGIN(type_name)                              \
+    base_init;                                                          \
+    _GOM_DEFINE_BASE_INIT_END                                           \
+                                                                        \
     static gpointer type_name##_get_type_once (gpointer data);          \
                                                                         \
     GType                                                               \
@@ -74,7 +94,7 @@ G_BEGIN_DECLS
     {                                                                   \
         static const GTypeInfo info = {                                 \
             sizeof (TypeName##Interface),                               \
-            NULL, /* base_init */                                       \
+            type_name##_base_init, /* base_init */                      \
             NULL, /* base_finalize */                                   \
             NULL, /* class_init */                                      \
             NULL, /* class_finalize */                                  \
@@ -85,7 +105,7 @@ G_BEGIN_DECLS
         };                                                              \
         GType type = g_type_register_static (G_TYPE_INTERFACE, #TypeName, &info, 0); \
         { /* custom code follows */
-#define _GOM_DEFINE_INTERFACE_END()                                     \
+#define _GOM_DEFINE_INTERFACE_END                                       \
         } /* following custom code */                                   \
         return GSIZE_TO_POINTER (type);                                 \
     }

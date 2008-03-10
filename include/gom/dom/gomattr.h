@@ -44,16 +44,8 @@ G_BEGIN_DECLS
 
 struct _GomAttrInterface {
     GTypeInterface parent;
-
-    const char *(*get_name)      (GomAttr *attr);
-    gboolean    (*get_specified) (GomAttr *attr);
-    const char *(*get_value)     (GomAttr *attr);
 };
 
 GType gom_attr_get_type (void);
-
-const char *gom_attr_get_name      (GomAttr *attr);
-gboolean    gom_attr_get_specified (GomAttr *attr);
-const char *gom_attr_get_value     (GomAttr *attr);
 
 #endif /* GOM_ATTR_H */

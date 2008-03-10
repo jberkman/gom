@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <gommacros.h>
 
 #include <gom/dom/gomdomexception.h>
+#include <gom/gomglist.h>
 #include <gom/gomjsdocument.h>
 #include <gom/gomjsexception.h>
 #include <gom/gomjsobject.h>
@@ -39,6 +40,24 @@ THE SOFTWARE.
 
 #include <string.h>
 
+enum {
+    PROP_NODE_NAME = 1,
+    PROP_NODE_VALUE,
+    PROP_NODE_TYPE,
+    PROP_PARENT_NODE,
+    PROP_CHILD_NODES,
+    PROP_FIRST_CHILD,
+    PROP_LAST_CHILD,
+    PROP_PREVIOUS_SIBLING,
+    PROP_NEXT_SIBLING,
+    PROP_ATTRIBUTES,
+    PROP_OWNER_DOCUMENT,
+
+    PROP_DOCTYPE,
+    PROP_IMPLEMENTATION,
+    PROP_DOCUMENT_ELEMENT
+};
+
 typedef struct {
     GList *children;
 } GomDocPrivate;
@@ -48,87 +67,81 @@ typedef struct {
 GOM_DEFINE_QUARK(doc_error)
 
 /* GomNodeInterface */
-/* attributes */
-static G_CONST_RETURN char *
-gom_doc_get_node_name (GomNode *node)
+/* GomDocumentInterface */
+static void
+gom_doc_get_property (GObject    *object,
+                      guint       property_id,
+                      GValue     *value,
+                      GParamSpec *pspec)
 {
-    return "document"; /* ??? */
-}
+    GomDocPrivate *priv = PRIV (object);
 
-static char *
-gom_doc_get_node_value (GomNode *node, GError **error)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
+    switch (property_id) {
+    case PROP_NODE_NAME:
+        g_value_set_static_string (value, "document");
+        break;
+    case PROP_NODE_TYPE:
+        g_value_set_uint (value, GOM_DOCUMENT_NODE);
+        break;
+    case PROP_OWNER_DOCUMENT:
+    case PROP_PREVIOUS_SIBLING:
+    case PROP_NEXT_SIBLING:
+    case PROP_PARENT_NODE:
+        g_value_set_object (value, NULL);
+        break;
+    case PROP_CHILD_NODES:
+        g_value_set_object (value, priv->children ? gom_g_list_new (priv->children) : NULL);
+        break;
+    case PROP_FIRST_CHILD:
+        g_value_set_object (value, priv->children ? priv->children->data : NULL);
+        break;
+    case PROP_LAST_CHILD: {
+        GList *last;
+        last = g_list_last (priv->children);
+        g_value_set_object (value, last ? last->data : NULL);
+        break;
+    }
+    case PROP_NODE_VALUE:
+    case PROP_ATTRIBUTES:
+    case PROP_DOCTYPE:
+    case PROP_IMPLEMENTATION:
+    case PROP_DOCUMENT_ELEMENT:
+        GOM_NOT_IMPLEMENTED;
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+        break;
+    }
 }
 
 static void
-gom_doc_set_node_value (GomNode *node, const char *value, GError **error)
+gom_doc_set_property (GObject *object,
+                      guint property_id,
+                      const GValue *value,
+                      GParamSpec *pspec)
 {
-    GOM_NOT_IMPLEMENTED;
-}
-
-static GomNodeType
-gom_doc_get_node_type (GomNode *node)
-{
-    return GOM_DOCUMENT_NODE;
-}
-
-static GomNode *
-gom_doc_get_parent_node (GomNode *node)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomNodeList *
-gom_doc_get_child_nodes (GomNode *node)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomNode *
-gom_doc_get_first_child (GomNode *node)
-{
-    GomDocPrivate *priv = PRIV (node);
-
-    return priv->children->data;
-}
-
-static GomNode *
-gom_doc_get_last_child (GomNode *node)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomNode *
-gom_doc_get_previous_sibling (GomNode *node)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomNode *
-gom_doc_get_next_sibling (GomNode *node)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomNamedNodeMap *
-gom_doc_get_attributes (GomNode *node)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomDocument *
-gom_doc_get_owner_document (GomNode *node)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
+    switch (property_id) {
+    case PROP_NODE_VALUE:
+        GOM_NOT_IMPLEMENTED;
+        break;
+    case PROP_NODE_TYPE:
+    case PROP_PARENT_NODE:
+    case PROP_CHILD_NODES:
+    case PROP_FIRST_CHILD:
+    case PROP_LAST_CHILD:
+    case PROP_PREVIOUS_SIBLING:
+    case PROP_NEXT_SIBLING:
+    case PROP_ATTRIBUTES:
+    case PROP_OWNER_DOCUMENT:
+    case PROP_DOCTYPE:
+    case PROP_IMPLEMENTATION:
+    case PROP_DOCUMENT_ELEMENT:
+        g_assert_not_reached ();
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+        break;
+    }
 }
 
 static GomNode *
@@ -194,19 +207,6 @@ gom_doc_node_init (gpointer g_iface, gpointer iface_data)
 
 #define IFACE(func) node->func = gom_doc_##func
 
-    IFACE (get_node_name);
-    IFACE (get_node_value);
-    IFACE (set_node_value);
-    IFACE (get_node_type);
-    IFACE (get_parent_node);
-    IFACE (get_child_nodes);
-    IFACE (get_first_child);
-    IFACE (get_last_child);
-    IFACE (get_previous_sibling);
-    IFACE (get_next_sibling);
-    IFACE (get_attributes);
-    IFACE (get_owner_document);
-
     IFACE (insert_before);
     IFACE (replace_child);
     IFACE (remove_child);
@@ -215,29 +215,6 @@ gom_doc_node_init (gpointer g_iface, gpointer iface_data)
     IFACE (clone_node);
 
 #undef IFACE
-}
-
-/* GomDocumentInterface */
-/* attributes */
-static GomDocumentType *
-gom_doc_get_doctype (GomDocument *doc)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomDOMImplementation *
-gom_doc_get_implementation (GomDocument *doc)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomElement *
-gom_doc_get_document_element (GomDocument *doc)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
 }
 
 /* methods */
@@ -350,7 +327,7 @@ element_get_element_by_id (GomElement *elem,
         return elem;
     }
 
-    for (node = gom_node_get_first_child (GOM_NODE (elem)); node; node = gom_node_get_next_sibling (node)) {
+    for (g_object_get (elem, "first-child", &node, NULL); node; g_object_get (node, "next-sibling", &node, NULL)) {
         if (GOM_IS_ELEMENT (node)) {
             ret = element_get_element_by_id (GOM_ELEMENT (node), element_id);
             if (ret) {
@@ -387,12 +364,6 @@ gom_doc_document_init (gpointer g_iface, gpointer iface_data)
 
 #define IFACE(func) iface->func = gom_doc_##func
 
-    /* attributes */
-    IFACE (get_doctype);
-    IFACE (get_implementation);
-    IFACE (get_document_element);
-
-    /* methods */
     IFACE (create_element);
     IFACE (create_document_fragment);
     IFACE (create_text_node);
@@ -419,7 +390,28 @@ static void gom_doc_init (GomDoc *doc) { }
 static void
 gom_doc_class_init (GomDocClass *klass)
 {
+    GObjectClass *oclass = G_OBJECT_CLASS (klass);
+
     g_type_class_add_private (klass, sizeof (GomDocPrivate));
+
+    oclass->get_property = gom_doc_get_property;
+    oclass->set_property = gom_doc_set_property;
+
+    g_object_class_override_property (oclass, PROP_NODE_NAME,        "node-name");
+    g_object_class_override_property (oclass, PROP_NODE_VALUE,       "node-value");
+    g_object_class_override_property (oclass, PROP_NODE_TYPE,        "node-type");
+    g_object_class_override_property (oclass, PROP_PARENT_NODE,      "parent-node");
+    g_object_class_override_property (oclass, PROP_CHILD_NODES,      "child-nodes");
+    g_object_class_override_property (oclass, PROP_FIRST_CHILD,      "first-child");
+    g_object_class_override_property (oclass, PROP_LAST_CHILD,       "last-child");
+    g_object_class_override_property (oclass, PROP_PREVIOUS_SIBLING, "previous-sibling");
+    g_object_class_override_property (oclass, PROP_NEXT_SIBLING,     "next-sibling");
+    g_object_class_override_property (oclass, PROP_ATTRIBUTES,       "attributes");
+    g_object_class_override_property (oclass, PROP_OWNER_DOCUMENT,   "owner-document");
+
+    g_object_class_override_property (oclass, PROP_DOCTYPE,          "doctype");
+    g_object_class_override_property (oclass, PROP_IMPLEMENTATION,   "implementation");
+    g_object_class_override_property (oclass, PROP_DOCUMENT_ELEMENT, "document-element");
 }
 
 typedef struct {
@@ -506,7 +498,11 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
     JSObject *jsobj = NULL;
     GomElement *elem;
     GomDomParserData *data = user_data;
+    GParamSpec *spec;
     const char **name, **value;
+    guint signal_id;
+    JSFunction *fun;
+    int lineno;
 
     if (!strcmp (element_name, "script")) {
         gom_dom_parser_start_script (context, element_name, attribute_names, attribute_values, user_data, error);
@@ -520,13 +516,9 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
     }
 
     for (name = attribute_names, value = attribute_values; *name; name++, value++) {
-        if ((*name)[0] == 'o' && 
-            (*name)[1] == 'n' && 
-            g_signal_lookup (&(*name)[2], G_TYPE_FROM_INSTANCE (elem))) {
-
-            JSFunction *fun;
-            int lineno;
-
+        if (!gom_object_resolve (G_OBJECT (elem), *name, &spec, &signal_id)) {
+            gom_element_set_attribute (elem, *name, *value, error);
+        } else if (signal_id) {
             if (!jsobj) {
                 jsobj = gom_js_object_get_or_create_js_object (data->cx, elem);
                 if (!jsobj) {
@@ -553,7 +545,7 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
             }
             
             if (!gom_js_object_connect (data->cx, jsobj,
-                                        &(*name)[2],
+                                        signal_id,
                                         fun)) {
                 if (!gom_js_exception_get_error (data->cx, error)) {
                     g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
@@ -563,10 +555,10 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
                 return;
             }
         } else {
-            gom_element_set_attribute (elem, *name, *value, error);
-            if (*error) {
-                return;
-            }
+            gom_element_set_attribute (elem, spec->name, *value, error);
+        }
+        if (*error) {
+            return;
         }
     }
     data->elems = g_slist_prepend (data->elems, elem);
