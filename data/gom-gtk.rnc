@@ -1,0 +1,36 @@
+default namespace = "http://ilovegom.org/Gtk"
+
+include "gom.rnc"
+
+a.text           = attribute text             { text }
+borderWidth      = attribute borderWidth      { xsd:nonNegativeInteger }
+editable         = attribute editable         { xsd:boolean }
+expand           = attribute expand           { xsd:boolean }
+fill             = attribute fill             { xsd:boolean }
+heightRequest    = attribute heightRequest    { xsd:nonNegativeInteger }
+hscrollbarPolicy = attribute hscrollbarPolicy { xsd:nonNegativeInteger }
+label            = attribute label            { text }
+ondeleteEvent    = attribute ondeleteEvent    { text }
+shadowType       = attribute shadowType       { xsd:nonNegativeInteger }
+spacing          = attribute spacing          { xsd:nonNegativeInteger }
+title            = attribute title            { text }
+vscrollbarPolicy = attribute vscrollbarPolicy { xsd:nonNegativeInteger }
+widthRequest     = attribute widthRequest     { xsd:nonNegativeInteger }
+wrapMode         = attribute wrapMode         { xsd:nonNegativeInteger }
+
+widgetAttrs = id?, borderWidth?, heightRequest?, widthRequest?
+
+childAttrs = widgetAttrs, expand?, fill?
+
+child     = element * { attribute * { text }* }
+container = element * { attribute * { text }*, widget* }
+widget    = child | container | script
+
+GtkEntry          = element GtkEntry          { childAttrs,  a.text? }
+GtkLabel          = element GtkLabel          { childAttrs,  label? }
+GtkScrolledWindow = element GtkScrolledWindow { childAttrs,  hscrollbarPolicy?, vscrollbarPolicy?, shadowType?, widget* }
+GtkTextView       = element GtkTextView       { childAttrs,  wrapMode?, editable? }
+GtkVBox           = element GtkVBox           { childAttrs,  spacing, widget* }
+GtkWindow         = element GtkWindow         { widgetAttrs, title?, ondeleteEvent?, widget* }
+
+toplevel |= GtkWindow
