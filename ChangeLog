@@ -1,3 +1,17 @@
+2008-03-12  jacob berkman  <jacob@ilovegom.org>
+
+	* src/schema/gtkschema.c: generate the full gtk schema via
+	introspection
+
+	* src/schema/gom.rnc: move schema here
+
+	* Makefile.am (gomwidgets.c): make gomwidgets.c here
+
+	* gomwidgets.in: undefine the types we aren't going to use
+
+	* src/libgom/gomwidget.c (gom_widget_init_once): use the more
+	reusable widget list
+
 2008-03-11  jacob berkman  <jacob@ilovegom.org>
 
 	* data/gom.rnc: 

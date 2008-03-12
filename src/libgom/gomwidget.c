@@ -466,26 +466,6 @@ widget_element_init (gpointer g_iface, gpointer iface_data)
 #undef IFACE
 }
 
-#undef GTK_TYPE_FILE_INFO
-#undef GTK_TYPE_FILE_SYSTEM_HANDLE
-#undef GTK_TYPE_FILE_SYSTEM
-#undef GTK_TYPE_FILE_FOLDER
-#undef GTK_TYPE_FILE_PATH
-#undef GTK_TYPE_TEXT
-#undef GTK_TYPE_TEXT_LAYOUT
-#undef GTK_TYPE_TREE
-#undef GTK_TYPE_TREE_ITEM
-
-#define GTK_TYPE_FILE_INFO 0
-#define GTK_TYPE_FILE_SYSTEM_HANDLE 0
-#define GTK_TYPE_FILE_SYSTEM 0
-#define GTK_TYPE_FILE_FOLDER 0
-#define GTK_TYPE_FILE_PATH 0
-#define GTK_TYPE_TEXT 0
-#define GTK_TYPE_TEXT_LAYOUT 0
-#define GTK_TYPE_TREE 0
-#define GTK_TYPE_TREE_ITEM 0
-
 void
 gom_widget_init_log_func (const gchar   *log_domain,
                           GLogLevelFlags log_level,
@@ -543,7 +523,9 @@ gom_widget_init_once (gpointer data)
 
     g_object_class_override_property (oclass, PROP_TAG_NAME,         "tag-name");
 
+#define WIDGET(w) type ^= (w);
 #include "gomwidgets.c"
+#undef WIDGET
 
     return GSIZE_TO_POINTER (type);
 }

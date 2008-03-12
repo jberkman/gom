@@ -25,12 +25,4 @@ libgom_la_LDFLAGS = $(GOM_LIBS)
 
 src/libgom/gomwidget.c: gomwidgets.c
 
-gomwidgets.c: src/libgom/Makefile.inc
-	awk '/GTK_TYPE_.*get_type/ { print "type ^= "$$2";" }' \
-		$(shell pkg-config --variable includedir gtk+-2.0)/gtk-2.0/gtk/*.h > $@.tmp
-	@if ! cmp $@.tmp $@ ; then		\
-		echo cp $@.tmp $@;		\
-		cp $@.tmp $@;			\
-	fi
-
 CLEANFILES += gomwidgets.c gomwidgets.c.tmp

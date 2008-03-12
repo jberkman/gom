@@ -59,11 +59,22 @@ include_subdirs :=
 
 DIST_SUBDIRS := $(SUBDIRS) $(include_subdirs)
 
+gomwidgets.c: gomwidgets.in Makefile
+	cp $< $@.tmp
+	awk '/GTK_TYPE_.*get_type/ { print "WIDGET ("$$2")" }' \
+		$(shell pkg-config --variable includedir gtk+-2.0)/gtk-2.0/gtk/*.h \
+		>> $@.tmp
+	@if ! cmp $@.tmp $@ ; then		\
+		echo cp $@.tmp $@;		\
+		cp $@.tmp $@;			\
+	fi
+
 include examples/Makefile.inc
 include include/gom/Makefile.inc
 include include/gom/dom/Makefile.inc
 include src/gom/Makefile.inc
 include src/libgom/Makefile.inc
+include src/schema/Makefile.inc
 include tests/Makefile.inc
 
 update-makefiles:
