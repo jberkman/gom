@@ -1,3 +1,10 @@
-<GtkWindow title="Gom 0.0" widthRequest="200" heightRequest="50" borderWidth="20" ondestroy="quit()">
-  <GtkLabel label="Hello, World"/>
-</GtkWindow>
+<?xml version="1.0" encoding="UTF-8"?>
+<gom xmlns="http://ilovegom.org/Gom"
+     xmlns:gtk="http://ilovegom.org/Gtk">
+  <app>
+    <GtkWindow title="Gom 0.0" widthRequest="200" heightRequest="50" borderWidth="20" ondeleteEvent="quit()"
+      xmlns="http://ilovegom.org/Gtk">
+      <GtkLabel label="Hello, World"/>
+    </GtkWindow>
+  </app>
+</gom>

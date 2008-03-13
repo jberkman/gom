@@ -1,19 +1,21 @@
 default namespace = "http://ilovegom.org/Gom"
 
-start       = gom
+start           = gom
 
-gom         = element gom { modules?, application }
+gom             = element gom { config?, app }
 
-contentType = attribute contentType { text }
-id          = attribute id          { text }
-name        = attribute name        { text }
-src         = attribute src         { xsd:anyURI }
+contentType     = attribute contentType { text }
+id              = attribute id          { text }
+name            = attribute name        { text }
+src             = attribute src         { xsd:anyURI }
 
-module      = element module  { name }
-modules     = element modules { module+ }
+module          = element module { name }
+config          = element config { module* }
 
-application = element application { toplevel* }
+app             = element app { toplevel+ }
 
-script      = element script { contentType, src?, id?, text }
+script          = element script { contentType, src?, id?, text }
 
-toplevel    = script
+misc            = script
+
+toplevel        = script

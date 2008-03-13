@@ -1,24 +1,40 @@
-<script src="jquery-1.2.3.js"></script>
-<GtkWindow id="win" title="Gom Console" widthRequest="400" heightRequest="300" borderWidth="6" ondeleteEvent="quit();">
-  <GtkVBox spacing="6">
-    <GtkScrolledWindow expand="true" fill="true" hscrollbarPolicy="2" vscrollbarPolicy="1" shadowType="1">
-      <GtkTextView id="output" wrapMode="2" editable="false"/>
-    </GtkScrolledWindow>
-    <GtkEntry id="entry" expand="false" fill="false"/>
-  </GtkVBox>
-</GtkWindow>
-<script><![CDATA[
-    $('#entry').get (0).onactivate = function () {
-        if (this.text) {
-            var res;
-	    try {
-                res = eval (this.text);
-            } catch (e) {
-                res = 'Exception: ' + e;
-            }
-   	    $('#output').get (0).buffer.text += res + '\n';
-	    this.text = '';
-        }
-        return true;
-    };
-]]></script>
+<?xml version="1.0" encoding="UTF-8"?>
+<gom xmlns="http://ilovegom.org/Gom">
+  <config>
+    <module name="gtk+-2.0"/>
+  </config>
+  <app>
+    <script contentType="text/javascript" src="jquery-1.2.3.js"></script>
+    <GtkWindow id="win" title="Gom Console"
+               widthRequest="400" heightRequest="300" borderWidth="6"
+               ondeleteEvent="quit();"
+               xmlns="http://ilovegom.org/Gtk">
+      <GtkVBox spacing="6">
+        <GtkScrolledWindow expand="true" fill="true"
+                           hscrollbarPolicy="GTK_POLICY_AUTOMATIC"
+                           vscrollbarPolicy="GTK_POLICY_ALWAYS"
+                           shadowType="GTK_SHADOW_IN">
+          <GtkTextView id="output" wrapMode="GTK_WRAP_WORD" editable="false"/>
+        </GtkScrolledWindow>
+        <GtkEntry id="entry" expand="false" fill="false"/>
+      </GtkVBox>
+    </GtkWindow>
+    <script contentType="text/javascript"><![CDATA[
+      (function(){
+          $('#entry').get (0).onactivate = function () {
+              if (this.text) {
+                  var res;
+	          try {
+                      res = eval (this.text);
+                  } catch (e) {
+                      res = 'Exception: ' + e;
+                  }
+   	          $('#output').get (0).buffer.text += res + '\n';
+	          this.text = '';
+              }
+              return true;
+          };
+      })();
+    ]]></script>
+  </app>
+</gom>

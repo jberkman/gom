@@ -504,6 +504,13 @@ gom_dom_parser_start_element (GMarkupParseContext *context,
     JSFunction *fun;
     int lineno;
 
+    if (!strcmp (element_name, "gom") ||
+        !strcmp (element_name, "config") ||
+        !strcmp (element_name, "module") ||
+        !strcmp (element_name, "app")) {
+        return;
+    }
+
     if (!strcmp (element_name, "script")) {
         gom_dom_parser_start_script (context, element_name, attribute_names, attribute_values, user_data, error);
         return;
@@ -572,6 +579,13 @@ gom_dom_parser_end_element (GMarkupParseContext *context,
                             GError             **error)
 {
     GomDomParserData *data = user_data;
+
+    if (!strcmp (element_name, "gom") ||
+        !strcmp (element_name, "config") ||
+        !strcmp (element_name, "module") ||
+        !strcmp (element_name, "app")) {
+        return;
+    }
 
     if (!strcmp (element_name, "script")) {
         jsval rval; 

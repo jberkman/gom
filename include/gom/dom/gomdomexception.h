@@ -44,6 +44,7 @@ typedef enum {
 
     /* Gom-specific exceptions */
     GOM_DOM_EXCEPTION_ERROR_UNKNOWN_TAG_NAME = 101,
+    GOM_DOM_EXCEPTION_INVALID_ATTRIBUTE_TYPE = 102,
 } GomDOMExceptionError;
 
 GQuark gom_dom_exception_error_quark (void);

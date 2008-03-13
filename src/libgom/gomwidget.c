@@ -65,8 +65,6 @@ static void (*gtk_widget_get_property) (GObject        *object,
                                         GValue         *value,
                                         GParamSpec     *pspec);
 
-static GtkBuilder *builder = NULL;
-
 /* attributes */
 
 static GomNode *
@@ -184,7 +182,8 @@ append_child_attrs_foreach (gpointer key, gpointer value, gpointer user_data)
     GValue gval = { 0 };
 
     spec = gtk_container_class_find_child_property (G_OBJECT_GET_CLASS (data->node), key);
-    if (!spec) {
+    if (!spec ||
+        G_TYPE_FUNDAMENTAL (G_PARAM_SPEC_VALUE_TYPE (spec)) == G_TYPE_OBJECT) {
         return;
     }
     g_print ("found child property %s.%s on %s\n",
@@ -192,7 +191,7 @@ append_child_attrs_foreach (gpointer key, gpointer value, gpointer user_data)
              spec->name,
              g_type_name (G_TYPE_FROM_INSTANCE (data->new_child)));
     
-    if (gtk_builder_value_from_string (builder, spec, g_value_get_string (value), &gval, &error)) {
+    if (gtk_builder_value_from_string (NULL, spec, g_value_get_string (value), &gval, &error)) {
         gtk_container_child_set_property (GTK_CONTAINER (data->node),
                                           GTK_WIDGET (data->new_child),
                                           spec->name, 
@@ -268,10 +267,6 @@ widget_node_init (gpointer g_iface, gpointer iface_data)
 {
     GomNodeInterface *node = (GomNodeInterface *)g_iface;
 
-    if (!builder) {
-        builder = gtk_builder_new ();
-    }
-
 #define IFACE(func) node->func = widget_##func
 
     IFACE (insert_before);
@@ -292,23 +287,25 @@ widget_get_attribute (GomElement *elem, const char *name)
     GParamSpec *spec;
     GValue gval = { 0 };
     GValue *gvalp;
-    const char *ret = NULL;
+    char *ret = NULL;
 
     spec = g_object_class_find_property (G_OBJECT_GET_CLASS (elem), name);
     if (spec) {
         g_value_init (&gval, G_TYPE_STRING);
         g_object_get_property (G_OBJECT (elem), name, &gval);
         if (G_VALUE_HOLDS (&gval, G_TYPE_STRING)) {
-            ret = g_value_get_string (&gval);
+            ret = g_value_dup_string (&gval);
         }
+        g_value_unset (&gval);
     } else {
         gvalp = gom_object_get_attribute (G_OBJECT (elem), name);
         if (gvalp && G_VALUE_HOLDS_STRING (gvalp)) {
-            ret = g_value_get_string (gvalp);
+            ret = g_value_dup_string (gvalp);
         }
+        g_value_unset (gvalp);
     }
 
-    return g_strdup (ret);
+    return ret;
 }
 
 static void
@@ -319,16 +316,21 @@ widget_set_attribute (GomElement *elem, const char *name, const char *value, GEr
 
     spec = g_object_class_find_property (G_OBJECT_GET_CLASS (elem), name);
     if (spec) {
-        if (gtk_builder_value_from_string (builder, spec, value, &gval, NULL)) {
+        if (G_TYPE_FUNDAMENTAL (G_PARAM_SPEC_VALUE_TYPE (spec)) == G_TYPE_OBJECT) {
+            g_set_error (error, GOM_DOM_EXCEPTION_ERROR,
+                         GOM_DOM_EXCEPTION_INVALID_ATTRIBUTE_TYPE,
+                         "Attribute %s.%s is a %s, which a string cannot be converted to",
+                         g_type_name (spec->owner_type), name,
+                         g_type_name (G_PARAM_SPEC_VALUE_TYPE (spec)));
+        } else if (gtk_builder_value_from_string (NULL, spec, value, &gval, error)) {
             g_object_set_property (G_OBJECT (elem), name, &gval);
-            g_value_unset (&gval);
         }
     } else {
         g_value_init (&gval, G_TYPE_STRING);
         g_value_set_string (&gval, value);
         gom_object_set_attribute (G_OBJECT (elem), name, &gval);
-        g_value_unset (&gval);
     }
+    g_value_unset (&gval);
 }
 
 static void

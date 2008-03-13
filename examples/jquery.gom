@@ -1,1 +1,7 @@
-<script src="jquery-1.2.3.js"></script>
+<?xml version="1.0" encoding="UTF-8"?>
+<gom xmlns="http://ilovegom.org/Gom"
+     xmlns:gtk="http://ilovegom.org/Gtk">
+  <app>
+    <script contentType="text/javascript" src="jquery-1.2.3.js"></script>
+  </app>
+</gom>

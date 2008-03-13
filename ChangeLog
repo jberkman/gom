@@ -1,5 +1,37 @@
 2008-03-12  jacob berkman  <jacob@ilovegom.org>
 
+	* examples/console.gom: 
+	* examples/hello.gom: 
+	* examples/jquery.gom: update for new schema
+
+	* src/libgom/gomwidget.c (append_child_attrs_foreach):
+	gtk_builder_value_from_string() can take a NULL builder as long as
+	the spec does not have a GObject value type, which we probably
+	couldn't do anyway
+	(widget_get_attribute): a little refactoring
+	(widget_set_attribute): same as above for the NULL builder; set an
+	error in this case
+
+	* src/libgom/gomdoc.c (gom_dom_parser_start_element)
+	(gom_dom_parser_end_element): just ignore <gom>, <config>,
+	<module>, and <app> for now
+
+	* src/schema/gtkschema.c (process_attribute): convert back to a
+	switch statement; only UNICHAR needs to be checked individually;
+	add good support for enums. less-so for flags
+	(process_child_properties): add listing of child properties; i
+	don't know how to set acceptable attributes based on the parent
+	element, so just set these as valid for all widgets
+	(process_widget): add each class to the list of acceptable widgets
+	(main): print out the list of child widgets
+
+	* src/schema/gom.rnc: rename modules -> config, application ->
+	app, add a misc category
+
+	* include/gom/dom/gomdomexception.h
+	(GOM_DOM_EXCEPTION_INVALID_ATTRIBUTE_TYPE): add an exception type
+	for GObject properties
+
 	* src/schema/gtkschema.c: generate the full gtk schema via
 	introspection
 
