@@ -34,7 +34,7 @@ typedef struct _GomDOMImplmentationInterface GomDOMImplementationInterface;
 
 G_END_DECLS
 
-#include <glib-object.h>
+#include <gom/dom/gomdocument.h>
 
 G_BEGIN_DECLS
 
@@ -46,15 +46,37 @@ G_BEGIN_DECLS
 struct _GomDOMImplmentationInterface {
     GTypeInterface parent;
 
-    /* methods */
-
     gboolean (*has_feature) (GomDOMImplementation *dom, const char *feature, const char *version);
+
+    GomDocumentType *(*create_document_type) (GomDOMImplementation *dom,
+                                              const char           *qualified_name,
+                                              const char           *public_id,
+                                              const char           *system_id,
+                                              GError              **error);
+
+    GomDocument     *(*create_document)      (GomDOMImplementation *dom,
+                                              const char           *namespace_uri,
+                                              const char           *qualified_name,
+                                              GomDocumentType      *doctype,
+                                              GError              **error);
 };
 
 GType gom_dom_implementation_get_type (void);
 
-/* methods */
-
 gboolean gom_dom_implementation_has_feature (GomDOMImplementation *dom, const char *feature, const char *version);
+
+GomDocumentType *gom_dom_implementation_create_document_type (GomDOMImplementation *dom,
+                                                              const char           *qualified_name,
+                                                              const char           *public_id,
+                                                              const char           *system_id,
+                                                              GError              **error);
+
+GomDocument     *gom_dom_implementation_create_document      (GomDOMImplementation *dom,
+                                                              const char           *namespace_uri,
+                                                              const char           *qualified_name,
+                                                              GomDocumentType      *doctype,
+                                                              GError              **error);
+
+G_END_DECLS
 
 #endif /* GOM_DOM_IMPLEMENTATION_H */

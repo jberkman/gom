@@ -11,6 +11,7 @@ AC_CONFIG_HEADER([config.h])
 ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 
 # Checks for packages
+GLIB_REQVER="2.6.0"
 GTK_REQVER="2.6.0"
 
 GOM_MODULES="gtk+-2.0 >= $GTK_REQVER gthread-2.0"
@@ -38,6 +39,18 @@ changequote([,])dnl
 # Checks for programs.
 
 # Checks for libraries.
+#
+# Run AM_PATH_GLIB_2_0 to make sure that GLib is installed and working
+# 
+
+GLIB_PACKAGES="gobject-2.0 gmodule-no-export-2.0"
+
+AM_PATH_GLIB_2_0(["$GLIB_REQVER"], :,
+  AC_MSG_ERROR([
+*** GLIB ["$GLIB_REQVER"] or better is required. The latest version of 
+*** GLIB is always available from ftp://ftp.gtk.org/pub/gtk/.]),
+  gobject gmodule-no-export gthread)
+
 AC_ARG_WITH([mozilla-source],
 	[AS_HELP_STRING([--with-mozilla-source],
 		[path to checked-out and built Mozilla JavaScript source tree])],

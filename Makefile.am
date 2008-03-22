@@ -46,7 +46,7 @@ TESTS :=
 
 AM_CPPFLAGS :=
 
-dist_noinst_DATA += Makefile.am.subdir Makefile.configure
+dist_noinst_DATA += Makefile.am.subdir Makefile.configure gomwidgets.in
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA := gom-0.pc
@@ -61,6 +61,7 @@ DIST_SUBDIRS := $(SUBDIRS) $(include_subdirs)
 
 gomwidgets.c: gomwidgets.in Makefile
 	cp $< $@.tmp
+	chmod +w $@.tmp
 	awk '/GTK_TYPE_.*get_type/ { print "WIDGET ("$$2")" }' \
 		$(shell pkg-config --variable includedir gtk+-2.0)/gtk-2.0/gtk/*.h \
 		>> $@.tmp

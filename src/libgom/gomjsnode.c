@@ -119,6 +119,48 @@ gom_js_node_clone_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, j
     return JS_FALSE;
 }
 
+static JSBool
+gom_js_node_normalize (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_node_is_supported (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_node_has_attributes (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_node_add_event_listener (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_node_remove_event_listener (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_node_dispatch_event (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
 static JSFunctionSpec gom_js_node_funcs[] = {
     { "insertBefore",  gom_js_node_insert_before,   2 },
     { "replaceChild",  gom_js_node_replace_child,   2 },
@@ -126,6 +168,16 @@ static JSFunctionSpec gom_js_node_funcs[] = {
     { "appendChild",   gom_js_node_append_child,    1 },
     { "hasChildNodes", gom_js_node_has_child_nodes, 0 },
     { "cloneNode",     gom_js_node_clone_node,      1 },
+
+    { "normalize",     gom_js_node_normalize,       0 },
+    { "isSupported",   gom_js_node_is_supported,    2 },
+    { "hasAttributes", gom_js_node_has_attributes,  0 },
+
+    /* EventTarget */
+    { "addEventListener",    gom_js_node_add_event_listener, 3 },
+    { "removeEventListener", gom_js_node_remove_event_listener, 3 },
+    { "dispatchEvent",       gom_js_node_dispatch_event, 1 },
+
     { NULL }
 };
 

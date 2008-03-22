@@ -56,6 +56,19 @@ struct _GomNamedNodeMapInterface {
                                    GError         **error);
     GomNode *(*item)              (GomNamedNodeMap *map,
                                    gulong           index);
+
+    GomNode *(*get_named_item_ns) (GomNamedNodeMap *map,
+                                   const char      *namespace_uri,
+                                   const char      *local_name);
+
+    GomNode *(*set_named_item_ns) (GomNamedNodeMap *map,
+                                   GomNode         *arg,
+                                   GError         **error);
+
+    GomNode *(*remove_named_item_ns) (GomNamedNodeMap *map,
+                                      const char      *namespace_uri,
+                                      const char      *local_name,
+                                      GError         **error);
 };
 
 GType gom_named_node_map_get_type (void);
@@ -70,5 +83,19 @@ GomNode *gom_named_node_map_remove_named_item (GomNamedNodeMap *map,
                                                GError         **error);
 GomNode *gom_named_node_map_item              (GomNamedNodeMap *map,
                                                gulong           index);
+
+GomNode *gom_named_node_map_get_named_item_ns (GomNamedNodeMap *map,
+                                               const char      *namespace_uri,
+                                               const char      *local_name);
+
+GomNode *gom_named_node_map_set_named_item_ns (GomNamedNodeMap *map,
+                                               GomNode         *arg,
+                                               GError         **error);
+
+GomNode *gom_named_node_map_remove_named_item_ns (GomNamedNodeMap *map,
+                                                  const char      *namespace_uri,
+                                                  const char      *local_name,
+                                                  GError         **error);
+G_END_DECLS
 
 #endif /* GOM_NAMED_NODE_MAP_H */

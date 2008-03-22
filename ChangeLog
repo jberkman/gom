@@ -1,3 +1,32 @@
+2008-03-21  jacob berkman  <jacob@ilovegom.org>
+
+	* include/gom/dom/gomdocument.h: 
+	* include/gom/dom/gomdomexception.h: 
+	* include/gom/dom/gomdomimplementation.h: 
+	* include/gom/dom/gomelement.h: 
+	* include/gom/dom/gomnamednodemap.h: 
+	* include/gom/dom/gomnode.h: 
+	* src/libgom/gomjsdocument.c: 
+	* src/libgom/gomjselement.c: 
+	* src/libgom/gomjsnode.c: 
+	* src/libgom/gomwidget.c: add DOM Level 2 (Core) interfaces and
+	attributes
+
+	* include/gom/dom/gomabstractview.h: 
+	* include/gom/dom/gomdocumentevent.h: 
+	* include/gom/dom/gomdocumentview.h: 
+	* include/gom/dom/gomevent.h: 
+	* include/gom/dom/gomeventexception.h: 
+	* include/gom/dom/gomeventlistener.h: 
+	* include/gom/dom/gomeventtarget.h: 
+	* include/gom/dom/gommouseevent.h: 
+	* include/gom/dom/gommutationevent.h: 
+	* include/gom/dom/gomuievent.h: add DOM Level 2 (Events)
+	interfaces
+
+	* src/libgom/gomdominterfaces.c: add DOM Level 2 (Core & Events)
+	interfaces and attributes
+
 2008-03-12  jacob berkman  <jacob@ilovegom.org>
 
 	* examples/console.gom: 

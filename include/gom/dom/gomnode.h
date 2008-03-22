@@ -82,10 +82,18 @@ struct _GomNodeInterface {
                                          GomNode  *new_child,
                                          GError   **error);
 
-    gboolean    (*has_child_nodes)      (GomNode *node);
+    gboolean   (*has_child_nodes)      (GomNode *node);
 
     GomNode   *(*clone_node)           (GomNode *node,
-                                         gboolean  deep);
+                                        gboolean deep);
+
+    void       (*normalize)            (GomNode *node);
+
+    gboolean   (*is_supported)         (GomNode    *node,
+                                        const char *feature,
+                                        const char *version);
+
+    gboolean   (*has_attributes)       (GomNode *node);
 };
 
 GType gom_node_get_type (void);
@@ -98,6 +106,14 @@ GomNode *gom_node_append_child  (GomNode  *node, GomNode  *new_child, GError   *
 gboolean  gom_node_has_child_nodes (GomNode *node);
 
 GomNode *gom_node_clone_node (GomNode *node, gboolean deep);
+
+void     gom_node_normalize (GomNode *node);
+
+gboolean gom_node_is_supported (GomNode    *node,
+                                const char *feature,
+                                const char *version);
+
+gboolean gom_node_has_attributes (GomNode *node);
 
 G_END_DECLS
 

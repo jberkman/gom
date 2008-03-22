@@ -21,39 +21,37 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef GOM_DOM_EXCEPTION_H
-#define GOM_DOM_EXCEPTION_H
+#ifndef GOM_EVENTLISTENER_H
+#define GOM_EVENTLISTENER_H
 
-#include <glib/gquark.h>
+#include <glib/gmacros.h>
 
 G_BEGIN_DECLS
 
-#define GOM_DOM_EXCEPTION_ERROR (gom_dom_exception_error_quark ())
-
-typedef enum {
-    GOM_DOM_EXCEPTION_ERROR_INDEX_SIZE_ERR = 1,
-    GOM_DOM_EXCEPTION_ERROR_DOMSTRING_SIZE_ERR,
-    GOM_DOM_EXCEPTION_ERROR_HIERCHY_REQUEST_ERR,
-    GOM_DOM_EXCEPTION_ERROR_WRONG_DOCUMENT_ERR,
-    GOM_DOM_EXCEPTION_ERROR_INVALID_CHARACTER_ERR,
-    GOM_DOM_EXCEPTION_ERROR_NO_DATA_ALLOWED_ERR,
-    GOM_DOM_EXCEPTION_ERROR_NO_MODIFICATION_ALLOWED_ERR,
-    GOM_DOM_EXCEPTION_ERROR_NOT_FOUND_ERR,
-    GOM_DOM_EXCEPTION_ERROR_NOT_SUPPORTED_ERR,
-    GOM_DOM_EXCEPTION_ERROR_INUSE_ATTRIBUTE_ERR,
-    GOM_DOM_EXCEPTION_ERROR_INVALID_STATE_ERR,
-    GOM_DOM_EXCEPTION_ERROR_SYNTAX_ERR,
-    GOM_DOM_EXCEPTION_ERROR_INVALID_MODIFICATION_ERR,
-    GOM_DOM_EXCEPTION_ERROR_NAMESPACE_ERR,
-    GOM_DOM_EXCEPTION_ERROR_INVALID_ACCESS_ERR,
-
-    /* Gom-specific exceptions */
-    GOM_DOM_EXCEPTION_ERROR_UNKNOWN_TAG_NAME = 101,
-    GOM_DOM_EXCEPTION_INVALID_ATTRIBUTE_TYPE = 102,
-} GomDOMExceptionError;
-
-GQuark gom_dom_exception_error_quark (void);
+typedef struct _GomEventListener          GomEventListener; /* dummy object */
+typedef struct _GomEventListenerInterface GomEventListenerInterface;
 
 G_END_DECLS
 
-#endif /* GOM_DOM_EXCEPTION_H */
+#include <gom/dom/gomevent.h>
+
+G_BEGIN_DECLS
+
+#define GOM_TYPE_EVENT_LISTENER             (gom_event_listener_get_type ())
+#define GOM_EVENT_LISTENER(i)               (G_TYPE_CHECK_INSTANCE_CAST    ((i), GOM_TYPE_EVENT_LISTENER, GomEventListener))
+#define GOM_IS_EVENT_LISTENER(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_EVENT_LISTENER))
+#define GOM_EVENT_LISTENER_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_EVENT_LISTENER, GomEventListenerInterface))
+
+struct _GomEventListenerInterface {
+    GTypeInterface parent;
+
+    void (*handle_event) (GomEventListener *listener,
+                          GomEvent         *evt);
+};
+
+GType gom_event_listener_get_type (void);
+
+void  gom_event_listener_handle_event (GomEventListener *listener,
+                                       GomEvent         *evt);
+
+#endif /* GOM_EVENTLISTENER_H */

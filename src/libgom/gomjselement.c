@@ -295,7 +295,56 @@ gom_js_element_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN arg
 }
 
 static JSBool
-gom_js_element_normalize (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_element_get_attribute_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_element_set_attribute_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_element_remove_attribute_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_element_get_attribute_node_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_element_set_attribute_node_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_element_get_elements_by_tag_name_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_element_has_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_element_has_attribute_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
@@ -309,7 +358,16 @@ static JSFunctionSpec gom_js_element_funcs[] = {
     { "setAttributeNode",     gom_js_element_set_attribute_node, 1 },
     { "removeAttributeNode",  gom_js_element_remove_attribute_node, 1 },
     { "getElementsByTagName", gom_js_element_get_elements_by_tag_name, 1 },
-    { "normalize",            gom_js_element_normalize, 0 },
+
+    { "getAttributeNS",         gom_js_element_get_attribute_ns, 2 },
+    { "setAttributeNS",         gom_js_element_set_attribute_ns, 3 },
+    { "removeAttributeNS",      gom_js_element_remove_attribute_ns, 2 },
+    { "getAttributeNodeNS",     gom_js_element_get_attribute_node_ns, 2 },
+    { "setAttributeNodeNS",     gom_js_element_set_attribute_node_ns, 1 },
+    { "getElementsByTagNameNS", gom_js_element_get_elements_by_tag_name_ns, 2 },
+    { "hasAttribute",           gom_js_element_has_attribute, 1 },
+    { "hasAttributeNS",         gom_js_element_has_attribute_ns, 2, },
+
     { NULL }
 };
 

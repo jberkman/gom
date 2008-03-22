@@ -51,12 +51,38 @@ struct _GomElementInterface {
     void   (*remove_attribute) (GomElement *elem, const char *name, GError **error);
 
     GomAttr *(*get_attribute_node)    (GomElement *elem, const char *name);
-    void     (*set_attribute_node)    (GomElement *elem, GomAttr *new_attr, GError **error);
-    void     (*remove_attribute_node) (GomElement *elem, GomAttr *old_attr, GError **error);
+    GomAttr *(*set_attribute_node)    (GomElement *elem, GomAttr *new_attr, GError **error);
+    GomAttr *(*remove_attribute_node) (GomElement *elem, GomAttr *old_attr, GError **error);
 
     GomNodeList *(*get_elements_by_tag_name) (GomElement *elem, const char *name);
 
-    void   (*normalize) (GomElement *elem);
+    char *(*get_attribute_ns) (GomElement *elem, const char *namespace_uri, const char *local_name);
+    void  (*set_attribute_ns) (GomElement *elem, 
+                               const char *namespace_uri,
+                               const char *qualified_name,
+                               const char *value,
+                               GError    **error);
+
+    void  (*remove_attribute_ns) (GomElement *elem,
+                                  const char *namespace_uri,
+                                  const char *local_name,
+                                  GError    **error);
+
+    GomAttr *(*get_attribute_node_ns) (GomElement *elem,
+                                       const char *namespace_uri,
+                                       const char *local_name);
+
+    GomAttr *(*set_attribute_node_ns) (GomElement *elem,
+                                       GomAttr    *new_attr,
+                                       GError    **error);
+
+    GomNodeList *(*get_elements_by_tag_name_ns) (GomElement *elem,
+                                                 const char *namespace_uri,
+                                                 const char *local_name);
+
+    gboolean (*has_attribute)    (GomElement *elem, const char *name);
+
+    gboolean (*has_attribute_ns) (GomElement *elem, const char *namespace_uri, const char *local_name);
 };
 
 GType gom_element_get_type (void);
@@ -66,12 +92,38 @@ void   gom_element_set_attribute    (GomElement *elem, const char *name, const c
 void   gom_element_remove_attribute (GomElement *elem, const char *name, GError **error);
 
 GomAttr *gom_element_get_attribute_node    (GomElement *elem, const char *name);
-void     gom_element_set_attribute_node    (GomElement *elem, GomAttr *new_attr, GError **error);
-void     gom_element_remove_attribute_node (GomElement *elem, GomAttr *old_attr, GError **error);
+GomAttr *gom_element_set_attribute_node    (GomElement *elem, GomAttr *new_attr, GError **error);
+GomAttr *gom_element_remove_attribute_node (GomElement *elem, GomAttr *old_attr, GError **error);
 
 GomNodeList *gom_element_get_elements_by_tag_name (GomElement *elem, const char *name);
 
-void   gom_element_normalize (GomElement *elem);
+char *gom_element_get_attribute_ns (GomElement *elem, const char *namespace_uri, const char *local_name);
+void  gom_element_set_attribute_ns (GomElement *elem, 
+                                    const char *namespace_uri,
+                                    const char *qualified_name,
+                                    const char *value,
+                                    GError    **error);
+
+void  gom_element_remove_attribute_ns (GomElement *elem,
+                                       const char *namespace_uri,
+                                       const char *local_name,
+                                       GError    **error);
+
+GomAttr *gom_element_get_attribute_node_ns (GomElement *elem,
+                                            const char *namespace_uri,
+                                            const char *local_name);
+
+GomAttr *gom_element_set_attribute_node_ns (GomElement *elem,
+                                            GomAttr    *new_attr,
+                                            GError    **error);
+
+GomNodeList *gom_element_get_elements_by_tag_name_ns (GomElement *elem,
+                                                      const char *namespace_uri,
+                                                      const char *local_name);
+
+gboolean gom_element_has_attribute    (GomElement *elem, const char *name);
+
+gboolean gom_element_has_attribute_ns (GomElement *elem, const char *namespace_uri, const char *local_name);
 
 G_END_DECLS
 

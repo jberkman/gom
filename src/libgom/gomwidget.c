@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include <gom/dom/gomdomexception.h>
 #include <gom/dom/gomelement.h>
+#include <gom/dom/gomeventtarget.h>
 #include <gom/gomglist.h>
 #include <gom/gomjselement.h>
 #include <gom/gomjsobject.h>
@@ -263,6 +264,12 @@ widget_clone_node (GomNode *node, gboolean deep)
 }
 
 static void
+widget_normalize (GomNode *node)
+{
+    GOM_NOT_IMPLEMENTED;
+}
+
+static void
 widget_node_init (gpointer g_iface, gpointer iface_data)
 {
     GomNodeInterface *node = (GomNodeInterface *)g_iface;
@@ -275,6 +282,7 @@ widget_node_init (gpointer g_iface, gpointer iface_data)
     IFACE (append_child);
     IFACE (has_child_nodes);
     IFACE (clone_node);
+    IFACE (normalize);
 
 #undef IFACE
 }
@@ -346,16 +354,18 @@ widget_get_attribute_node (GomElement *elem, const char *name)
     return NULL;
 }
 
-static void
+static GomAttr *
 widget_set_attribute_node (GomElement *elem, GomAttr *new_atr, GError **error)
 {
     GOM_NOT_IMPLEMENTED;
+    return new_atr;
 }
 
-static void
+static GomAttr *
 widget_remove_attribute_node (GomElement *elem, GomAttr *old_attr, GError **error)
 {
     GOM_NOT_IMPLEMENTED;
+    return old_attr;
 }
 
 static GomNodeList *
@@ -363,12 +373,6 @@ widget_get_elements_by_tag_name (GomElement *elem, const char *name)
 {
     GOM_NOT_IMPLEMENTED;
     return NULL;
-}
-
-static void
-widget_normalize (GomElement *elem)
-{
-    GOM_NOT_IMPLEMENTED;
 }
 
 static void
@@ -463,7 +467,47 @@ widget_element_init (gpointer g_iface, gpointer iface_data)
     IFACE (set_attribute_node);
     IFACE (remove_attribute_node);
     IFACE (get_elements_by_tag_name);
-    IFACE (normalize);
+
+#undef IFACE
+}
+
+static void
+widget_add_event_listener (GomEventTarget   *target,
+                           const char       *type,
+                           GomEventListener *listener,
+                           gboolean          use_capture)
+{
+    GOM_NOT_IMPLEMENTED;
+}
+
+static void
+widget_remove_event_listener (GomEventTarget   *target,
+                              const char       *type,
+                              GomEventListener *listener,
+                              gboolean          use_capture)
+{
+    GOM_NOT_IMPLEMENTED;
+}
+
+static gboolean
+widget_dispatch_event (GomEventTarget   *target,
+                       GomEvent         *evt,
+                       GError          **error)
+{
+    GOM_NOT_IMPLEMENTED;
+    return FALSE;
+}
+
+static void
+widget_target_init (gpointer g_iface, gpointer iface_data)
+{
+    GomEventTargetInterface *target = (GomEventTargetInterface *)g_iface;
+
+#define IFACE(func) target->func = widget_##func
+
+    IFACE (add_event_listener);
+    IFACE (remove_event_listener);
+    IFACE (dispatch_event);
 
 #undef IFACE
 }
@@ -499,9 +543,15 @@ gom_widget_init_once (gpointer data)
         NULL, /* interface_finalize */
         NULL  /* interface_data */
     };
+    static const GInterfaceInfo target_info = {
+        widget_target_init,
+        NULL,
+        NULL,
+    };
 
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE, &node_info);
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT, &element_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET, &target_info);
 
     oclass = g_type_class_ref (GTK_TYPE_WIDGET);
 

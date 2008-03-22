@@ -79,6 +79,25 @@ struct _GomDocumentInterface {
                                                                 const char  *tag_name);
 
     /* introduced in DOM level 2: */
+    GomNode                  *(*import_node)                   (GomDocument *doc,
+                                                                GomNode     *node,
+                                                                gboolean     deep,
+                                                                GError     **error);
+
+    GomElement               *(*create_element_ns)             (GomDocument *doc,
+                                                                const char  *namespace_uri,
+                                                                const char  *qualified_name,
+                                                                GError     **error);
+
+    GomAttr                  *(*create_attribute_ns)           (GomDocument *doc,
+                                                                const char  *namespace_uri,
+                                                                const char  *qualified_name,
+                                                                GError     **error);
+
+    GomNodeList              *(*get_elements_by_tag_name_ns)   (GomDocument *doc,
+                                                                const char  *namespace_uri,
+                                                                const char  *local_name);
+
     GomElement               *(*get_element_by_id)             (GomDocument *doc,
                                                                 const char  *element_id);
 };
@@ -110,6 +129,25 @@ GomNodeList              *gom_document_get_elements_by_tag_name      (GomDocumen
                                                                       const char  *tag_name);
 
 /* Introduced in DOM Level 2: */
+GomNode                  *gom_document_import_node                   (GomDocument *doc,
+                                                                      GomNode     *node,
+                                                                      gboolean     deep,
+                                                                      GError     **error);
+
+GomElement               *gom_document_create_element_ns             (GomDocument *doc,
+                                                                      const char  *namespace_uri,
+                                                                      const char  *qualified_name,
+                                                                      GError     **error);
+
+GomAttr                  *gom_document_create_attribute_ns           (GomDocument *doc,
+                                                                      const char  *namespace_uri,
+                                                                      const char  *qualified_name,
+                                                                      GError     **error);
+
+GomNodeList              *gom_document_get_elements_by_tag_name_ns   (GomDocument *doc,
+                                                                      const char  *namespace_uri,
+                                                                      const char  *local_name);
+
 GomElement               *gom_document_get_element_by_id             (GomDocument *doc,
                                                                       const char  *element_id);
 G_END_DECLS

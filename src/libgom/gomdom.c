@@ -25,11 +25,7 @@ THE SOFTWARE.
 
 #include <gom/gomdom.h>
 #include <gom/gomdoc.h>
-#include <gom/dom/gomdomexception.h>
-
 #include <gommacros.h>
-
-GOM_DEFINE_QUARK (dom_exception_error);
 
 static gboolean
 gom_dom_has_feature (GomDOMImplementation *dom, const char *feature, const char *version)

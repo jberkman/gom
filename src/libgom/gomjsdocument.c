@@ -140,6 +140,34 @@ gom_js_document_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN ar
 }
 
 static JSBool
+gom_js_document_import_node (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_document_create_element_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_document_create_attribute_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
+gom_js_document_get_elements_by_tag_name_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
+static JSBool
 gom_js_document_get_element_by_id (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GomDocument *doc;
@@ -181,8 +209,14 @@ static JSFunctionSpec document_funcs[] = {
     { "createAttribute",             gom_js_document_create_attribute, 1 },
     { "createEntityReference",       gom_js_document_create_entity_reference, 1 },
     { "getElementsByTagName",        gom_js_document_get_elements_by_tag_name, 1 },
+
     /* Introduced in DOM Level 2: */
+    { "importNode",                  gom_js_document_import_node, 2 },
+    { "createElementNS",             gom_js_document_create_element_ns, 2 },
+    { "createAttributeNS",           gom_js_document_create_attribute_ns, 2 },
+    { "getElementsByTagNameNS",      gom_js_document_get_elements_by_tag_name_ns, 2 },
     { "getElementById",              gom_js_document_get_element_by_id, 1 },
+
     { NULL }
 };
 
