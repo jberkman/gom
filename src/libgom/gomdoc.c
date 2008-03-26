@@ -124,20 +124,6 @@ gom_doc_set_property (GObject *object,
     case PROP_NODE_VALUE:
         GOM_NOT_IMPLEMENTED;
         break;
-    case PROP_NODE_TYPE:
-    case PROP_PARENT_NODE:
-    case PROP_CHILD_NODES:
-    case PROP_FIRST_CHILD:
-    case PROP_LAST_CHILD:
-    case PROP_PREVIOUS_SIBLING:
-    case PROP_NEXT_SIBLING:
-    case PROP_ATTRIBUTES:
-    case PROP_OWNER_DOCUMENT:
-    case PROP_DOCTYPE:
-    case PROP_IMPLEMENTATION:
-    case PROP_DOCUMENT_ELEMENT:
-        g_assert_not_reached ();
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
         break;

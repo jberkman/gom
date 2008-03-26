@@ -30,9 +30,12 @@ THE SOFTWARE.
 #include <gom/dom/gomdomexception.h>
 #include <gom/dom/gomelement.h>
 #include <gom/dom/gomeventtarget.h>
+#include <gom/dom/gommouseevent.h>
+#include <gom/dom/gomuievent.h>
 #include <gom/gomglist.h>
 #include <gom/gomjselement.h>
 #include <gom/gomjsobject.h>
+#include <gom/gommouseevt.h>
 #include <gom/gomobject.h>
 
 #include <gtk/gtk.h>
@@ -57,14 +60,45 @@ enum {
     PROP_TAG_NAME
 };
 
-static void (*gtk_widget_set_property) (GObject        *object,
-                                        guint           property_id,
-                                        const GValue   *value,
-                                        GParamSpec     *pspec);
-static void (*gtk_widget_get_property) (GObject        *object,
-                                        guint           property_id,
-                                        GValue         *value,
-                                        GParamSpec     *pspec);
+GQuark gom_widget_private_quark (void);
+GOM_DEFINE_QUARK (widget_private);
+
+typedef struct {
+    guint click_state;
+} GomWidgetPrivate;
+
+static void
+free_priv (gpointer data)
+{
+    GomWidgetPrivate *priv = data;
+
+    g_free (priv);
+}
+
+static GomWidgetPrivate *
+get_priv (gpointer obj)
+{
+    GomWidgetPrivate *priv;
+
+    priv = g_object_get_qdata (obj, gom_widget_private_quark ());
+    if (!priv) {
+        priv = g_new0 (GomWidgetPrivate, 1);
+        g_object_set_qdata_full (obj, gom_widget_private_quark (), priv, free_priv);
+    }
+    return priv;
+}
+
+static void (*_gtk_widget_set_property) (GObject        *object,
+                                         guint           property_id,
+                                         const GValue   *value,
+                                         GParamSpec     *pspec);
+static void (*_gtk_widget_get_property) (GObject        *object,
+                                         guint           property_id,
+                                         GValue         *value,
+                                         GParamSpec     *pspec);
+
+static gboolean (*_gtk_widget_event)    (GtkWidget      *widget,
+                                         GdkEvent       *event);
 
 /* attributes */
 
@@ -270,7 +304,7 @@ widget_normalize (GomNode *node)
 }
 
 static void
-widget_node_init (gpointer g_iface, gpointer iface_data)
+widget_impl_node (gpointer g_iface, gpointer iface_data)
 {
     GomNodeInterface *node = (GomNodeInterface *)g_iface;
 
@@ -420,7 +454,9 @@ gom_widget_get_property (GObject    *object,
         g_value_set_object (value, widget_get_owner_document (GOM_NODE (object)));
         break;
     default:
-        gtk_widget_get_property (object, property_id, value, pspec);
+        if (_gtk_widget_get_property) {
+            _gtk_widget_get_property (object, property_id, value, pspec);
+        }
         break;
     }
 }
@@ -445,16 +481,138 @@ gom_widget_set_property (GObject      *object,
     case PROP_ATTRIBUTES:
     case PROP_OWNER_DOCUMENT:
     case PROP_TAG_NAME:
-        g_assert_not_reached ();
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
         break;
     default:
-        gtk_widget_set_property (object, property_id, value, pspec);
+        if (_gtk_widget_set_property) {
+            _gtk_widget_set_property (object, property_id, value, pspec);
+        }
         break;
     }
 }
 
+/*
+ Triple-clicks are very similar to double-clicks, except that
+ GDK_3BUTTON_PRESS is inserted after the third click. The order of the
+ events is:
+
+ 1. GDK_BUTTON_PRESS
+ 2. GDK_BUTTON_RELEASE
+ 3. GDK_BUTTON_PRESS
+ 4. GDK_2BUTTON_PRESS
+ 5. GDK_BUTTON_RELEASE
+ 6. GDK_BUTTON_PRESS
+ 7. GDK_3BUTTON_PRESS
+ 8. GDK_BUTTON_RELEASE
+
+Meanwhile, for the DOM...
+
+ The click event occurs when the pointing device button is clicked
+ over an element. A click is defined as a mousedown and mouseup over
+ the same screen location. The sequence of these events is:
+
+ 1. mousedown
+ 2. mouseup
+ 3. click
+
+ If multiple clicks occur at the same screen location, the sequence
+ repeats with the detail attribute incrementing with each repetition.
+*/
+
+#define INIT_MOUSE_EVENT(name, f)                                       \
+    G_STMT_START {                                                      \
+        evt = g_object_new (GOM_TYPE_MOUSE_EVT, NULL);                  \
+        gom_mouse_event_init_mouse_event (                              \
+            GOM_MOUSE_EVENT (evt),                                      \
+            (name), TRUE, event->type != GDK_MOTION_NOTIFY,             \
+            NULL, priv->click_state,                                    \
+            event->f.x_root,                                            \
+            event->f.y_root,                                            \
+            event->f.x,                                                 \
+            event->f.y,                                                 \
+            event->f.state & GDK_CONTROL_MASK,                          \
+            event->f.state & GDK_MOD1_MASK,                             \
+            event->f.state & GDK_SHIFT_MASK,                            \
+            event->f.state & GDK_META_MASK,                             \
+            (event->f.state & (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK | GDK_BUTTON3_MASK)) >> 8, \
+            NULL);                                                      \
+    } G_STMT_END
+    
+
+static gboolean
+gom_widget_event (GtkWidget *widget, GdkEvent *event)
+{
+    GomEvt *evt = NULL;
+    GomWidgetPrivate *priv;
+    GError *error = NULL;
+
+    switch (event->type) {
+    case GDK_MOTION_NOTIFY:        
+        priv = get_priv (widget);
+        priv->click_state = 0;
+        INIT_MOUSE_EVENT ("mousemove", motion);
+        break;
+    case GDK_BUTTON_PRESS:
+        priv = get_priv (widget);
+        ++priv->click_state;
+        INIT_MOUSE_EVENT ("mousedown", button);
+        break;
+    case GDK_BUTTON_RELEASE:
+        priv = get_priv (widget);
+        INIT_MOUSE_EVENT ("mouseup", button);
+        break;
+    case GDK_ENTER_NOTIFY:
+        priv = get_priv (widget);
+        INIT_MOUSE_EVENT ("mouseover", crossing);
+        break;
+    case GDK_LEAVE_NOTIFY:
+        priv = get_priv (widget);
+        INIT_MOUSE_EVENT ("mouseout", crossing);
+        break;
+    case GDK_SCROLL:
+    case GDK_KEY_PRESS:
+    case GDK_KEY_RELEASE:
+        break;
+    default:
+        break;
+    }
+
+    if (evt) {
+        gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), GOM_EVENT (evt), &error);
+        if (error) {
+            g_print ("%s:%d:%s(): Error dispatching event: %s\n",
+                     __FILE__, __LINE__, __FUNCTION__, error->message);
+            g_clear_error (&error);
+        }
+        if (gom_evt_prevented_default (evt)) {
+            g_object_unref (evt);
+            return TRUE;
+        }
+        g_object_unref (evt);
+        if (_gtk_widget_event && _gtk_widget_event (widget, event)) {
+            return TRUE;
+        }
+        if (event->type == GDK_BUTTON_RELEASE && priv->click_state) {
+            INIT_MOUSE_EVENT ("click", button);
+            gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), GOM_EVENT (evt), &error);
+            if (error) {
+                g_print ("%s:%d:%s(): Error dispatching event: %s\n",
+                         __FILE__, __LINE__, __FUNCTION__, error->message);
+                g_clear_error (&error);
+            }
+            if (gom_evt_prevented_default (evt)) {
+                g_object_unref (evt);
+                return TRUE;
+            }
+            g_object_unref (evt);
+        }
+    }
+
+    return FALSE;
+}
+
 static void
-widget_element_init (gpointer g_iface, gpointer iface_data)
+widget_impl_element (gpointer g_iface, gpointer iface_data)
 {
     GomElementInterface *elem = (GomElementInterface *)g_iface;
 
@@ -494,12 +652,15 @@ widget_dispatch_event (GomEventTarget   *target,
                        GomEvent         *evt,
                        GError          **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    char *event_name;
+    g_object_get (evt, "type", &event_name, NULL);
+    g_print (" &&& dispatching event: %s.%s\n", g_type_name (G_TYPE_FROM_INSTANCE (target)), event_name);
+    g_free (event_name);
     return FALSE;
 }
 
 static void
-widget_target_init (gpointer g_iface, gpointer iface_data)
+widget_impl_target (gpointer g_iface, gpointer iface_data)
 {
     GomEventTargetInterface *target = (GomEventTargetInterface *)g_iface;
 
@@ -532,19 +693,21 @@ static gpointer
 gom_widget_init_once (gpointer data)
 {
     GObjectClass *oclass;
+    GtkWidgetClass *wclass;
     GType type = 0;
+
     static const GInterfaceInfo node_info = {
-        widget_node_init,
+        widget_impl_node,
         NULL, /* interface_finalize */
         NULL  /* interface_data */
     };
     static const GInterfaceInfo element_info = {
-        widget_element_init,
+        widget_impl_element,
         NULL, /* interface_finalize */
         NULL  /* interface_data */
     };
     static const GInterfaceInfo target_info = {
-        widget_target_init,
+        widget_impl_target,
         NULL,
         NULL,
     };
@@ -554,12 +717,16 @@ gom_widget_init_once (gpointer data)
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET, &target_info);
 
     oclass = g_type_class_ref (GTK_TYPE_WIDGET);
+    wclass = GTK_WIDGET_CLASS (oclass);
 
-    gtk_widget_get_property = oclass->get_property;
+    _gtk_widget_get_property = oclass->get_property;
     oclass->get_property = gom_widget_get_property;
 
-    gtk_widget_set_property = oclass->set_property;
+    _gtk_widget_set_property = oclass->set_property;
     oclass->set_property = gom_widget_set_property;
+
+    _gtk_widget_event = wclass->event;
+    wclass->event = gom_widget_event;
 
     g_object_class_override_property (oclass, PROP_NODE_NAME,        "node-name");
     g_object_class_override_property (oclass, PROP_NODE_VALUE,       "node-value");

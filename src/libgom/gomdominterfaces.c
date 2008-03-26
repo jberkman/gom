@@ -38,7 +38,7 @@ GOM_DEFINE_INTERFACE(GomAbstractView, gom_abstract_view,
         g_param_spec_object ("document", NULL,
                              "The source DocumentView of which this is an AbstractView.",
                              GOM_TYPE_DOCUMENT_VIEW,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 });
 
 #include <gom/dom/gomattr.h>
@@ -52,14 +52,14 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE(GomAttr, gom_attr,
         g_param_spec_string ("name", NULL,
                              "The name of this attribute",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_boolean ("specified", NULL,
                               "Whether this attribute was explicitly given a value in the original document.",
                               FALSE,
-                              G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
@@ -69,14 +69,14 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE(GomAttr, gom_attr,
                              "their values. "
                              "On setting, this creates a Text node with the unparsed contents of the string.",
                              NULL,
-                             G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
     
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("owner-element", NULL,
                              "The Element node this attribute is attached to or null if this attribute is not in use.",
                              GOM_TYPE_ELEMENT,
-                             G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_NODE);
 
 #include <gom/dom/gomcdatasection.h>
@@ -92,13 +92,13 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE(GomCharacterData, gom_character_data,
         g_param_spec_string ("data", NULL,
                              "The character data of the node that implements this interface",
                              NULL,
-                             G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
     g_object_interface_install_property (
         g_iface,
         g_param_spec_ulong ("length", NULL,
                             "The number of characters that are available through data and the substringData method below",
                             0, G_MAXULONG, 0,
-                            G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_NODE);
 
 GOM_STUB_FUNC (GOM_CHARACTER_DATA, gom_character_data, substring_data,
@@ -134,20 +134,20 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomDocument, gom_document,
         g_param_spec_object ("doctype", NULL,
                              "The Document Type Declaration (see DocumentType) associated with this document.",
                              GOM_TYPE_DOCUMENT_TYPE,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("implementation", NULL,
                              "The DOMImplementation object that handles this document.",
                              GOM_TYPE_DOM_IMPLEMENTATION,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("document-element", NULL,
                              "This is a convenience attribute that allows direct access to the child node that is the root element of the document.",
                              GOM_TYPE_ELEMENT,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_NODE);
 
 GOM_STUB_FUNC (GOM_DOCUMENT, gom_document, create_element,
@@ -225,41 +225,41 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomDocumentType, gom_document_type,
         g_param_spec_string ("name", NULL,
                              "The name of DTD; i.e., the name immediately following the DOCTYPE keyword.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("entities", NULL,
                              "A NamedNodeMap containing the general entities, both external and internal, declared in the DTD.",
                              GOM_TYPE_NAMED_NODE_MAP,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("notations", NULL,
                              "A NamedNodeMap containing the notations declared in the DTD.",
                              GOM_TYPE_NAMED_NODE_MAP,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("public-id", NULL,
                              "The public identifier of the external subset.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("system-id", NULL,
                              "The system identifier of the external subset.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("internal-subset", NULL,
                              "The internal subset as a string.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_NODE);
 
 #include <gom/dom/gomdocumentview.h>
@@ -271,7 +271,7 @@ GOM_DEFINE_INTERFACE(GomDocumentView, gom_document_view,
         g_param_spec_object ("default-view", NULL,
                              "The default AbstractView for this Document, or null if none available.",
                              GOM_TYPE_ABSTRACT_VIEW,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 });
 
 #include <gom/dom/gomdomexception.h>
@@ -312,7 +312,7 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomElement, gom_element,
         g_param_spec_string ("tag-name", NULL,
                              "The name of the element.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_NODE);
 
 GOM_STUB_FUNC (GOM_ELEMENT, gom_element, get_attribute,
@@ -403,21 +403,21 @@ GOM_DEFINE_INTERFACE (GomEvent, gom_event,
         g_param_spec_string ("type", NULL,
                              "The name of the event",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("target", NULL,
                              "Used to indicate the EventTarget to which the event was originally dispatched.",
                              GOM_TYPE_EVENT_TARGET,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("current-target", NULL,
                              "Used to indicate the EventTarget whose EventListeners are currently being processed.",
                              GOM_TYPE_EVENT_TARGET,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
@@ -425,28 +425,28 @@ GOM_DEFINE_INTERFACE (GomEvent, gom_event,
                            "Used to indicate which phase of event flow is currently being evaluated.",
                            GOM_TYPE_EVENT_PHASE_TYPE,
                            GOM_EVENT_CAPTURING_PHASE,
-                           G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_boolean ("bubbles", NULL,
                               "Used to indicate whether or not an event is a bubbling event.",
                               TRUE,
-                              G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_boolean ("cancelable", NULL,
                               "Used to indicate whether or not an event can have its default action prevented.",
                               TRUE,
-                              G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
     
     g_object_interface_install_property (
         g_iface,
         g_param_spec_long ("time-stamp", NULL,
                            "Used to specify the time (in milliseconds relative to the epoch) at which the event was created.",
                            0, G_MAXLONG, 0,
-                           G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 });
 
 GOM_STUB_VOID (GOM_EVENT, gom_event, stop_propagation,
@@ -501,7 +501,7 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomMouseEvent, gom_mouse_event,
         g_param_spec_long ("screen-x", NULL,
                            "The horizontal coordinate at which the event occurred relative to the origin of the screen coordinate system.",
                            0, G_MAXLONG, 0,
-                           G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
 
     g_object_interface_install_property (
@@ -509,28 +509,28 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomMouseEvent, gom_mouse_event,
         g_param_spec_long ("screen-y", NULL,
                            "The vertical coordinate at which the event occurred relative to the origin of the screen coordinate system.",
                            0, G_MAXLONG, 0,
-                           G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_long ("client-x", NULL,
                            "The horizontal coordinate at which the event occurred relative to the DOM implementation's client area.",
                            0, G_MAXLONG, 0,
-                           G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_long ("client-y", NULL,
                            "The vertical coordinate at which the event occurred relative to the DOM implementation's client area.",
                            0, G_MAXLONG, 0,
-                           G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_boolean ("ctrl-key", NULL,
                               "Used to indicate whether the 'ctrl' key was depressed during the firing of the event.",
                               FALSE,
-                              G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
 
     g_object_interface_install_property (
@@ -538,35 +538,35 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomMouseEvent, gom_mouse_event,
         g_param_spec_boolean ("shift-key", NULL,
                               "Used to indicate whether the 'shift' key was depressed during the firing of the event.",
                               FALSE,
-                              G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_boolean ("alt-key", NULL,
                               "Used to indicate whether the 'alt' key was depressed during the firing of the event.",
                               FALSE,
-                              G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_boolean ("meta-key", NULL,
                               "Used to indicate whether the 'meta' key was depressed during the firing of the event.",
                               FALSE,
-                              G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_uint ("button", NULL,
                            "During mouse events caused by the depression or release of a mouse button, button is used to indicate which mouse button changed state.",
                            0, 2, 0,
-                           G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("related-target", NULL,
                              "Used to identify a secondary EventTarget related to a UI event.",
                              GOM_TYPE_EVENT_TARGET,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_UI_EVENT);
 
 GOM_STUB_VOID (GOM_MOUSE_EVENT, gom_mouse_event, init_mouse_event,
@@ -600,28 +600,28 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomMutationEvent, gom_mutation_event,
         g_param_spec_object ("related-node", NULL,
                              "relatedNode is used to identify a secondary node related to a mutation event.",
                              GOM_TYPE_NODE,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("prev-value", NULL,
                              "prevValue indicates the previous value of the Attr node in DOMAttrModified events, and of the CharacterData node in DOMCharDataModified events.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("new-value", NULL,
                              "newValue indicates the new value of the Attr node in DOMAttrModified events, and of the CharacterData node in DOMCharDataModified events.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("attr-name", NULL,
                              "attrName indicates the name of the changed Attr node in a DOMAttrModified event.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
@@ -629,7 +629,7 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomMutationEvent, gom_mutation_event,
                            "attrChange indicates the type of change which triggered the DOMAttrModified event.",
                            GOM_TYPE_MUTATION_EVENT_ATTR_CHANGE_TYPE,
                            GOM_MUTATION_EVENT_MODIFICATION,
-                           G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_EVENT);
 
 #include <gom/dom/gomnamednodemap.h>
@@ -641,7 +641,7 @@ GOM_DEFINE_INTERFACE (GomNamedNodeMap, gom_named_node_map,
         g_param_spec_ulong ("length", NULL,
                             "The number of nodes in the map.",
                             0, G_MAXULONG, 0,
-                            G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 });
 
 GOM_STUB_FUNC (GOM_NAMED_NODE_MAP, gom_named_node_map, get_named_item,
@@ -673,14 +673,14 @@ GOM_DEFINE_INTERFACE (GomNode, gom_node,
         g_param_spec_string ("node-name", NULL,
                              "The name of this node, depending on its type",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("node-value", NULL,
                              "The value of this node, depending on its type",
                              NULL,
-                             G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
@@ -688,84 +688,84 @@ GOM_DEFINE_INTERFACE (GomNode, gom_node,
                            "A code representing the type of the underlying object",
                            GOM_ELEMENT_NODE, GOM_NOTATION_NODE,
                            GOM_ELEMENT_NODE,
-                           G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("parent-node", NULL,
                              "The parent of this node.",
                              GOM_TYPE_NODE,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("child-nodes", NULL,
                              "A NodeList that contains all children of this node.",
                              GOM_TYPE_NODE_LIST,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("first-child", NULL,
                              "The first child of this node.",
                              GOM_TYPE_NODE,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("last-child", NULL,
                              "The last child of this node.",
                              GOM_TYPE_NODE,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("previous-sibling", NULL,
                              "The node immediately preceding this node.",
                              GOM_TYPE_NODE,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("next-sibling", NULL,
                              "The node immediately following this node.",
                              GOM_TYPE_NODE,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("attributes", NULL,
                              "A NamedNodeMap containing the attributes of this node (if it is an Element) or null otherwise.",
                              GOM_TYPE_NAMED_NODE_MAP,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("owner-document", NULL,
                              "The Document object associated with this node.",
                              GOM_TYPE_DOCUMENT,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("namespace-uri", "namespace-u-r-i",
                              "The namespace URI of this node, or null if it is unspecified.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("prefix", NULL,
                              "The namespace prefix of this node, or null if it is unspecified.",
                              NULL,
-                             G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("local-name", NULL,
                              "Returns the local part of the qualified name of this node.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 });
 
 GOM_STUB_FUNC (GOM_NODE, gom_node, insert_before,
@@ -806,7 +806,7 @@ GOM_DEFINE_INTERFACE (GomNodeList, gom_node_list,
         g_param_spec_ulong ("length", NULL,
                             "The number of nodes in the list.",
                             0, G_MAXULONG, 0,
-                            G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 });
 
 GOM_STUB_FUNC (GOM_NODE_LIST, gom_node_list, item,
@@ -822,14 +822,14 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomNotation, gom_notation,
         g_param_spec_string ("public-id", NULL,
                              "The public identifier of this notation.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("system-id", NULL,
                              "The system identifier of this notation.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
 }, GOM_TYPE_NODE);
 
@@ -842,14 +842,14 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomProcessingInstruction, gom_processing
         g_param_spec_string ("target", NULL,
                              "The target of this processing instruction.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("data", NULL,
                              "The content of this processing instruction.",
                              NULL,
-                             G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_NODE);
 
 #include <gom/dom/gomtext.h>
@@ -869,14 +869,14 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomUIEvent, gom_ui_event,
         g_param_spec_object ("view", NULL,
                              "The view attribute identifies the AbstractView from which the event was generated.",
                              GOM_TYPE_ABSTRACT_VIEW,
-                             G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_long ("detail", NULL,
                            "Specifies some detail information about the Event, depending on the type of event.",
                            0, G_MAXLONG, 0,
-                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_BLURB));
+                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_EVENT);
 
 GOM_STUB_VOID (GOM_UI_EVENT, gom_ui_event, init_ui_event,

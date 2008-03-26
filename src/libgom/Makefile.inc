@@ -8,16 +8,19 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomdom.c			\
 	src/libgom/gomdombuiltins.c		\
 	src/libgom/gomdominterfaces.c		\
+	src/libgom/gomevt.c			\
 	src/libgom/gomglist.c			\
 	src/libgom/gomjscontext.c		\
 	src/libgom/gomjsdocument.c		\
 	src/libgom/gomjselement.c		\
 	src/libgom/gomjsexception.c		\
-	src/libgom/gomjsobject.c		\
 	src/libgom/gomjsnavigator.c		\
 	src/libgom/gomjsnode.c			\
+	src/libgom/gomjsobject.c		\
 	src/libgom/gomjswindow.c		\
+	src/libgom/gommouseevt.c		\
 	src/libgom/gomobject.c			\
+	src/libgom/gomuievt.c			\
 	src/libgom/gomvalue.c			\
 	src/libgom/gomwidget.c
 

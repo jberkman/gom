@@ -1,3 +1,27 @@
+2008-03-25  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomwidget.c (get_priv): add a private structure which
+	is used to track button events for clicks
+	(widget_impl_node, widget_impl_element, widget_impl_target):
+	rename
+	(gom_widget_event): beginings of reporting Gdk events as DOM
+	events.
+	(widget_dispatch_event): just print the event we are dispatching
+	(gom_widget_init_once): override the event function of
+	GtkWidgetClass
+
+	* src/libgom/gomdominterfaces.c: use the G_PARAM_STATIC_STRINGS
+	macro
+
+	* src/libgom/gomevt.c:
+	* include/gom/gomevt.h: implement GomEvent
+
+	* src/libgom/gomuievt.c:
+	* include/gom/gomuievt.h: implement GomUIEvent
+
+	* src/libgom/gommouseevt.c:
+	* include/gom/gommouseevt.h: implement GomMouseEvent
+
 2008-03-21  jacob berkman  <jacob@ilovegom.org>
 
 	* include/gom/dom/gomdocument.h: 
