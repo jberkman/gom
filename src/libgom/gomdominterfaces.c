@@ -1141,14 +1141,14 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomUIEvent, gom_ui_event,
         g_param_spec_object ("view", NULL,
                              "The view attribute identifies the AbstractView from which the event was generated.",
                              GOM_TYPE_ABSTRACT_VIEW,
-                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_long ("detail", NULL,
                            "Specifies some detail information about the Event, depending on the type of event.",
                            0, G_MAXLONG, 0,
-                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_EVENT);
 
 GOM_STUB_VOID (GOM_UI_EVENT, gom_ui_event, init_ui_event,

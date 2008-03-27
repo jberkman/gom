@@ -575,6 +575,15 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
     const char *key_identifier;
     GomKeyLocationCode key_location;
 
+    static GdkEventType  last_type  = 0;
+    static GdkEvent     *last_event = NULL;
+
+    if (event == last_event && event->type == last_type) {
+        return _gtk_widget_event 
+            ? _gtk_widget_event (widget, event)
+            : FALSE;
+    }
+
     switch (event->type) {
     case GDK_MOTION_NOTIFY:        
         priv = get_priv (widget);
@@ -598,8 +607,6 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         priv = get_priv (widget);
         INIT_MOUSE_EVENT ("mouseout", crossing);
         break;
-    case GDK_SCROLL:
-        break;
     case GDK_KEY_PRESS:
         priv = get_priv (widget);
         INIT_KEY_EVENT ("keydown");
@@ -608,11 +615,34 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         priv = get_priv (widget);
         INIT_KEY_EVENT ("keyup");
         break;
+    case GDK_SCROLL:
     default:
-        break;
+        return _gtk_widget_event 
+            ? _gtk_widget_event (widget, event)
+            : FALSE;
     }
 
-    if (evt) {
+    g_assert (GOM_IS_EVENT (evt));
+
+    last_type  = event->type;
+    last_event = event;
+
+    gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
+    if (error) {
+        g_print ("%s:%d:%s(): Error dispatching event: %s\n",
+                 __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_clear_error (&error);
+    }
+    if (gom_event_is_default_prevented (evt)) {
+        g_object_unref (evt);
+        return TRUE;
+    }
+    g_object_unref (evt);
+    if (_gtk_widget_event && _gtk_widget_event (widget, event)) {
+        return TRUE;
+    }
+    if (event->type == GDK_BUTTON_RELEASE && priv->click_state) {
+        INIT_MOUSE_EVENT ("click", button);
         gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
         if (error) {
             g_print ("%s:%d:%s(): Error dispatching event: %s\n",
@@ -624,23 +654,6 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
             return TRUE;
         }
         g_object_unref (evt);
-        if (_gtk_widget_event && _gtk_widget_event (widget, event)) {
-            return TRUE;
-        }
-        if (event->type == GDK_BUTTON_RELEASE && priv->click_state) {
-            INIT_MOUSE_EVENT ("click", button);
-            gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
-            if (error) {
-                g_print ("%s:%d:%s(): Error dispatching event: %s\n",
-                         __FILE__, __LINE__, __FUNCTION__, error->message);
-                g_clear_error (&error);
-            }
-            if (gom_event_is_default_prevented (evt)) {
-                g_object_unref (evt);
-                return TRUE;
-            }
-            g_object_unref (evt);
-        }
     }
 
     return FALSE;

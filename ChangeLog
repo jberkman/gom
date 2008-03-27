@@ -1,3 +1,11 @@
+2008-03-27  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomdominterfaces.c: UIEvent properties are read-only
+
+	* src/libgom/gomwidget.c (gom_widget_event): remember the last
+	event/event type we handled, to work around gtk's built-in event
+	bubbling
+
 2008-03-26  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomkeyboardevt.c
