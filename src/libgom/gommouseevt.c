@@ -30,6 +30,8 @@ THE SOFTWARE.
 #include <gom/dom/gommouseevent.h>
 #include <gom/dom/gomuievent.h>
 
+#include <gdk/gdktypes.h>
+
 enum {
     PROP_SCREEN_X = 1,
     PROP_SCREEN_Y,
@@ -50,10 +52,7 @@ typedef struct {
     long client_x;
     long client_y;
     guint button;
-    guint ctrl_key  : 1;
-    guint shift_key : 1;
-    guint alt_key   : 1;
-    guint meta_key  : 1;
+    guint state;
 } GomMouseEvtPrivate;
 
 #define PRIV(i) G_TYPE_INSTANCE_GET_PRIVATE ((i), GOM_TYPE_MOUSE_EVT, GomMouseEvtPrivate)
@@ -80,16 +79,16 @@ gom_mouse_evt_get_property (GObject    *object,
         g_value_set_long (value, priv->client_y);
         break;
     case PROP_CTRL_KEY:
-        g_value_set_boolean (value, priv->ctrl_key);
+        g_value_set_boolean (value, priv->state & GDK_CONTROL_MASK);
         break;
     case PROP_SHIFT_KEY:
-        g_value_set_boolean (value, priv->shift_key);
+        g_value_set_boolean (value, priv->state & GDK_SHIFT_MASK);
         break;
     case PROP_ALT_KEY:
-        g_value_set_boolean (value, priv->alt_key);
+        g_value_set_boolean (value, priv->state & GDK_MOD1_MASK);
         break;
     case PROP_META_KEY:
-        g_value_set_boolean (value, priv->meta_key);
+        g_value_set_boolean (value, priv->state & GDK_META_MASK);
         break;
     case PROP_BUTTON:
         g_value_set_uint (value, priv->button);
@@ -101,6 +100,55 @@ gom_mouse_evt_get_property (GObject    *object,
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
         break;
     }
+}
+
+static void
+gom_mouse_evt_init_mouse_event_ns (GomMouseEvent   *evt,
+                                   const char      *namespace_uri,
+                                   const char      *event_type_arg,
+                                   gboolean         can_bubble_arg,
+                                   gboolean         cancelable_arg,
+                                   GomAbstractView *view_arg,
+                                   long             detail_arg,
+                                   long             screen_x_arg,
+                                   long             screen_y_arg,
+                                   long             client_x_arg,
+                                   long             client_y_arg,
+                                   gboolean         ctrl_key_arg,
+                                   gboolean         alt_key_arg,
+                                   gboolean         shift_key_arg,
+                                   gboolean         meta_key_arg,
+                                   guint            button_arg,
+                                   GomEventTarget  *related_target_arg)
+{
+    GomMouseEvtPrivate *priv = PRIV (evt);
+    GomEventTarget *target;
+
+    g_object_get (evt, "target", &target, NULL);
+    if (target) {
+        g_warning ("Event %p has already begun dispatching; changes are not permitted.", evt);
+        return;
+    }
+
+    gom_ui_event_init_ui_event_ns (GOM_UI_EVENT (evt), namespace_uri, event_type_arg,
+                                   can_bubble_arg, cancelable_arg, view_arg, detail_arg);
+
+    priv->screen_x  = screen_x_arg;
+    priv->screen_y  = screen_y_arg;
+    priv->client_x  = client_x_arg;
+    priv->client_y  = client_y_arg;
+    priv->button    = button_arg;
+
+    priv->state = 0;
+    if (ctrl_key_arg)  priv->state |= GDK_CONTROL_MASK;
+    if (shift_key_arg) priv->state |= GDK_SHIFT_MASK;
+    if (alt_key_arg)   priv->state |= GDK_MOD1_MASK;
+    if (meta_key_arg)  priv->state |= GDK_META_MASK;
+
+    if (priv->related_target) {
+        g_object_unref (priv->related_target);
+    }
+    priv->related_target = related_target_arg ? g_object_ref (related_target_arg) : NULL;
 }
 
 static void
@@ -121,31 +169,7 @@ gom_mouse_evt_init_mouse_event (GomMouseEvent   *evt,
                                 guint            button_arg,
                                 GomEventTarget  *related_target_arg)
 {
-    GomMouseEvtPrivate *priv = PRIV (evt);
-    GomEventTarget *target;
-
-    g_object_get (evt, "target", &target, NULL);
-    if (target) {
-        g_warning ("Event %p has already begun dispatching; changes are not permitted.", evt);
-        return;
-    }
-
-    gom_ui_event_init_ui_event (GOM_UI_EVENT (evt), event_type_arg, can_bubble_arg, cancelable_arg, view_arg, detail_arg);
-
-    priv->screen_x  = screen_x_arg;
-    priv->screen_y  = screen_y_arg;
-    priv->client_x  = client_x_arg;
-    priv->client_y  = client_y_arg;
-    priv->ctrl_key  = ctrl_key_arg  ? 1 : 0;
-    priv->alt_key   = alt_key_arg   ? 1 : 0;
-    priv->shift_key = shift_key_arg ? 1 : 0;
-    priv->meta_key  = meta_key_arg  ? 1 : 0;
-    priv->button    = button_arg;
-
-    if (priv->related_target) {
-        g_object_unref (priv->related_target);
-    }
-    priv->related_target = related_target_arg ? g_object_ref (related_target_arg) : NULL;
+    gom_mouse_evt_init_mouse_event_ns (evt, NULL, event_type_arg, can_bubble_arg, cancelable_arg, view_arg, detail_arg, screen_x_arg, screen_y_arg, client_x_arg, client_y_arg, ctrl_key_arg, alt_key_arg, shift_key_arg, meta_key_arg, button_arg, related_target_arg);
 }
 
 static void
@@ -156,7 +180,8 @@ gom_mouse_evt_impl_gom_mouse_event (gpointer g_iface, gpointer iface_data)
 #define IFACE(func) iface->func = gom_mouse_evt_##func
 
     IFACE (init_mouse_event);
-    
+    IFACE (init_mouse_event_ns);
+
 #undef IFACE
 }
 

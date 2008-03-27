@@ -30,11 +30,13 @@ THE SOFTWARE.
 #include <gom/dom/gomdomexception.h>
 #include <gom/dom/gomelement.h>
 #include <gom/dom/gomeventtarget.h>
+#include <gom/dom/gomkeyboardevent.h>
 #include <gom/dom/gommouseevent.h>
 #include <gom/dom/gomuievent.h>
 #include <gom/gomglist.h>
 #include <gom/gomjselement.h>
 #include <gom/gomjsobject.h>
+#include <gom/gomkeyboardevt.h>
 #include <gom/gommouseevt.h>
 #include <gom/gomobject.h>
 
@@ -56,6 +58,9 @@ enum {
     PROP_NEXT_SIBLING,
     PROP_ATTRIBUTES,
     PROP_OWNER_DOCUMENT,
+    PROP_NAMESPACE_URI,
+    PROP_PREFIX,
+    PROP_LOCAL_NAME,
 
     PROP_TAG_NAME
 };
@@ -253,7 +258,7 @@ widget_append_child (GomNode *node,
     if (!GTK_IS_CONTAINER (node)) {
         g_set_error (error,
                      GOM_DOM_EXCEPTION_ERROR,
-                     GOM_DOM_EXCEPTION_ERROR_HIERCHY_REQUEST_ERR,
+                     GOM_HIERCHY_REQUEST_ERR,
                      "Cannot append a child that is not a GtkWidget");
         return NULL;
     }
@@ -261,7 +266,7 @@ widget_append_child (GomNode *node,
     if (!GTK_IS_WIDGET (new_child)) {
         g_set_error (error,
                      GOM_DOM_EXCEPTION_ERROR,
-                     GOM_DOM_EXCEPTION_ERROR_HIERCHY_REQUEST_ERR,
+                     GOM_HIERCHY_REQUEST_ERR,
                      "Cannot append to a parent that is not a GtkContainer");
         return NULL;
     }
@@ -360,7 +365,7 @@ widget_set_attribute (GomElement *elem, const char *name, const char *value, GEr
     if (spec) {
         if (G_TYPE_FUNDAMENTAL (G_PARAM_SPEC_VALUE_TYPE (spec)) == G_TYPE_OBJECT) {
             g_set_error (error, GOM_DOM_EXCEPTION_ERROR,
-                         GOM_DOM_EXCEPTION_INVALID_ATTRIBUTE_TYPE,
+                         GOM_INVALID_ATTRIBUTE_TYPE,
                          "Attribute %s.%s is a %s, which a string cannot be converted to",
                          g_type_name (spec->owner_type), name,
                          g_type_name (G_PARAM_SPEC_VALUE_TYPE (spec)));
@@ -418,6 +423,7 @@ gom_widget_get_property (GObject    *object,
     switch (property_id) {
     case PROP_TAG_NAME:
     case PROP_NODE_NAME:
+    case PROP_LOCAL_NAME:
         g_value_set_static_string (value, g_type_name (G_TYPE_FROM_INSTANCE (object)));
         break;
     case PROP_NODE_VALUE:
@@ -453,6 +459,10 @@ gom_widget_get_property (GObject    *object,
     case PROP_OWNER_DOCUMENT:
         g_value_set_object (value, widget_get_owner_document (GOM_NODE (object)));
         break;
+    case PROP_NAMESPACE_URI:
+    case PROP_PREFIX:
+        g_value_set_string (value, NULL);
+        break;
     default:
         if (_gtk_widget_get_property) {
             _gtk_widget_get_property (object, property_id, value, pspec);
@@ -481,6 +491,9 @@ gom_widget_set_property (GObject      *object,
     case PROP_ATTRIBUTES:
     case PROP_OWNER_DOCUMENT:
     case PROP_TAG_NAME:
+    case PROP_NAMESPACE_URI:
+    case PROP_PREFIX:
+    case PROP_LOCAL_NAME:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
         break;
     default:
@@ -538,13 +551,29 @@ Meanwhile, for the DOM...
             NULL);                                                      \
     } G_STMT_END
     
+#define INIT_KEY_EVENT(name)                                            \
+    G_STMT_START {                                                      \
+        modifiers = gom_keyboard_evt_string_from_state (event->key.state); \
+        gom_keyboard_evt_lookup_keyval (event->key.keyval, &key_identifier, &key_location); \
+        evt = g_object_new (GOM_TYPE_KEYBOARD_EVT, NULL);               \
+        gom_keyboard_event_init_keyboard_event (                        \
+            GOM_KEYBOARD_EVENT (evt),                                   \
+            (name), TRUE, TRUE,                                         \
+            NULL,                                                       \
+            key_identifier, key_location, modifiers);                   \
+        g_free (modifiers);                                             \
+    } G_STMT_END
 
 static gboolean
 gom_widget_event (GtkWidget *widget, GdkEvent *event)
 {
-    GomEvt *evt = NULL;
+    GomEvent *evt = NULL;
     GomWidgetPrivate *priv;
     GError *error = NULL;
+
+    char *modifiers;
+    const char *key_identifier;
+    GomKeyLocationCode key_location;
 
     switch (event->type) {
     case GDK_MOTION_NOTIFY:        
@@ -570,21 +599,27 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         INIT_MOUSE_EVENT ("mouseout", crossing);
         break;
     case GDK_SCROLL:
+        break;
     case GDK_KEY_PRESS:
+        priv = get_priv (widget);
+        INIT_KEY_EVENT ("keydown");
+        break;
     case GDK_KEY_RELEASE:
+        priv = get_priv (widget);
+        INIT_KEY_EVENT ("keyup");
         break;
     default:
         break;
     }
 
     if (evt) {
-        gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), GOM_EVENT (evt), &error);
+        gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
         if (error) {
             g_print ("%s:%d:%s(): Error dispatching event: %s\n",
                      __FILE__, __LINE__, __FUNCTION__, error->message);
             g_clear_error (&error);
         }
-        if (gom_evt_prevented_default (evt)) {
+        if (gom_event_is_default_prevented (evt)) {
             g_object_unref (evt);
             return TRUE;
         }
@@ -594,13 +629,13 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         }
         if (event->type == GDK_BUTTON_RELEASE && priv->click_state) {
             INIT_MOUSE_EVENT ("click", button);
-            gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), GOM_EVENT (evt), &error);
+            gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
             if (error) {
                 g_print ("%s:%d:%s(): Error dispatching event: %s\n",
                          __FILE__, __LINE__, __FUNCTION__, error->message);
                 g_clear_error (&error);
             }
-            if (gom_evt_prevented_default (evt)) {
+            if (gom_event_is_default_prevented (evt)) {
                 g_object_unref (evt);
                 return TRUE;
             }
@@ -673,22 +708,6 @@ widget_impl_target (gpointer g_iface, gpointer iface_data)
 #undef IFACE
 }
 
-void
-gom_widget_init_log_func (const gchar   *log_domain,
-                          GLogLevelFlags log_level,
-                          const gchar   *message,
-                          gpointer       user_data)
-{
-    if (log_level == G_LOG_LEVEL_CRITICAL &&
-        !strcmp (log_domain, "GLib-GObject") &&
-        g_str_has_prefix (message, "Object class GtkWidget doesn't implement property '") &&
-        (g_str_has_suffix (message, "' from interface 'GomNode'") ||
-         g_str_has_suffix (message, "' from interface 'GomElement'"))) {
-        return;
-    }
-    g_log_default_handler (log_domain, log_level, message, user_data);
-}
-
 static gpointer
 gom_widget_init_once (gpointer data)
 {
@@ -712,10 +731,6 @@ gom_widget_init_once (gpointer data)
         NULL,
     };
 
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE, &node_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT, &element_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET, &target_info);
-
     oclass = g_type_class_ref (GTK_TYPE_WIDGET);
     wclass = GTK_WIDGET_CLASS (oclass);
 
@@ -728,19 +743,115 @@ gom_widget_init_once (gpointer data)
     _gtk_widget_event = wclass->event;
     wclass->event = gom_widget_event;
 
-    g_object_class_override_property (oclass, PROP_NODE_NAME,        "node-name");
-    g_object_class_override_property (oclass, PROP_NODE_VALUE,       "node-value");
-    g_object_class_override_property (oclass, PROP_NODE_TYPE,        "node-type");
-    g_object_class_override_property (oclass, PROP_PARENT_NODE,      "parent-node");
-    g_object_class_override_property (oclass, PROP_CHILD_NODES,      "child-nodes");
-    g_object_class_override_property (oclass, PROP_FIRST_CHILD,      "first-child");
-    g_object_class_override_property (oclass, PROP_LAST_CHILD,       "last-child");
-    g_object_class_override_property (oclass, PROP_PREVIOUS_SIBLING, "previous-sibling");
-    g_object_class_override_property (oclass, PROP_NEXT_SIBLING,     "next-sibling");
-    g_object_class_override_property (oclass, PROP_ATTRIBUTES,       "attributes");
-    g_object_class_override_property (oclass, PROP_OWNER_DOCUMENT,   "owner-document");
+    g_object_class_install_property (
+        oclass, PROP_NODE_NAME,
+        g_param_spec_string ("node-name", NULL,
+                             "The name of this node, depending on its type",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
-    g_object_class_override_property (oclass, PROP_TAG_NAME,         "tag-name");
+    g_object_class_install_property (
+        oclass, PROP_NODE_VALUE,
+        g_param_spec_string ("node-value", NULL,
+                             "The value of this node, depending on its type",
+                             NULL,
+                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_NODE_TYPE,
+        g_param_spec_uint ("node-type", NULL,
+                           "A code representing the type of the underlying object",
+                           GOM_ELEMENT_NODE, GOM_NOTATION_NODE,
+                           GOM_ELEMENT_NODE,
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_PARENT_NODE,
+        g_param_spec_object ("parent-node", NULL,
+                             "The parent of this node.",
+                             GOM_TYPE_NODE,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_CHILD_NODES,
+        g_param_spec_object ("child-nodes", NULL,
+                             "A NodeList that contains all children of this node.",
+                             GOM_TYPE_NODE_LIST,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_FIRST_CHILD,
+        g_param_spec_object ("first-child", NULL,
+                             "The first child of this node.",
+                             GOM_TYPE_NODE,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_LAST_CHILD,
+        g_param_spec_object ("last-child", NULL,
+                             "The last child of this node.",
+                             GOM_TYPE_NODE,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_PREVIOUS_SIBLING,
+        g_param_spec_object ("previous-sibling", NULL,
+                             "The node immediately preceding this node.",
+                             GOM_TYPE_NODE,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_NEXT_SIBLING,
+        g_param_spec_object ("next-sibling", NULL,
+                             "The node immediately following this node.",
+                             GOM_TYPE_NODE,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_ATTRIBUTES,
+        g_param_spec_object ("attributes", NULL,
+                             "A NamedNodeMap containing the attributes of this node (if it is an Element) or null otherwise.",
+                             GOM_TYPE_NAMED_NODE_MAP,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_OWNER_DOCUMENT,
+        g_param_spec_object ("owner-document", NULL,
+                             "The Document object associated with this node.",
+                             GOM_TYPE_DOCUMENT,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_NAMESPACE_URI,
+        g_param_spec_string ("namespace-uri", "namespace-u-r-i",
+                             "The namespace URI of this node, or null if it is unspecified.",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_PREFIX,
+        g_param_spec_string ("prefix", NULL,
+                             "The namespace prefix of this node, or null if it is unspecified.",
+                             NULL,
+                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_LOCAL_NAME,
+        g_param_spec_string ("local-name", NULL,
+                             "Returns the local part of the qualified name of this node.",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property (
+        oclass, PROP_TAG_NAME,
+        g_param_spec_string ("tag-name", NULL,
+                             "The name of the element.",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE, &node_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT, &element_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET, &target_info);
 
 #define WIDGET(w) type ^= (w);
 #include "gomwidgets.c"

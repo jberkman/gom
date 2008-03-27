@@ -1,3 +1,45 @@
+2008-03-26  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomwidget.c (widget_append_child,
+	widget_set_attribute): update for shorter macros
+	(gom_widget_get_property, gom_widget_set_property)
+	(gom_widget_init_once): add level 2 Node properties
+	(gom_widget_init_once): just manually install the properties on
+	this class before adding the interfaces; this gets rid of the
+	stupid GObject warnings
+	(gom_widget_event): use new Level 3 api, handle keyboard events
+
+	* src/libgom/gomdoc.c (gom_doc_get_property, gom_doc_class_init):
+	add Core level 2 properties for Node
+
+	* src/gom/gom.c (main): 
+	* include/gom/gomwidget.h: remove gom_widget_init_log_func()
+
+	* include/gom/gomkeyboardevt.h: implementation of KeyboardEvent
+
+	* include/gom/gomevt.h: remove api already covered by CustomEvent
+
+	* src/libgom/gommouseevt.c: 
+	* src/libgom/gomdominterfaces.c: 
+	* src/libgom/gomkeyboardevt.c: 
+	* src/libgom/gomuievt.c:
+	* include/gom/dom/gomevent.h: 
+	* include/gom/dom/gomdocumentevent.h: 
+	* include/gom/dom/gomuievent.h: 
+	* include/gom/dom/gommutationnameevent.h: 
+	* include/gom/dom/gommouseevent.h: 
+	* include/gom/dom/gomeventtarget.h: 
+	* include/gom/dom/gomtextevent.h: 
+	* include/gom/dom/gomcustomevent.h: 
+	* include/gom/dom/gommutationevent.h: 
+	* include/gom/dom/gomkeyboardevent.h: update events to level 3
+
+	* include/gom/gomkeyidentifiers.h: macros for key identifiers
+
+	* include/gom/dom/gomeventexception.h: 
+	* include/gom/dom/gomdomexception.h: rename some types and macros
+	to be a little easier on the fingers and eyes
+
 2008-03-25  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomwidget.c (get_priv): add a private structure which

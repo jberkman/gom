@@ -24,6 +24,8 @@ THE SOFTWARE.
 #ifndef GOM_MOUSE_EVENT_H
 #define GOM_MOUSE_EVENT_H
 
+#include <glib/gmacros.h>
+
 G_BEGIN_DECLS
 
 typedef struct _GomMouseEvent          GomMouseEvent; /*dummy object*/
@@ -60,6 +62,27 @@ struct _GomMouseEventInterface {
                               gboolean         meta_key_arg,
                               guint            button_arg,
                               GomEventTarget  *related_target_arg);
+
+    gboolean (*get_modifier_state) (GomMouseEvent *evt,
+                                    const char    *key_identifier_arg);
+
+    void (*init_mouse_event_ns) (GomMouseEvent   *evt,
+                                 const char      *namespace_uri,
+                                 const char      *type_arg,
+                                 gboolean         can_bubble_arg,
+                                 gboolean         cancelable_arg,
+                                 GomAbstractView *view_arg,
+                                 long             detail_arg,
+                                 long             screen_x_arg,
+                                 long             screen_y_arg,
+                                 long             client_x_arg,
+                                 long             client_y_arg,
+                                 gboolean         ctrl_key_arg,
+                                 gboolean         alt_key_arg,
+                                 gboolean         shift_key_arg,
+                                 gboolean         meta_key_arg,
+                                 guint            button_arg,
+                                 GomEventTarget  *related_target_arg);
 };
 
 GType gom_mouse_event_get_type (void);
@@ -80,6 +103,27 @@ void  gom_mouse_event_init_mouse_event (GomMouseEvent *evt,
                                         gboolean         meta_key_arg,
                                         guint            button_arg,
                                         GomEventTarget  *related_target_arg);
+
+gboolean gom_mouse_event_get_modifier_state (GomMouseEvent *evt,
+                                             const char    *key_identifier_arg);
+
+void  gom_mouse_event_init_mouse_event_ns (GomMouseEvent   *evt,
+                                           const char      *namespace_uri,
+                                           const char      *type_arg,
+                                           gboolean         can_bubble_arg,
+                                           gboolean         cancelable_arg,
+                                           GomAbstractView *view_arg,
+                                           long             detail_arg,
+                                           long             screen_x_arg,
+                                           long             screen_y_arg,
+                                           long             client_x_arg,
+                                           long             client_y_arg,
+                                           gboolean         ctrl_key_arg,
+                                           gboolean         alt_key_arg,
+                                           gboolean         shift_key_arg,
+                                           gboolean         meta_key_arg,
+                                           guint            button_arg,
+                                           GomEventTarget  *related_target_arg);
 
 G_END_DECLS
 

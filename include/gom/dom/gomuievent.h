@@ -51,6 +51,15 @@ struct _GomUIEventInterface {
                            gboolean         cancelable_arg,
                            GomAbstractView *view_arg,
                            long             detail_arg);
+
+    void (*init_ui_event_ns) (GomUIEvent      *evt,
+                              const char      *namespace_uri,
+                              const char      *type_arg,
+                              gboolean         can_bubble_arg,
+                              gboolean         cancelable_arg,
+                              GomAbstractView *view_arg,
+                              long             detail_arg);
+
 };
 
 GType gom_ui_event_get_type (void);
@@ -61,6 +70,14 @@ void  gom_ui_event_init_ui_event (GomUIEvent      *evt,
                                   gboolean         cancelable_arg,
                                   GomAbstractView *view_arg,
                                   long             detail_arg);
+
+void  gom_ui_event_init_ui_event_ns (GomUIEvent      *evt,
+                                     const char      *namespace_uri,
+                                     const char      *type_arg,
+                                     gboolean         can_bubble_arg,
+                                     gboolean         cancelable_arg,
+                                     GomAbstractView *view_arg,
+                                     long             detail_arg);
 
 G_END_DECLS
 

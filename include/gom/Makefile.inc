@@ -14,6 +14,8 @@ gominclude_HEADERS :=				\
 	include/gom/gomjsnode.h			\
 	include/gom/gomjsobject.h		\
 	include/gom/gomjswindow.h		\
+	include/gom/gomkeyboardevt.h		\
+	include/gom/gomkeyidentifiers.h		\
 	include/gom/gommouseevt.h		\
 	include/gom/gomobject.h			\
 	include/gom/gomuievt.h			\

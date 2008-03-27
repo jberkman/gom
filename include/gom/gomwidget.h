@@ -29,11 +29,6 @@ THE SOFTWARE.
 
 G_BEGIN_DECLS
 
-void gom_widget_init_log_func (const gchar    *log_domain,
-                               GLogLevelFlags  log_level,
-                               const gchar    *message,
-                               gpointer        user_data);
-
 void gom_widget_init (void);
 
 G_END_DECLS

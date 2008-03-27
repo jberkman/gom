@@ -32,10 +32,10 @@ typedef struct _GomMutationEvent          GomMutationEvent; /*dummy object*/
 typedef struct _GomMutationEventInterface GomMutationEventInterface;
 
 typedef enum {
-    GOM_MUTATION_EVENT_MODIFICATION = 1,
-    GOM_MUTATION_EVENT_ADDITION,
-    GOM_MUTATION_EVENT_REMOVAL
-} GomMutationEventAttrChangeType;
+    GOM_MODIFICATION = 1,
+    GOM_ADDITION,
+    GOM_REMOVAL
+} GomAttrChangeType;
 
 G_END_DECLS
 
@@ -60,7 +60,19 @@ struct _GomMutationEventInterface {
                                  const char       *prev_value_arg,
                                  const char       *new_value_arg,
                                  const char       *attr_name_arg,
-                                 GomMutationEventAttrChangeType attr_change_arg);
+                                 GomAttrChangeType attr_change_arg);
+
+    void (*init_mutation_event_ns) (GomMutationEvent *evt,
+                                    const char       *namespace_uri,
+                                    const char       *event_type_arg,
+                                    gboolean          can_bubble_arg,
+                                    gboolean          cancelable_arg,
+                                    GomNode          *related_node_arg,
+                                    const char       *prev_value_arg,
+                                    const char       *new_value_arg,
+                                    const char       *attr_name_arg,
+                                    GomAttrChangeType attr_change_arg);
+
 };
 
 GType gom_mutation_event_get_type (void);
@@ -72,7 +84,18 @@ void  gom_mutation_event_init_mutation_event (GomMutationEvent *evt,
                                               const char       *prev_value_arg,
                                               const char       *new_value_arg,
                                               const char       *attr_name_arg,
-                                              GomMutationEventAttrChangeType attr_change_arg);
+                                              GomAttrChangeType attr_change_arg);
+
+void  gom_mutation_event_init_mutation_event_ns (GomMutationEvent *evt,
+                                                 const char       *namespace_uri,
+                                                 const char       *event_type_arg,
+                                                 gboolean          can_bubble_arg,
+                                                 gboolean          cancelable_arg,
+                                                 GomNode          *related_node_arg,
+                                                 const char       *prev_value_arg,
+                                                 const char       *new_value_arg,
+                                                 const char       *attr_name_arg,
+                                                 GomAttrChangeType attr_change_arg);
 
 G_END_DECLS
 

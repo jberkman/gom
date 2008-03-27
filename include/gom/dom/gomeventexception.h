@@ -31,8 +31,9 @@ G_BEGIN_DECLS
 #define GOM_EVENT_EXCEPTION_ERROR (gom_event_exception_error_quark ())
 
 typedef enum {
-    GOM_EVENT_EXCEPTION_ERROR_UNSPECIFIED_EVENT_TYPE_ERR = 0
-} GomEventExceptionError;
+    GOM_UNSPECIFIED_EVENT_TYPE_ERR = 0,
+    GOM_DISPATCH_REQUEST_ERR,
+} GomEventExceptionCode;
 
 GQuark gom_event_exception_error_quark (void);
 

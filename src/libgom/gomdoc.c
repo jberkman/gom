@@ -52,6 +52,9 @@ enum {
     PROP_NEXT_SIBLING,
     PROP_ATTRIBUTES,
     PROP_OWNER_DOCUMENT,
+    PROP_NAMESPACE_URI,
+    PROP_PREFIX,
+    PROP_LOCAL_NAME,
 
     PROP_DOCTYPE,
     PROP_IMPLEMENTATION,
@@ -77,6 +80,7 @@ gom_doc_get_property (GObject    *object,
     GomDocPrivate *priv = PRIV (object);
 
     switch (property_id) {
+    case PROP_LOCAL_NAME:
     case PROP_NODE_NAME:
         g_value_set_static_string (value, "document");
         break;
@@ -101,6 +105,10 @@ gom_doc_get_property (GObject    *object,
         g_value_set_object (value, last ? last->data : NULL);
         break;
     }
+    case PROP_NAMESPACE_URI:
+    case PROP_PREFIX:
+        g_value_set_string (value, NULL);
+        break;
     case PROP_NODE_VALUE:
     case PROP_ATTRIBUTES:
     case PROP_DOCTYPE:
@@ -219,7 +227,7 @@ gom_doc_create_element (GomDocument *doc,
     if (!obj) {
         g_set_error (error,
                      GOM_DOM_EXCEPTION_ERROR,
-                     GOM_DOM_EXCEPTION_ERROR_UNKNOWN_TAG_NAME,
+                     GOM_UNKNOWN_TAG_NAME,
                      "%s is not a registered GType",
                      tag_name);
         return NULL;
@@ -394,6 +402,9 @@ gom_doc_class_init (GomDocClass *klass)
     g_object_class_override_property (oclass, PROP_NEXT_SIBLING,     "next-sibling");
     g_object_class_override_property (oclass, PROP_ATTRIBUTES,       "attributes");
     g_object_class_override_property (oclass, PROP_OWNER_DOCUMENT,   "owner-document");
+    g_object_class_override_property (oclass, PROP_NAMESPACE_URI,    "namespace-uri");
+    g_object_class_override_property (oclass, PROP_PREFIX,           "prefix");
+    g_object_class_override_property (oclass, PROP_LOCAL_NAME,       "local-name");
 
     g_object_class_override_property (oclass, PROP_DOCTYPE,          "doctype");
     g_object_class_override_property (oclass, PROP_IMPLEMENTATION,   "implementation");

@@ -48,6 +48,10 @@ struct _GomDocumentEventInterface {
     GomEvent *(*create_event) (GomDocumentEvent *doc,
                                const char       *event_type,
                                GError          **error);
+
+    gboolean  (*can_dispatch) (GomDocumentEvent *gom_document_event,
+                               const char       *namespace_uri,
+                               const char       *type);
 };
 
 GType gom_document_event_get_type (void);
@@ -55,6 +59,10 @@ GType gom_document_event_get_type (void);
 GomEvent *gom_document_event_create_event (GomDocumentEvent *doc,
                                            const char       *event_type,
                                            GError          **error);
+
+gboolean  gom_document_event_can_dispatch (GomDocumentEvent *gom_document_event,
+                                           const char       *namespace_uri,
+                                           const char       *type);
 
 G_END_DECLS
 

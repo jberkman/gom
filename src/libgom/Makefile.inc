@@ -18,6 +18,7 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomjsnode.c			\
 	src/libgom/gomjsobject.c		\
 	src/libgom/gomjswindow.c		\
+	src/libgom/gomkeyboardevt.c		\
 	src/libgom/gommouseevt.c		\
 	src/libgom/gomobject.c			\
 	src/libgom/gomuievt.c			\

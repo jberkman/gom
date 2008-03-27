@@ -54,12 +54,7 @@ struct _GomEvtClass {
 
 GType gom_evt_get_type (void);
 
-void gom_evt_set_current_target (GomEvt *evt, GomEventTarget    *current_target);
-void gom_evt_set_event_phase    (GomEvt *evt, GomEventPhaseType  phase);
-void gom_evt_set_target         (GomEvt *evt, GomEventTarget    *target);
-
-gboolean gom_evt_stopped_propagation (GomEvt *evt);
-gboolean gom_evt_prevented_default   (GomEvt *evt);
+void gom_evt_set_target (GomEvt *evt, GomEventTarget *target);
 
 G_END_DECLS
 

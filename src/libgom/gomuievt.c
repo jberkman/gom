@@ -64,12 +64,13 @@ gom_ui_evt_get_property (GObject    *object,
 }
 
 static void
-gom_ui_evt_init_ui_event (GomUIEvent      *evt,
-                          const char      *event_type_arg,
-                          gboolean         can_bubble_arg,
-                          gboolean         cancelable_arg,
-                          GomAbstractView *view_arg,
-                          long             detail_arg)
+gom_ui_evt_init_ui_event_ns (GomUIEvent      *evt,
+                             const char      *namespace_uri,
+                             const char      *event_type_arg,
+                             gboolean         can_bubble_arg,
+                             gboolean         cancelable_arg,
+                             GomAbstractView *view_arg,
+                             long             detail_arg)
 {
     GomUIEvtPrivate *priv = PRIV (evt);
     GomEventTarget *target;
@@ -80,7 +81,7 @@ gom_ui_evt_init_ui_event (GomUIEvent      *evt,
         return;
     }
 
-    gom_event_init_event (GOM_EVENT (evt), event_type_arg, can_bubble_arg, cancelable_arg);
+    gom_event_init_event_ns (GOM_EVENT (evt), namespace_uri, event_type_arg, can_bubble_arg, cancelable_arg);
 
     if (priv->view) {
         g_object_unref (priv->view);
@@ -91,6 +92,17 @@ gom_ui_evt_init_ui_event (GomUIEvent      *evt,
 }
 
 static void
+gom_ui_evt_init_ui_event (GomUIEvent      *evt,
+                          const char      *event_type_arg,
+                          gboolean         can_bubble_arg,
+                          gboolean         cancelable_arg,
+                          GomAbstractView *view_arg,
+                          long             detail_arg)
+{
+    gom_ui_evt_init_ui_event_ns (evt, NULL, event_type_arg, can_bubble_arg, cancelable_arg, view_arg, detail_arg);
+}
+
+static void
 gom_ui_evt_impl_gom_ui_event (gpointer g_iface, gpointer iface_data)
 {
     GomUIEventInterface *iface = (GomUIEventInterface *)g_iface;
@@ -98,6 +110,7 @@ gom_ui_evt_impl_gom_ui_event (gpointer g_iface, gpointer iface_data)
 #define IFACE(func) iface->func = gom_ui_evt_##func
 
     IFACE (init_ui_event);
+    IFACE (init_ui_event_ns);
     
 #undef IFACE
 }

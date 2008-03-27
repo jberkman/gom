@@ -125,6 +125,22 @@ GOM_STUB_VOID (GOM_CHARACTER_DATA, gom_character_data, replace_data,
 
 GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomComment, gom_comment, GOM_NOT_IMPLEMENTED, GOM_TYPE_CHARACTER_DATA);
 
+#include <gom/dom/gomcustomevent.h>
+
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomCustomEvent, gom_custom_event, GOM_NOT_IMPLEMENTED, GOM_TYPE_EVENT);
+
+GOM_STUB_VOID (GOM_CUSTOM_EVENT, gom_custom_event, set_dispatch_state,
+               (GomCustomEvent *gom_custom_event,
+                GomEventTarget *target,
+                GomPhaseType    phase),
+               (gom_custom_event, target, phase));
+
+GOM_STUB_FUNC (GOM_CUSTOM_EVENT, gom_custom_event, is_propagation_stopped,
+               (GomCustomEvent *gom_custom_event), (gom_custom_event), gboolean);
+
+GOM_STUB_FUNC (GOM_CUSTOM_EVENT, gom_custom_event, is_immediate_propagation_stopped,
+               (GomCustomEvent *gom_custom_event), (gom_custom_event), gboolean);
+
 #include <gom/dom/gomdocument.h>
 
 GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomDocument, gom_document,
@@ -211,6 +227,10 @@ GOM_DEFINE_INTERFACE (GomDocumentEvent, gom_document_event, GOM_NOT_IMPLEMENTED)
 GOM_STUB_FUNC (GOM_DOCUMENT_EVENT, gom_document_event, create_event,
                (GomDocumentEvent *gom_document_event, const char *event_type, GError **error),
                (gom_document_event, event_type, error), GomEvent *);
+
+GOM_STUB_FUNC (GOM_DOCUMENT_EVENT, gom_document_event, can_dispatch,
+               (GomDocumentEvent *gom_document_event, const char *namespace_uri, const char *type),
+               (gom_document_event, namespace_uri, type), gboolean);
 
 #include <gom/dom/gomdocumentfragment.h>
 
@@ -423,8 +443,8 @@ GOM_DEFINE_INTERFACE (GomEvent, gom_event,
         g_iface,
         g_param_spec_enum ("event-phase", NULL,
                            "Used to indicate which phase of event flow is currently being evaluated.",
-                           GOM_TYPE_EVENT_PHASE_TYPE,
-                           GOM_EVENT_CAPTURING_PHASE,
+                           GOM_TYPE_PHASE_TYPE,
+                           GOM_CAPTURING_PHASE,
                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
@@ -447,6 +467,13 @@ GOM_DEFINE_INTERFACE (GomEvent, gom_event,
                            "Used to specify the time (in milliseconds relative to the epoch) at which the event was created.",
                            0, G_MAXLONG, 0,
                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_string ("namespace-uri", "namespace-u-r-i",
+                             "The namespace URI  associated with this event at creation time, or null if it is unspecified.",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 });
 
 GOM_STUB_VOID (GOM_EVENT, gom_event, stop_propagation,
@@ -462,6 +489,23 @@ GOM_STUB_VOID (GOM_EVENT, gom_event, init_event,
                 gboolean    cancelable_arg),
                (gom_event, event_type_arg, cancelable_arg, cancelable_arg));
 
+GOM_STUB_FUNC (GOM_EVENT, gom_event, is_custom,
+               (GomEvent *gom_event), (gom_event), gboolean);
+
+GOM_STUB_VOID (GOM_EVENT, gom_event, stop_immediate_propagation,
+               (GomEvent *gom_event), (gom_event));
+
+GOM_STUB_FUNC (GOM_EVENT, gom_event, is_default_prevented,
+               (GomEvent *gom_event), (gom_event), gboolean);
+
+GOM_STUB_VOID (GOM_EVENT, gom_event, init_event_ns,
+               (GomEvent *gom_event,
+                const char *namespace_uri_arg,
+                const char *event_type_arg,
+                gboolean    can_bubble_arg,
+                gboolean    cancelable_arg),
+               (gom_event, namespace_uri_arg, event_type_arg, can_bubble_arg, cancelable_arg));
+               
 #include <gom/dom/gomeventexception.h>
 
 GOM_DEFINE_QUARK (event_exception_error);
@@ -482,6 +526,34 @@ GOM_STUB_FUNC (GOM_EVENT_TARGET, gom_event_target, dispatch_event,
                (GomEventTarget *gom_event_target, GomEvent *evt, GError **error),
                (gom_event_target, evt, error), gboolean);
 
+GOM_STUB_VOID (GOM_EVENT_TARGET, gom_event_target, add_event_listener_ns,
+               (GomEventTarget   *gom_event_target,
+                const char       *namespace_uri,
+                const char       *type,
+                GomEventListener *listener,
+                gboolean          use_capture),
+               (gom_event_target, namespace_uri, type, listener, use_capture));
+
+GOM_STUB_VOID (GOM_EVENT_TARGET, gom_event_target, remove_event_listener_ns,
+               (GomEventTarget   *gom_event_target,
+                const char       *namespace_uri,
+                const char       *type,
+                GomEventListener *listener,
+                gboolean          use_capture),
+               (gom_event_target, namespace_uri, type, listener, use_capture));
+
+GOM_STUB_FUNC (GOM_EVENT_TARGET, gom_event_target, will_trigger_ns,
+               (GomEventTarget   *gom_event_target,
+                const char       *namespace_uri,
+                const char       *type),
+               (gom_event_target, namespace_uri, type), gboolean);
+               
+GOM_STUB_FUNC (GOM_EVENT_TARGET, gom_event_target, has_event_listener_ns,
+               (GomEventTarget   *gom_event_target,
+                const char       *namespace_uri,
+                const char       *type),
+               (gom_event_target, namespace_uri, type), gboolean);
+
 #include <gom/dom/gomeventlistener.h>
 
 GOM_DEFINE_INTERFACE (GomEventListener, gom_event_listener, GOM_NOT_IMPLEMENTED);
@@ -489,6 +561,83 @@ GOM_DEFINE_INTERFACE (GomEventListener, gom_event_listener, GOM_NOT_IMPLEMENTED)
 GOM_STUB_VOID (GOM_EVENT_LISTENER, gom_event_listener, handle_event,
                (GomEventListener *gom_event_listener, GomEvent *evt),
                (gom_event_listener, evt));
+
+#include <gom/dom/gomkeyboardevent.h>
+#include <gom/dom/gomuievent.h>
+
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomKeyboardEvent, gom_keyboard_event,
+{
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_string ("key-identifier", NULL,
+                             "keyIdentifier holds the identifier of the key.",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_enum ("key-location", NULL,
+                           "The keyLocation attribute contains an indication of the location of they key on the device, as described in Keyboard event types.",
+                           GOM_TYPE_KEY_LOCATION_CODE,
+                           GOM_DOM_KEY_LOCATION_STANDARD,
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_boolean ("ctrl-key", NULL,
+                              "true if the control (Ctrl) key modifier is activated.",
+                              FALSE,
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_boolean ("shift-key", NULL,
+                              "true if the shift (Shift) key modifier is activated.",
+                              FALSE,
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_boolean ("alt-key", NULL,
+                              "true if the alternative (Alt) key modifier is activated.",
+                              FALSE,
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_boolean ("meta-key", NULL,
+                              "true if the meta (Meta) key modifier is activated.",
+                              FALSE,
+                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+}, GOM_TYPE_UI_EVENT);
+
+GOM_STUB_FUNC (GOM_KEYBOARD_EVENT, gom_keyboard_event, get_modifier_state,
+               (GomKeyboardEvent *gom_keyboard_event,
+                const char       *key_identifier_arg),
+               (gom_keyboard_event, key_identifier_arg), gboolean);
+    
+GOM_STUB_VOID (GOM_KEYBOARD_EVENT, gom_keyboard_event, init_keyboard_event,
+               (GomKeyboardEvent   *gom_keyboard_event,
+                const char         *type_arg,
+                gboolean            can_bubble_arg,
+                gboolean            cancelable_arg,
+                GomAbstractView    *view_arg,
+                const char         *key_identifier_arg,
+                GomKeyLocationCode  key_location_arg,
+                const char         *modifiers_list),
+               (gom_keyboard_event, type_arg, can_bubble_arg, cancelable_arg, view_arg, key_identifier_arg, key_location_arg, modifiers_list));
+
+GOM_STUB_VOID (GOM_KEYBOARD_EVENT, gom_keyboard_event, init_keyboard_event_ns,
+               (GomKeyboardEvent   *gom_keyboard_event,
+                const char         *namespace_uri,
+                const char         *type_arg,
+                gboolean            can_bubble_arg,
+                gboolean            cancelable_arg,
+                GomAbstractView    *view_arg,
+                const char         *key_identifier_arg,
+                GomKeyLocationCode  key_location_arg,
+                const char         *modifiers_list),
+               (gom_keyboard_event, namespace_uri, type_arg, can_bubble_arg, cancelable_arg, view_arg, key_identifier_arg, key_location_arg, modifiers_list));
 
 #include <gom/dom/gommouseevent.h>
 
@@ -570,7 +719,7 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomMouseEvent, gom_mouse_event,
 }, GOM_TYPE_UI_EVENT);
 
 GOM_STUB_VOID (GOM_MOUSE_EVENT, gom_mouse_event, init_mouse_event,
-               (GomMouseEvent *gom_mouse_event,
+               (GomMouseEvent   *gom_mouse_event,
                 const char      *type_arg,
                 gboolean         can_bubble_arg,
                 gboolean         cancelable_arg,
@@ -587,6 +736,33 @@ GOM_STUB_VOID (GOM_MOUSE_EVENT, gom_mouse_event, init_mouse_event,
                 guint            button_arg,
                 GomEventTarget  *related_target_arg),
                (gom_mouse_event, type_arg, can_bubble_arg, cancelable_arg, view_arg, detail_arg,
+                screen_x_arg, screen_y_arg, client_x_arg, client_y_arg,
+                ctrl_key_arg, alt_key_arg, shift_key_arg, meta_key_arg,
+                button_arg, related_target_arg));
+
+GOM_STUB_FUNC (GOM_MOUSE_EVENT, gom_mouse_event, get_modifier_state,
+               (GomMouseEvent *gom_mouse_event, const char *key_identifier_arg),
+               (gom_mouse_event, key_identifier_arg), gboolean);
+
+GOM_STUB_VOID (GOM_MOUSE_EVENT, gom_mouse_event, init_mouse_event_ns,
+               (GomMouseEvent   *gom_mouse_event,
+                const char      *namespace_uri,
+                const char      *type_arg,
+                gboolean         can_bubble_arg,
+                gboolean         cancelable_arg,
+                GomAbstractView *view_arg,
+                long             detail_arg,
+                long             screen_x_arg,
+                long             screen_y_arg,
+                long             client_x_arg,
+                long             client_y_arg,
+                gboolean         ctrl_key_arg,
+                gboolean         alt_key_arg,
+                gboolean         shift_key_arg,
+                gboolean         meta_key_arg,
+                guint            button_arg,
+                GomEventTarget  *related_target_arg),
+               (gom_mouse_event, namespace_uri, type_arg, can_bubble_arg, cancelable_arg, view_arg, detail_arg,
                 screen_x_arg, screen_y_arg, client_x_arg, client_y_arg,
                 ctrl_key_arg, alt_key_arg, shift_key_arg, meta_key_arg,
                 button_arg, related_target_arg));
@@ -627,10 +803,75 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomMutationEvent, gom_mutation_event,
         g_iface,
         g_param_spec_enum ("attr-change", NULL,
                            "attrChange indicates the type of change which triggered the DOMAttrModified event.",
-                           GOM_TYPE_MUTATION_EVENT_ATTR_CHANGE_TYPE,
-                           GOM_MUTATION_EVENT_MODIFICATION,
+                           GOM_TYPE_ATTR_CHANGE_TYPE,
+                           GOM_MODIFICATION,
                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_EVENT);
+
+GOM_STUB_VOID (GOM_MUTATION_EVENT, gom_mutation_event, init_mutation_event,
+               (GomMutationEvent *gom_mutation_event,
+                const char       *event_type_arg,
+                gboolean          can_bubble_arg,
+                gboolean          cancelable_arg,
+                GomNode          *related_node_arg,
+                const char       *prev_value_arg,
+                const char       *new_value_arg,
+                const char       *attr_name_arg,
+                GomAttrChangeType attr_change_arg),
+               (gom_mutation_event, event_type_arg, can_bubble_arg, cancelable_arg, related_node_arg, prev_value_arg, new_value_arg, attr_name_arg, attr_change_arg));
+
+GOM_STUB_VOID (GOM_MUTATION_EVENT, gom_mutation_event, init_mutation_event_ns,
+               (GomMutationEvent *gom_mutation_event,
+                const char       *namespace_uri,
+                const char       *event_type_arg,
+                gboolean          can_bubble_arg,
+                gboolean          cancelable_arg,
+                GomNode          *related_node_arg,
+                const char       *prev_value_arg,
+                const char       *new_value_arg,
+                const char       *attr_name_arg,
+                GomAttrChangeType attr_change_arg),
+               (gom_mutation_event, namespace_uri, event_type_arg, can_bubble_arg, cancelable_arg, related_node_arg, prev_value_arg, new_value_arg, attr_name_arg, attr_change_arg));
+
+#include <gom/dom/gommutationnameevent.h>
+
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomMutationNameEvent, gom_mutation_name_event,
+{
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_string ("prev-namespace-uri", "prev-namespace-u-r-i",
+                             "The previous value of the relatedNode's namespaceURI.",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_string ("prev-node-name", NULL,
+                             "The previous value of the relatedNode's nodeName.",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+}, GOM_TYPE_MUTATION_EVENT);
+
+GOM_STUB_VOID (GOM_MUTATION_NAME_EVENT, gom_mutation_name_event, init_mutation_name_event,
+               (GomMutationNameEvent *gom_mutation_name_event,
+                const char           *event_type_arg,
+                gboolean              can_bubble_arg,
+                gboolean              cancelable_arg,
+                GomNode              *related_node_arg,
+                const char           *prev_namespace_uri_arg,
+                const char           *prev_node_name_arg),
+               (gom_mutation_name_event, event_type_arg, can_bubble_arg, cancelable_arg, related_node_arg, prev_namespace_uri_arg, prev_node_name_arg));
+
+GOM_STUB_VOID (GOM_MUTATION_NAME_EVENT, gom_mutation_name_event, init_mutation_name_event_ns,
+               (GomMutationNameEvent *gom_mutation_name_event,
+                const char           *namespace_uri,
+                const char           *event_type_arg,
+                gboolean              can_bubble_arg,
+                gboolean              cancelable_arg,
+                GomNode              *related_node_arg,
+                const char           *prev_namespace_uri_arg,
+                const char           *prev_node_name_arg),
+               (gom_mutation_name_event, namespace_uri, event_type_arg, can_bubble_arg, cancelable_arg, related_node_arg, prev_namespace_uri_arg, prev_node_name_arg));
 
 #include <gom/dom/gomnamednodemap.h>
 
@@ -860,6 +1101,37 @@ GOM_STUB_FUNC (GOM_TEXT, gom_text, split_text,
                (GomText *gom_text, gulong offset, GError **error),
                (gom_text, offset, error), GomText *);
 
+#include <gom/dom/gomtextevent.h>
+
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomTextEvent, gom_text_event,
+{
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_string ("data", NULL,
+                             "data holds the value of the characters generated by the character device.",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+}, GOM_TYPE_UI_EVENT);
+
+GOM_STUB_VOID (GOM_TEXT_EVENT, gom_text_event, init_text_event,
+               (GomTextEvent    *gom_text_event,
+                const char      *type_arg,
+                gboolean         can_bubble_arg,
+                gboolean         cancelable_arg,
+                GomAbstractView *view_arg,
+                const char      *data_arg),
+               (gom_text_event, type_arg, can_bubble_arg, cancelable_arg, view_arg, data_arg));
+
+GOM_STUB_VOID (GOM_TEXT_EVENT, gom_text_event, init_text_event_ns,
+               (GomTextEvent    *gom_text_event,
+                const char      *namespace_uri,
+                const char      *type_arg,
+                gboolean         can_bubble_arg,
+                gboolean         cancelable_arg,
+                GomAbstractView *view_arg,
+                const char      *data_arg),
+               (gom_text_event, namespace_uri, type_arg, can_bubble_arg, cancelable_arg, view_arg, data_arg));
+
 #include <gom/dom/gomuievent.h>
 
 GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomUIEvent, gom_ui_event,
@@ -887,3 +1159,13 @@ GOM_STUB_VOID (GOM_UI_EVENT, gom_ui_event, init_ui_event,
                 GomAbstractView *view_arg,
                 long             detail_arg),
                (gom_ui_event, type_arg, can_bubble_arg, cancelable_arg, view_arg, detail_arg));
+
+GOM_STUB_VOID (GOM_UI_EVENT, gom_ui_event, init_ui_event_ns,
+               (GomUIEvent      *gom_ui_event,
+                const char      *namespace_uri,
+                const char      *type_arg,
+                gboolean         can_bubble_arg,
+                gboolean         cancelable_arg,
+                GomAbstractView *view_arg,
+                long             detail_arg),
+               (gom_ui_event, namespace_uri, type_arg, can_bubble_arg, cancelable_arg, view_arg, detail_arg));

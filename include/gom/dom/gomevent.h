@@ -32,10 +32,10 @@ typedef struct _GomEvent          GomEvent; /* dummy object */
 typedef struct _GomEventInterface GomEventInterface;
 
 typedef enum {
-    GOM_EVENT_CAPTURING_PHASE = 1,
-    GOM_EVENT_AT_TARGET,
-    GOM_EVENT_BUBBLING_PHASE
-} GomEventPhaseType;
+    GOM_CAPTURING_PHASE = 1,
+    GOM_AT_TARGET,
+    GOM_BUBBLING_PHASE
+} GomPhaseType;
 
 G_END_DECLS
 
@@ -57,6 +57,15 @@ struct _GomEventInterface {
                               const char *event_type_arg,
                               gboolean    can_bubble_arg,
                               gboolean    cancelable_arg);
+
+    gboolean (*is_custom)                  (GomEvent *evt);
+    void     (*stop_immediate_propagation) (GomEvent *evt);
+    gboolean (*is_default_prevented)       (GomEvent *evt);
+    void     (*init_event_ns)              (GomEvent *evt,
+                                            const char *namespace_uri_arg,
+                                            const char *event_type_arg,
+                                            gboolean    can_bubble_arg,
+                                            gboolean    cancelable_arg);
 };
 
 GType gom_event_get_type (void);
@@ -67,7 +76,15 @@ void gom_event_init_event       (GomEvent *evt,
                                  const char *event_type_arg,
                                  gboolean    can_bubble_arg,
                                  gboolean    cancelable_arg);
-                                
+
+gboolean gom_event_is_custom                  (GomEvent *evt);
+void     gom_event_stop_immediate_propagation (GomEvent *evt);
+gboolean gom_event_is_default_prevented       (GomEvent *evt);
+void     gom_event_init_event_ns              (GomEvent *evt,
+                                               const char *namespace_uri_arg,
+                                               const char *event_type_arg,
+                                               gboolean    can_bubble_arg,
+                                               gboolean    cancelable_arg);
 G_END_DECLS
 
 #endif /* GOM_EVENT_H */

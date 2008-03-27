@@ -27,28 +27,33 @@ THE SOFTWARE.
 
 #include "gommacros.h"
 
+#include <gom/dom/gomcustomevent.h>
+
 #include <time.h>
 
 enum {
-    PROP_TYPE = 1,
+    PROP_NAMESPACE = 1,
+    PROP_TYPE,
     PROP_TARGET,
     PROP_CURRENT_TARGET,
     PROP_EVENT_PHASE,
     PROP_BUBBLES,
     PROP_CANCELABLE,
-    PROP_TIME_STAMP
+    PROP_TIME_STAMP,
 };
 
 typedef struct {
-    char              *type;
-    GomEventTarget    *target;
-    GomEventTarget    *current_target;
-    time_t             time_stamp;
-    GomEventPhaseType  phase_type;
-    guint              bubbles             : 1;
-    guint              cancelable          : 1;
-    guint              stopped_propagation : 1;
-    guint              prevented_default   : 1;
+    char           *namespace_uri;
+    char           *type;
+    GomEventTarget *target;
+    GomEventTarget *current_target;
+    time_t          time_stamp;
+    GomPhaseType    phase_type;
+    guint           bubbles             : 1;
+    guint           cancelable          : 1;
+    guint           stopped_propagation : 1;
+    guint           stopped_immediate   : 1;
+    guint           prevented_default   : 1;
 } GomEvtPrivate;
 
 #define PRIV(i) G_TYPE_INSTANCE_GET_PRIVATE ((i), GOM_TYPE_EVT, GomEvtPrivate)
@@ -62,6 +67,9 @@ gom_evt_get_property (GObject    *object,
     GomEvtPrivate *priv = PRIV (object);
 
     switch (property_id) {
+    case PROP_NAMESPACE:
+        g_value_set_string (value, priv->namespace_uri);
+        break;
     case PROP_TYPE:
         g_value_set_string (value, priv->type);
         break;
@@ -95,10 +103,22 @@ gom_evt_stop_propagation (GomEvent *evt)
     PRIV (evt)->stopped_propagation = TRUE;
 }
 
-gboolean
-gom_evt_stopped_propagation (GomEvt *evt)
+static gboolean
+gom_evt_is_propagation_stopped (GomCustomEvent *evt)
 {
     return PRIV (evt)->stopped_propagation;
+}
+
+static void
+gom_evt_stop_immediate_propagation (GomEvent *evt)
+{
+    PRIV (evt)->stopped_immediate = TRUE;
+}
+
+static gboolean
+gom_evt_is_immediate_propagation_stopped (GomCustomEvent *evt)
+{
+    return PRIV (evt)->stopped_immediate;
 }
 
 static void
@@ -107,17 +127,18 @@ gom_evt_prevent_default  (GomEvent *evt)
     PRIV (evt)->prevented_default = TRUE;
 }
 
-gboolean
-gom_evt_prevented_default (GomEvt *evt)
+static gboolean
+gom_evt_is_default_prevented (GomEvent *evt)
 {
     return PRIV (evt)->prevented_default;
 }
 
 static void
-gom_evt_init_event (GomEvent   *evt,
-                    const char *event_type_arg,
-                    gboolean    can_bubble_arg,
-                    gboolean    cancelable_arg)
+gom_evt_init_event_ns (GomEvent *evt,
+                       const char *namespace_uri_arg,
+                       const char *event_type_arg,
+                       gboolean    can_bubble_arg,
+                       gboolean    cancelable_arg)
 {
     GomEvtPrivate *priv = PRIV (evt);
 
@@ -131,6 +152,56 @@ gom_evt_init_event (GomEvent   *evt,
 
     g_free (priv->type);
     priv->type = g_strdup (event_type_arg);
+
+    g_free (priv->namespace_uri);
+    priv->namespace_uri = g_strdup (namespace_uri_arg);
+}
+
+static void
+gom_evt_init_event (GomEvent   *evt,
+                    const char *event_type_arg,
+                    gboolean    can_bubble_arg,
+                    gboolean    cancelable_arg)
+{
+    gom_evt_init_event_ns (evt, NULL, event_type_arg, can_bubble_arg, cancelable_arg);
+}
+
+static gboolean
+gom_evt_is_custom (GomEvent *evt)
+{
+    return GOM_IS_CUSTOM_EVENT (evt);
+}
+
+static void
+gom_evt_set_dispatch_state (GomCustomEvent *gom_custom_event,
+                            GomEventTarget *target,
+                            GomPhaseType    phase)
+{
+    GomEvtPrivate *priv = PRIV (gom_custom_event);
+
+    if (priv->current_target) {
+        g_object_unref (priv->current_target);
+    }
+    priv->current_target = target ? g_object_ref (target) : NULL;
+
+    priv->phase_type = phase;
+}
+
+void
+gom_evt_set_target (GomEvt *evt, GomEventTarget *target)
+{
+    GomEvtPrivate *priv = PRIV (evt);
+
+    if (priv->target) {
+        g_warning ("There is already a target set on this object.");
+        return;
+    }
+    if (!GOM_IS_EVENT_TARGET (target)) {
+        g_warning ("target is not a GomEventTarget");
+        return;
+    }
+
+    priv->target = g_object_ref (target);
 }
 
 static void
@@ -143,13 +214,33 @@ gom_evt_impl_gom_event (gpointer g_iface, gpointer iface_data)
     IFACE (stop_propagation);
     IFACE (prevent_default);
     IFACE (init_event);
-    
+
+    IFACE (is_custom);
+    IFACE (stop_immediate_propagation);
+    IFACE (is_default_prevented);
+    IFACE (init_event_ns);
+
+#undef IFACE
+}
+
+static void
+gom_evt_impl_gom_custom_event (gpointer g_iface, gpointer iface_data)
+{
+    GomCustomEventInterface *iface = (GomCustomEventInterface *)g_iface;
+
+#define IFACE(func) iface->func = gom_evt_##func
+
+    IFACE (set_dispatch_state);
+    IFACE (is_propagation_stopped);
+    IFACE (is_immediate_propagation_stopped);
+
 #undef IFACE
 }
 
 G_DEFINE_TYPE_WITH_CODE (GomEvt, gom_evt, G_TYPE_OBJECT,
                          {
                              G_IMPLEMENT_INTERFACE (GOM_TYPE_EVENT, gom_evt_impl_gom_event);
+                             G_IMPLEMENT_INTERFACE (GOM_TYPE_CUSTOM_EVENT, gom_evt_impl_gom_custom_event);
                          });
 
 static void
@@ -158,7 +249,7 @@ gom_evt_init (GomEvt *event)
     GomEvtPrivate *priv = PRIV (event);
     
     priv->time_stamp = time (NULL);
-    priv->phase_type = GOM_EVENT_CAPTURING_PHASE;
+    priv->phase_type = GOM_CAPTURING_PHASE;
 }
 
 static void
@@ -177,4 +268,5 @@ gom_evt_class_init (GomEvtClass *klass)
     g_object_class_override_property (oclass, PROP_BUBBLES,        "bubbles");
     g_object_class_override_property (oclass, PROP_CANCELABLE,     "cancelable");
     g_object_class_override_property (oclass, PROP_TIME_STAMP,     "time-stamp");
+    g_object_class_override_property (oclass, PROP_NAMESPACE,      "namespace-uri");
 }
