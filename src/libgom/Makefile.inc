@@ -8,6 +8,7 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomdom.c			\
 	src/libgom/gomdombuiltins.c		\
 	src/libgom/gomdominterfaces.c		\
+	src/libgom/gomeventtargetdelegate.c	\
 	src/libgom/gomevt.c			\
 	src/libgom/gomglist.c			\
 	src/libgom/gomjscontext.c		\

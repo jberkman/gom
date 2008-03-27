@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <gom/dom/gomkeyboardevent.h>
 #include <gom/dom/gommouseevent.h>
 #include <gom/dom/gomuievent.h>
+#include <gom/gomeventtargetdelegate.h>
 #include <gom/gomglist.h>
 #include <gom/gomjselement.h>
 #include <gom/gomjsobject.h>
@@ -69,14 +70,15 @@ GQuark gom_widget_private_quark (void);
 GOM_DEFINE_QUARK (widget_private);
 
 typedef struct {
-    guint click_state;
+    GomEventTarget *delegate;
+    guint           click_state;
 } GomWidgetPrivate;
 
 static void
 free_priv (gpointer data)
 {
     GomWidgetPrivate *priv = data;
-
+    g_object_unref (priv->delegate);
     g_free (priv);
 }
 
@@ -88,10 +90,16 @@ get_priv (gpointer obj)
     priv = g_object_get_qdata (obj, gom_widget_private_quark ());
     if (!priv) {
         priv = g_new0 (GomWidgetPrivate, 1);
+
+        priv->delegate = g_object_new (GOM_TYPE_EVENT_TARGET_DELEGATE,
+                                       "target", obj,
+                                       NULL);
+
         g_object_set_qdata_full (obj, gom_widget_private_quark (), priv, free_priv);
     }
     return priv;
 }
+#define PRIV(i) get_priv (i)
 
 static void (*_gtk_widget_set_property) (GObject        *object,
                                          guint           property_id,
@@ -586,33 +594,33 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
 
     switch (event->type) {
     case GDK_MOTION_NOTIFY:        
-        priv = get_priv (widget);
+        priv = PRIV (widget);
         priv->click_state = 0;
         INIT_MOUSE_EVENT ("mousemove", motion);
         break;
     case GDK_BUTTON_PRESS:
-        priv = get_priv (widget);
+        priv = PRIV (widget);
         ++priv->click_state;
         INIT_MOUSE_EVENT ("mousedown", button);
         break;
     case GDK_BUTTON_RELEASE:
-        priv = get_priv (widget);
+        priv = PRIV (widget);
         INIT_MOUSE_EVENT ("mouseup", button);
         break;
     case GDK_ENTER_NOTIFY:
-        priv = get_priv (widget);
+        priv = PRIV (widget);
         INIT_MOUSE_EVENT ("mouseover", crossing);
         break;
     case GDK_LEAVE_NOTIFY:
-        priv = get_priv (widget);
+        priv = PRIV (widget);
         INIT_MOUSE_EVENT ("mouseout", crossing);
         break;
     case GDK_KEY_PRESS:
-        priv = get_priv (widget);
+        priv = PRIV (widget);
         INIT_KEY_EVENT ("keydown");
         break;
     case GDK_KEY_RELEASE:
-        priv = get_priv (widget);
+        priv = PRIV (widget);
         INIT_KEY_EVENT ("keyup");
         break;
     case GDK_SCROLL:
@@ -683,7 +691,7 @@ widget_add_event_listener (GomEventTarget   *target,
                            GomEventListener *listener,
                            gboolean          use_capture)
 {
-    GOM_NOT_IMPLEMENTED;
+    gom_event_target_add_event_listener (PRIV (target)->delegate, type, listener, use_capture);
 }
 
 static void
@@ -692,7 +700,7 @@ widget_remove_event_listener (GomEventTarget   *target,
                               GomEventListener *listener,
                               gboolean          use_capture)
 {
-    GOM_NOT_IMPLEMENTED;
+    gom_event_target_remove_event_listener (PRIV (target)->delegate, type, listener, use_capture);
 }
 
 static gboolean
@@ -700,11 +708,7 @@ widget_dispatch_event (GomEventTarget   *target,
                        GomEvent         *evt,
                        GError          **error)
 {
-    char *event_name;
-    g_object_get (evt, "type", &event_name, NULL);
-    g_print (" &&& dispatching event: %s.%s\n", g_type_name (G_TYPE_FROM_INSTANCE (target)), event_name);
-    g_free (event_name);
-    return FALSE;
+    return gom_event_target_dispatch_event (PRIV (target)->delegate, evt, error);
 }
 
 static void
@@ -717,6 +721,24 @@ widget_impl_target (gpointer g_iface, gpointer iface_data)
     IFACE (add_event_listener);
     IFACE (remove_event_listener);
     IFACE (dispatch_event);
+
+#undef IFACE
+}
+
+static GomEventTarget *
+widget_get_event_target_delegate (GomEventTargetHelper *helper)
+{
+    return PRIV (helper)->delegate;
+}
+
+static void
+widget_impl_helper (gpointer g_iface, gpointer iface_data)
+{
+    GomEventTargetHelperInterface *helper = (GomEventTargetHelperInterface *)g_iface;
+
+#define IFACE(func) helper->func = widget_##func
+
+    IFACE (get_event_target_delegate);
 
 #undef IFACE
 }
@@ -742,6 +764,11 @@ gom_widget_init_once (gpointer data)
         widget_impl_target,
         NULL,
         NULL,
+    };
+    static const GInterfaceInfo helper_info = {
+        widget_impl_helper,
+        NULL,
+        NULL
     };
 
     oclass = g_type_class_ref (GTK_TYPE_WIDGET);
@@ -865,6 +892,7 @@ gom_widget_init_once (gpointer data)
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE, &node_info);
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT, &element_info);
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET, &target_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET_HELPER, &helper_info);
 
 #define WIDGET(w) type ^= (w);
 #include "gomwidgets.c"

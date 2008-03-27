@@ -4,6 +4,7 @@ gomincludedir := $(includedir)/gom-0/gom
 gominclude_HEADERS :=				\
 	include/gom/gomdoc.h			\
 	include/gom/gomdom.h			\
+	include/gom/gomeventtargetdelegate.h	\
 	include/gom/gomevt.h			\
 	include/gom/gomglist.h			\
 	include/gom/gomjscontext.h		\

@@ -1,5 +1,17 @@
 2008-03-27  jacob berkman  <jacob@ilovegom.org>
 
+	* src/libgom/gomwidget.c (get_priv): create a delegate
+	(free_priv): release the delegate
+	(widget_add_event_listener, widget_remove_event_listener)
+	(widget_dispatch_event): delegate
+	(widget_get_event_target_delegate, widget_impl_helper)
+	(gom_widget_init_once): implement GomEventTargetHelper
+
+	* include/gom/gomeventtargetdelegate.h: 
+	* src/libgom/gomeventtargetdelegate.c: an actual implementation of
+	EventTarget for all things which implement it to use, and an
+	interface to get at this object from the real EventTargets
+
 	* src/libgom/gomdominterfaces.c: UIEvent properties are read-only
 
 	* src/libgom/gomwidget.c (gom_widget_event): remember the last
