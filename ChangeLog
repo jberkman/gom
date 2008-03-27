@@ -1,5 +1,9 @@
 2008-03-26  jacob berkman  <jacob@ilovegom.org>
 
+	* src/libgom/gomkeyboardevt.c
+	(gom_keyboard_evt_state_from_string): if we added a mask, no need
+	to go through the rest of the items
+
 	* src/libgom/gomwidget.c (widget_append_child,
 	widget_set_attribute): update for shorter macros
 	(gom_widget_get_property, gom_widget_set_property)

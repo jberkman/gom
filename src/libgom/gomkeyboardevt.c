@@ -257,6 +257,7 @@ gom_keyboard_evt_state_from_string (const char *modifiers_list)
         for (i = 0; i < G_N_ELEMENTS (id_masks); i++) {
             if (!strncmp (id_masks[i].id, start, end - start)) {
                 state |= id_masks[i].mask;
+                break;
             }
         }
     } while (1);
