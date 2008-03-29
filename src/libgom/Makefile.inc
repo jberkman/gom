@@ -14,10 +14,16 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomjscontext.c		\
 	src/libgom/gomjsdocument.c		\
 	src/libgom/gomjselement.c		\
+	src/libgom/gomjsevent.c			\
+	src/libgom/gomjseventlistener.c		\
+	src/libgom/gomjseventtarget.c		\
 	src/libgom/gomjsexception.c		\
+	src/libgom/gomjskeyboardevent.c		\
+	src/libgom/gomjsmouseevent.c		\
 	src/libgom/gomjsnavigator.c		\
 	src/libgom/gomjsnode.c			\
 	src/libgom/gomjsobject.c		\
+	src/libgom/gomjsuievent.c		\
 	src/libgom/gomjswindow.c		\
 	src/libgom/gomkeyboardevt.c		\
 	src/libgom/gommouseevt.c		\

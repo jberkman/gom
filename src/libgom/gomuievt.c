@@ -102,23 +102,10 @@ gom_ui_evt_init_ui_event (GomUIEvent      *evt,
     gom_ui_evt_init_ui_event_ns (evt, NULL, event_type_arg, can_bubble_arg, cancelable_arg, view_arg, detail_arg);
 }
 
-static void
-gom_ui_evt_impl_gom_ui_event (gpointer g_iface, gpointer iface_data)
-{
-    GomUIEventInterface *iface = (GomUIEventInterface *)g_iface;
-
-#define IFACE(func) iface->func = gom_ui_evt_##func
-
-    IFACE (init_ui_event);
-    IFACE (init_ui_event_ns);
-    
-#undef IFACE
-}
+GOM_IMPLEMENT (UI_EVENT, ui_event, gom_ui_evt);
 
 G_DEFINE_TYPE_WITH_CODE (GomUIEvt, gom_ui_evt, GOM_TYPE_EVT,
-                         {
-                             G_IMPLEMENT_INTERFACE (GOM_TYPE_UI_EVENT, gom_ui_evt_impl_gom_ui_event);
-                         });
+                         GOM_IMPLEMENT_INTERFACE (UI_EVENT, ui_event, gom_ui_evt));
 
 static void gom_ui_evt_init (GomUIEvt *event) { }
 

@@ -470,7 +470,7 @@ GOM_DEFINE_INTERFACE (GomEvent, gom_event,
 
     g_object_interface_install_property (
         g_iface,
-        g_param_spec_string ("namespace-uri", "namespace-u-r-i",
+        g_param_spec_string ("namespace-u-r-i", "namespace-uri",
                              "The namespace URI  associated with this event at creation time, or null if it is unspecified.",
                              NULL,
                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
@@ -531,8 +531,9 @@ GOM_STUB_VOID (GOM_EVENT_TARGET, gom_event_target, add_event_listener_ns,
                 const char       *namespace_uri,
                 const char       *type,
                 GomEventListener *listener,
-                gboolean          use_capture),
-               (gom_event_target, namespace_uri, type, listener, use_capture));
+                gboolean          use_capture,
+                GObject          *evt_group),
+               (gom_event_target, namespace_uri, type, listener, use_capture, evt_group));
 
 GOM_STUB_VOID (GOM_EVENT_TARGET, gom_event_target, remove_event_listener_ns,
                (GomEventTarget   *gom_event_target,
@@ -839,7 +840,7 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomMutationNameEvent, gom_mutation_name_
 {
     g_object_interface_install_property (
         g_iface,
-        g_param_spec_string ("prev-namespace-uri", "prev-namespace-u-r-i",
+        g_param_spec_string ("prev-namespace-u-r-i", "prev-namespace-uri",
                              "The previous value of the relatedNode's namespaceURI.",
                              NULL,
                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
@@ -989,7 +990,7 @@ GOM_DEFINE_INTERFACE (GomNode, gom_node,
 
     g_object_interface_install_property (
         g_iface,
-        g_param_spec_string ("namespace-uri", "namespace-u-r-i",
+        g_param_spec_string ("namespace-u-r-i", "namespace-uri",
                              "The namespace URI of this node, or null if it is unspecified.",
                              NULL,
                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));

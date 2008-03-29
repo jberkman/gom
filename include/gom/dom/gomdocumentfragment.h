@@ -42,6 +42,8 @@ G_BEGIN_DECLS
 #define GOM_IS_DOCUMENT_FRAGMENT(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_DOCUMENT_FRAGMENT))
 #define GOM_DOCUMENT_FRAGMENT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_DOCUMENT_FRAGMENT, GomDocumentFragmentInterface))
 
+#define GOM_IMPLEMENT_DOCUMENT_FRAGMENT(i, p)
+
 struct _GomDocumentFragmentInterface {
     GTypeInterface parent;
 };

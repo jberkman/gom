@@ -36,35 +36,6 @@ GOM_DEFINE_QUARK (object_attrs);
 #define ATTRS_QUARK (gom_object_attrs_quark ())
 #define ATTRS(o) ((GHashTable *)g_object_get_qdata (G_OBJECT (o), ATTRS_QUARK));
 
-#if 0
-static char *
-camel_case (const char *s)
-{
-    int si, ri;
-    char *r = g_malloc (strlen (s) + 1);
-    gboolean upper = FALSE;
-    for (ri = si = 0; s[si]; si++) {
-        switch (s[si]) {
-        case '-':
-        case '_':
-            upper = TRUE;
-            break;
-        default:
-            if (upper) {
-                r[ri++] = g_ascii_toupper (s[si]);
-                upper = FALSE;
-            } else {
-                r[ri++] = s[si];
-            }
-            break;
-        }
-    }
-    r[ri] = s[si];
-    g_print ("%s:%d:%s: %s -> %s\n", __FILE__, __LINE__, __FUNCTION__, s, r);
-    return r;
-}
-#endif
-
 static char *
 camel_uncase (const char *s)
 {
@@ -79,7 +50,9 @@ camel_uncase (const char *s)
         }
     }
     r[ri] = s[si];
+#if 0
     g_print ("%s:%d:%s: %s -> %s\n", __FILE__, __LINE__, __FUNCTION__, s, r);
+#endif
     return r;
 }
 

@@ -51,7 +51,7 @@ struct _GomGList {
 };
 
 struct _GomGListClass {
-    GObjectClass parent;
+    GObjectClass parent_class;
 };
 
 GType gom_g_list_get_type (void);

@@ -55,7 +55,7 @@ struct _GomDoc {
 };
 
 struct _GomDocClass {
-    GObjectClass parent;
+    GObjectClass parent_class;
 };
 
 GType gom_doc_get_type (void);

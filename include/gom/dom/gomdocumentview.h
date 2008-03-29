@@ -42,6 +42,8 @@ G_BEGIN_DECLS
 #define GOM_IS_DOCUMENT_VIEW(i)            (G_TYPE_CHECK_INSTANCE_CAST    ((i), GOM_TYPE_DOCUMENT_VIEW))
 #define GOM_DOCUMENT_VIEW_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_DOCUMENT_VIEW, GomDocumentViewInterface))
 
+#define GOM_IMPLEMENT_DOCUMENT_VIEW(i, p)
+
 struct _GomDocumentViewInterface {
     GTypeInterface parent;
 };

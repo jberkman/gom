@@ -86,13 +86,15 @@ gom_jsval (JSContext *cx, jsval *jval, const GValue *gval, GError **error)
 {
     gboolean ret = FALSE;
     JSString *jstr;
+    GObject  *gobj;
+    JSObject *jsobj;
     jschar jc;
     char c;
 
     g_return_val_if_fail (jval != NULL, FALSE);
     g_return_val_if_fail (gval != NULL, FALSE);
 
-    switch (G_VALUE_TYPE (gval)) {
+    switch (G_TYPE_FUNDAMENTAL (G_VALUE_TYPE (gval))) {
     case G_TYPE_CHAR:
         c = g_value_get_char (gval);
         jstr = JS_NewStringCopyN (cx, &c, 1);
@@ -108,6 +110,10 @@ gom_jsval (JSContext *cx, jsval *jval, const GValue *gval, GError **error)
     case G_TYPE_BOOLEAN:
         *jval = BOOLEAN_TO_JSVAL (g_value_get_boolean (gval));
         ret = TRUE;
+        break;
+
+    case G_TYPE_ENUM:
+        ret = JS_NewNumberValue (cx, g_value_get_enum (gval), jval);
         break;
 
     case G_TYPE_INT:
@@ -144,9 +150,7 @@ gom_jsval (JSContext *cx, jsval *jval, const GValue *gval, GError **error)
         break;
 
     default:
-        if (G_VALUE_HOLDS (gval, G_TYPE_OBJECT)) {
-            GObject  *gobj;
-            JSObject *jsobj;
+        if (G_VALUE_HOLDS_OBJECT (gval)) {
             gobj = g_value_get_object (gval);
             if (!gobj) {
                 *jval = JSVAL_NULL;
@@ -162,6 +166,7 @@ gom_jsval (JSContext *cx, jsval *jval, const GValue *gval, GError **error)
             }
             ret = TRUE;
         }
+        break;
     }
 
     if (!ret) {

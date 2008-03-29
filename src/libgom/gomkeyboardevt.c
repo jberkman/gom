@@ -67,7 +67,7 @@ gom_keyboard_evt_get_property (GObject    *object,
         g_value_set_string (value, priv->key_identifier);
         break;
     case PROP_KEY_LOCATION:
-        g_value_set_int (value, priv->key_location);
+        g_value_set_enum (value, priv->key_location);
         break;
     case PROP_CTRL_KEY:
         g_value_set_boolean (value, priv->state & GDK_CONTROL_MASK);
@@ -326,22 +326,18 @@ gom_keyboard_evt_init_keyboard_event (GomKeyboardEvent   *evt,
                                              key_identifier_arg, key_location_arg, modifiers_list);
 }
 
-static void
-gom_keyboard_evt_impl_gom_keyboard_event (gpointer g_iface, gpointer iface_data)
+static gboolean
+gom_keyboard_evt_get_modifier_state (GomKeyboardEvent *evt,
+                                     const char       *key_identifier_arg)
 {
-    GomKeyboardEventInterface *iface = (GomKeyboardEventInterface *)g_iface;
-
-#define IFACE(func) iface->func = gom_keyboard_evt_##func
-
-    IFACE (init_keyboard_event);
-    
-#undef IFACE
+    GOM_NOT_IMPLEMENTED;
+    return FALSE;
 }
 
+GOM_IMPLEMENT (KEYBOARD_EVENT, keyboard_event, gom_keyboard_evt);
+
 G_DEFINE_TYPE_WITH_CODE (GomKeyboardEvt, gom_keyboard_evt, GOM_TYPE_UI_EVT,
-                         {
-                             G_IMPLEMENT_INTERFACE (GOM_TYPE_KEYBOARD_EVENT, gom_keyboard_evt_impl_gom_keyboard_event);
-                         });
+                         GOM_IMPLEMENT_INTERFACE (KEYBOARD_EVENT, keyboard_event, gom_keyboard_evt));
 
 static void gom_keyboard_evt_init (GomKeyboardEvt *event) { }
 

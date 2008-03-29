@@ -172,23 +172,18 @@ gom_mouse_evt_init_mouse_event (GomMouseEvent   *evt,
     gom_mouse_evt_init_mouse_event_ns (evt, NULL, event_type_arg, can_bubble_arg, cancelable_arg, view_arg, detail_arg, screen_x_arg, screen_y_arg, client_x_arg, client_y_arg, ctrl_key_arg, alt_key_arg, shift_key_arg, meta_key_arg, button_arg, related_target_arg);
 }
 
-static void
-gom_mouse_evt_impl_gom_mouse_event (gpointer g_iface, gpointer iface_data)
+static gboolean
+gom_mouse_evt_get_modifier_state (GomMouseEvent *evt,
+                                  const char    *modifiers_list)
 {
-    GomMouseEventInterface *iface = (GomMouseEventInterface *)g_iface;
-
-#define IFACE(func) iface->func = gom_mouse_evt_##func
-
-    IFACE (init_mouse_event);
-    IFACE (init_mouse_event_ns);
-
-#undef IFACE
+    GOM_NOT_IMPLEMENTED;
+    return FALSE;
 }
 
+GOM_IMPLEMENT (MOUSE_EVENT, mouse_event, gom_mouse_evt);
+
 G_DEFINE_TYPE_WITH_CODE (GomMouseEvt, gom_mouse_evt, GOM_TYPE_UI_EVT,
-                         {
-                             G_IMPLEMENT_INTERFACE (GOM_TYPE_MOUSE_EVENT, gom_mouse_evt_impl_gom_mouse_event);
-                         });
+                         GOM_IMPLEMENT_INTERFACE (MOUSE_EVENT, mouse_event, gom_mouse_evt));
 
 static void gom_mouse_evt_init (GomMouseEvt *event) { }
 

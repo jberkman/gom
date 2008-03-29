@@ -43,6 +43,26 @@ G_BEGIN_DECLS
 #define GOM_IS_ELEMENT(i)            (G_TYPE_CHECK_INSTANCE_TYPE ((i), GOM_TYPE_ELEMENT))
 #define GOM_ELEMENT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_ELEMENT, GomElementInterface))
 
+#define _GOM_IMPLEMENT_ELEMENT(i, p, f) (((GomElementInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_ELEMENT(i, p)                                 \
+    G_STMT_START {                                                  \
+        _GOM_IMPLEMENT_ELEMENT (i, p, get_attribute);               \
+        _GOM_IMPLEMENT_ELEMENT (i, p, set_attribute);               \
+        _GOM_IMPLEMENT_ELEMENT (i, p, remove_attribute);            \
+        _GOM_IMPLEMENT_ELEMENT (i, p, get_attribute_node);          \
+        _GOM_IMPLEMENT_ELEMENT (i, p, set_attribute_node);          \
+        _GOM_IMPLEMENT_ELEMENT (i, p, remove_attribute_node);       \
+        _GOM_IMPLEMENT_ELEMENT (i, p, get_elements_by_tag_name);    \
+        _GOM_IMPLEMENT_ELEMENT (i, p, set_attribute_ns);            \
+        _GOM_IMPLEMENT_ELEMENT (i, p, get_attribute_ns);            \
+        _GOM_IMPLEMENT_ELEMENT (i, p, remove_attribute_ns);         \
+        _GOM_IMPLEMENT_ELEMENT (i, p, get_attribute_node_ns);       \
+        _GOM_IMPLEMENT_ELEMENT (i, p, set_attribute_node_ns);       \
+        _GOM_IMPLEMENT_ELEMENT (i, p, get_elements_by_tag_name_ns); \
+        _GOM_IMPLEMENT_ELEMENT (i, p, has_attribute);               \
+        _GOM_IMPLEMENT_ELEMENT (i, p, has_attribute_ns);            \
+    } G_STMT_END
+
 struct _GomElementInterface {
     GTypeInterface parent;
 

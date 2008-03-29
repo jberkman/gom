@@ -80,7 +80,7 @@ gom_evt_get_property (GObject    *object,
         g_value_set_object (value, priv->current_target);
         break;
     case PROP_EVENT_PHASE:
-        g_value_set_int (value, priv->phase_type);
+        g_value_set_enum (value, priv->phase_type);
         break;
     case PROP_BUBBLES:
         g_value_set_boolean (value, priv->bubbles);
@@ -204,43 +204,13 @@ gom_evt_set_target (GomEvt *evt, GomEventTarget *target)
     priv->target = g_object_ref (target);
 }
 
-static void
-gom_evt_impl_gom_event (gpointer g_iface, gpointer iface_data)
-{
-    GomEventInterface *iface = (GomEventInterface *)g_iface;
-
-#define IFACE(func) iface->func = gom_evt_##func
-
-    IFACE (stop_propagation);
-    IFACE (prevent_default);
-    IFACE (init_event);
-
-    IFACE (is_custom);
-    IFACE (stop_immediate_propagation);
-    IFACE (is_default_prevented);
-    IFACE (init_event_ns);
-
-#undef IFACE
-}
-
-static void
-gom_evt_impl_gom_custom_event (gpointer g_iface, gpointer iface_data)
-{
-    GomCustomEventInterface *iface = (GomCustomEventInterface *)g_iface;
-
-#define IFACE(func) iface->func = gom_evt_##func
-
-    IFACE (set_dispatch_state);
-    IFACE (is_propagation_stopped);
-    IFACE (is_immediate_propagation_stopped);
-
-#undef IFACE
-}
+GOM_IMPLEMENT (EVENT,        event,        gom_evt);
+GOM_IMPLEMENT (CUSTOM_EVENT, custom_event, gom_evt);
 
 G_DEFINE_TYPE_WITH_CODE (GomEvt, gom_evt, G_TYPE_OBJECT,
                          {
-                             G_IMPLEMENT_INTERFACE (GOM_TYPE_EVENT, gom_evt_impl_gom_event);
-                             G_IMPLEMENT_INTERFACE (GOM_TYPE_CUSTOM_EVENT, gom_evt_impl_gom_custom_event);
+                             GOM_IMPLEMENT_INTERFACE (EVENT,        event,        gom_evt);
+                             GOM_IMPLEMENT_INTERFACE (CUSTOM_EVENT, custom_event, gom_evt);
                          });
 
 static void
@@ -253,6 +223,30 @@ gom_evt_init (GomEvt *event)
 }
 
 static void
+gom_evt_finalize (GObject *object)
+{
+    GomEvtPrivate *priv = PRIV (object);
+
+    g_free (priv->namespace_uri);
+    priv->namespace_uri = NULL;
+
+    g_free (priv->type);
+    priv->type = NULL;
+
+    if (priv->target) {
+        g_object_unref (priv->target);
+        priv->target = NULL;
+    }
+
+    if (priv->current_target) {
+        g_object_unref (priv->current_target);
+        priv->current_target = NULL;
+    }
+
+    G_OBJECT_CLASS (gom_evt_parent_class)->finalize (object);
+}
+
+static void
 gom_evt_class_init (GomEvtClass *klass)
 {
     GObjectClass *oclass = G_OBJECT_CLASS (klass);
@@ -260,6 +254,7 @@ gom_evt_class_init (GomEvtClass *klass)
     g_type_class_add_private (klass, sizeof (GomEvtPrivate));
 
     oclass->get_property = gom_evt_get_property;
+    oclass->finalize     = gom_evt_finalize;
 
     g_object_class_override_property (oclass, PROP_TYPE,           "type");
     g_object_class_override_property (oclass, PROP_TARGET,         "target");
@@ -268,5 +263,5 @@ gom_evt_class_init (GomEvtClass *klass)
     g_object_class_override_property (oclass, PROP_BUBBLES,        "bubbles");
     g_object_class_override_property (oclass, PROP_CANCELABLE,     "cancelable");
     g_object_class_override_property (oclass, PROP_TIME_STAMP,     "time-stamp");
-    g_object_class_override_property (oclass, PROP_NAMESPACE,      "namespace-uri");
+    g_object_class_override_property (oclass, PROP_NAMESPACE,      "namespace-u-r-i");
 }

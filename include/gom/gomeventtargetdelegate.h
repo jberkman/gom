@@ -36,16 +36,22 @@ typedef struct _GomEventTargetDelegateClass GomEventTargetDelegateClass;
 
 G_END_DECLS
 
-#include <gom/dom/gomeventtarget.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
 #define GOM_TYPE_EVENT_TARGET_HELPER             (gom_event_target_helper_get_type ())
-#define GOM_EVENT_TARGET_HELPER(i)               (G_TYPE_CHECK_INSTANCE_CAST    ((i), GOM_TYPE_EVENT_TARGET_HELPER, GomEventTarget_Helper))
+#define GOM_EVENT_TARGET_HELPER(i)               (G_TYPE_CHECK_INSTANCE_CAST    ((i), GOM_TYPE_EVENT_TARGET_HELPER, GomEventTargetHelper))
 #define GOM_IS_EVENT_TARGET_HELPER(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_EVENT_TARGET_HELPER))
 #define GOM_EVENT_TARGET_HELPER_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_EVENT_TARGET_HELPER, GomEventTargetHelperInterface))
 
 #define GOM_HAS_EVENT_TARGET_DELEGATE(i)         (GOM_IS_EVENT_TARGET_HELPER (i))
+
+#define _GOM_IMPLEMENT_EVENT_TARGET_HELPER(i, p, f) (((GomEventTargetHelperInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_EVENT_TARGET_HELPER(i, p)                         \
+    G_STMT_START {                                                      \
+        _GOM_IMPLEMENT_EVENT_TARGET_HELPER (i, p, get_event_target_delegate); \
+    } G_STMT_END
 
 #define GOM_TYPE_EVENT_TARGET_DELEGATE           (gom_event_target_delegate_get_type ())
 #define GOM_EVENT_TARGET_DELEGATE(i)             (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_EVENT_TARGET_DELEGATE, GomEventTargetDelegate))
@@ -57,7 +63,7 @@ G_BEGIN_DECLS
 struct _GomEventTargetHelperInterface {
     GTypeInterface parent;
 
-    GomEventTarget *(*get_event_target_delegate) (GomEventTargetHelper *gom_event_target_helper);
+    GomEventTargetDelegate *(*get_event_target_delegate) (GomEventTargetHelper *gom_event_target_helper);
 };
 
 struct _GomEventTargetDelegate {
@@ -65,13 +71,13 @@ struct _GomEventTargetDelegate {
 };
 
 struct _GomEventTargetDelegateClass {
-    GObjectClass parent;
+    GObjectClass parent_class;
 };
 
 GType           gom_event_target_helper_get_type     (void);
 GType           gom_event_target_delegate_get_type   (void);
 
-GomEventTarget *gom_event_target_helper_get_event_target_delegate (GomEventTargetHelper *gom_event_target_helper);
+GomEventTargetDelegate *gom_event_target_helper_get_event_target_delegate (GomEventTargetHelper *gom_event_target_helper);
 
 G_END_DECLS
 

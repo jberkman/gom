@@ -42,6 +42,8 @@ G_BEGIN_DECLS
 #define GOM_IS_ATTR(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_ATTR))
 #define GOM_ATTR_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_ATTR, GomAttrInterface))
 
+#define GOM_IMPLEMENT_ATTR(i, p)
+
 struct _GomAttrInterface {
     GTypeInterface parent;
 };

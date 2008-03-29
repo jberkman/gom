@@ -43,6 +43,14 @@ G_BEGIN_DECLS
 #define GOM_IS_MOUSE_EVENT(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_MOUSE_EVENT))
 #define GOM_MOUSE_EVENT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_MOUSE_EVENT, GomMouseEventInterface))
 
+#define _GOM_IMPLEMENT_MOUSE_EVENT(i, p, f) (((GomMouseEventInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_MOUSE_EVENT(i, p)                         \
+    G_STMT_START {                                              \
+        _GOM_IMPLEMENT_MOUSE_EVENT (i, p, get_modifier_state);  \
+        _GOM_IMPLEMENT_MOUSE_EVENT (i, p, init_mouse_event);    \
+        _GOM_IMPLEMENT_MOUSE_EVENT (i, p, init_mouse_event_ns); \
+    } G_STMT_END
+
 struct _GomMouseEventInterface {
     GTypeInterface parent;
 

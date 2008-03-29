@@ -31,7 +31,7 @@ THE SOFTWARE.
 
 #include <locale.h>
 
-struct JSClass GomJSNavigatorClass = {
+JSClass GomJSNavigatorClass = {
     "Navigator", 0,
 
     JS_PropertyStub, JS_PropertyStub,
@@ -131,8 +131,8 @@ gom_js_navigator_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *arg
 JSObject *
 gom_js_navigator_init_class (JSContext *cx, JSObject *obj)
 {
-    JSObject *proto;
-    proto = JS_ConstructObject (cx, NULL, NULL, NULL);
-    return JS_InitClass (cx, obj, proto, &GomJSNavigatorClass, gom_js_navigator_construct, 0,
+    return JS_InitClass (cx, obj,
+                         JS_ConstructObject (cx, NULL, NULL, NULL),
+                         &GomJSNavigatorClass, gom_js_navigator_construct, 0,
                          gom_js_navigator_props, gom_js_navigator_funcs, NULL, NULL);
 }

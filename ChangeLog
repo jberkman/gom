@@ -1,3 +1,127 @@
+2008-03-29  jacob berkman  <jacob@ilovegom.org>
+
+	* examples/jquery-1.2.3.js: fix for http://dev.jquery.com/ticket/2620
+
+	* examples/hello.gom: give the GtkWindow an id
+
+	* examples/console.gom: add labels for the current x/y mouse
+	coords, and an event handler to display them on mousemove
+
+	* src/libgom/gomjselement.c (gom_js_element_resolve): set *objp to
+	NULL when we aren't actually defining the property
+
+	* src/libgom/gomeventtargetdelegate.c (find_entry): find a handler
+	by namespace, type, use_capture, and optional listener
+	(gom_event_target_delegate_add_event_listener_ns)
+	(gom_event_target_delegate_remove_event_listener_ns)
+	(gom_event_target_delegate_has_event_listener_ns)
+	(gom_event_target_delegate_will_trigger_ns)
+	(gom_event_target_delegate_dispatch_event): implment level 3 event
+	target
+	(dispatch_events): call handlers for a target and phase
+
+	* src/libgom/gomwidget.c (widget_is_supported)
+	(widget_has_attributes, widget_set_attribute_ns)
+	(widget_remove_attribute_ns, widget_get_attribute_node_ns)
+	(widget_set_attribute_node_ns)
+	(widget_get_elements_by_tag_name_ns, widget_has_attribute_ns)
+	(widget_has_attribute): add level 2 method stubs
+	(widget_add_event_listener_ns, widget_remove_event_listener_ns)
+	(widget_will_trigger_ns, widget_has_event_listener_ns): add level
+	3 method stubs
+
+	* src/libgom/gomdominterfaces.c: use -u-r-i for uris to camel
+	correctly
+
+	* src/libgom/gomjsnode.c: remove EventTarget stubs, and just set
+	our proto to be an EventTarget instead
+
+	* src/libgom/gomjscontext.c
+	(gom_js_context_init_standard_classes): initialize event classes
+
+	* src/libgom/gomkeyboardevt.c (gom_keyboard_evt_get_property):
+	location is an enum
+	(gom_keyboard_evt_get_modifier_state): add level 3 method
+
+	* src/libgom/gomvalue.c (gom_jsval): handle enums correctly
+
+	* src/libgom/gomjsdocument.c: enumerate with gom_js_object_enumerate
+
+	* src/libgom/gomdom.c (gom_dom_create_document_type)
+	(gom_dom_create_document): add stubs for level 2 methods
+
+	* src/libgom/gomdoc.c (gom_doc_normalize, gom_doc_is_supported)
+	(gom_doc_has_attributes, gom_doc_create_element_ns)
+	(gom_doc_create_attribute_ns)
+	(gom_doc_get_elements_by_tag_name_ns, gom_doc_import_node): add
+	stubs for level 2 methods
+
+	* src/libgom/gomjsobject.c (camel_case): move this from
+	gomobject.c and uncomment
+	(gom_js_object_enumerate): enumerate over GObject properties
+
+	* src/libgom/gomevt.c (gom_evt_finalize, gom_evt_class_init): add
+	a finalize method
+
+	* src/gom/gom.c (gom_error_reporter): print errors as warnings
+
+	* src/libgom/gomjseventlistener.c: 
+	* include/gom/gomjseventlistener.h: a GObject wrapper for a JS
+	event listener (either a Function or an object with a handleEvent
+	method)
+
+	* src/libgom/gomjseventtarget.c: 
+	* include/gom/gomjseventtarget.h: 
+	* src/libgom/gomjsuievent.c: 
+	* include/gom/gomjsuievent.h: 
+	* src/libgom/gomjskeyboardevent.c: 
+	* include/gom/gomjskeyboardevent.h: 
+	* src/libgom/gomjsmouseevent.c: 
+	* include/gom/gomjsmouseevent.h: 
+	* src/libgom/gomjsevent.c: 
+	* include/gom/gomjsevent.h: add JS wrappers for event interfaces
+
+	* src/libgom/gomglist.c: 
+	* src/libgom/gommouseevt.c:
+	* src/libgom/gomevt.c: 
+	* src/libgom/gomuievt.c: use new macros below
+
+	* include/gommacros.h (GOM_IMPLEMENT, GOM_IMPLEMENT_INTERFACE):
+	helper macros for using the helper macros below
+
+	* include/gom/gomeventtargetdelegate.h (GOM_IMPLEMENT_EVENT_TARGET_HELPER): 
+	* include/gom/dom/gomtext.h (GOM_IMPLEMENT_TEXT): 
+	* include/gom/dom/gomnodelist.h (GOM_IMPLEMENT_NODE_LIST): 
+	* include/gom/dom/gomevent.h (GOM_IMPLEMENT_EVENT): 
+	* include/gom/dom/gomdocumentevent.h (GOM_IMPLEMENT_DOCUMENT_EVENT): 
+	* include/gom/dom/gomuievent.h (GOM_IMPLEMENT_UI_EVENT): 
+	* include/gom/dom/gomdocumentview.h (GOM_IMPLEMENT_DOCUMENT_VIEW): 
+	* include/gom/dom/gommutationnameevent.h (GOM_IMPLEMENT_MUTATION_NAME_EVENT): 
+	* include/gom/dom/gomdocumentfragment.h (GOM_IMPLEMENT_DOCUMENT_FRAGMENT): 
+	* include/gom/dom/gomentityreference.h (GOM_IMPLEMENT_ENTITY_REFERENCE): 
+	* include/gom/dom/gommouseevent.h (GOM_IMPLEMENT_MOUSE_EVENT): 
+	* include/gom/dom/gomelement.h (GOM_IMPLEMENT_ELEMENT): 
+	* include/gom/dom/gomeventtarget.h (GOM_IMPLEMENT_EVENT_TARGET): 
+	* include/gom/dom/gomnamednodemap.h (GOM_IMPLEMENT_NAMED_NODE_MAP): 
+	* include/gom/dom/gomtextevent.h (GOM_IMPLEMENT_TEXT_EVENT): 
+	* include/gom/dom/gomcharacterdata.h (GOM_IMPLEMENT_CHARACTER_DATA): 
+	* include/gom/dom/gomdomimplementation.h (GOM_IMPLEMENT_DOM_IMPLEMENTATION): 
+	* include/gom/dom/gomnode.h (GOM_IMPLEMENT_NODE): 
+	* include/gom/dom/gomdocumenttype.h (GOM_IMPLEMENT_DOCUMENT_TYPE): 
+	* include/gom/dom/gomdocument.h (GOM_IMPLEMENT_DOCUMENT): 
+	* include/gom/dom/gomprocessinginstruction.h (GOM_IMPLEMENT_PROCESSING_INSTRUCTION): 
+	* include/gom/dom/gomcustomevent.h (GOM_IMPLEMENT_CUSTOM_EVENT): 
+	* include/gom/dom/gomattr.h (GOM_IMPLEMENT_ATTR): 
+	* include/gom/dom/gommutationevent.h (GOM_IMPLEMENT_MUTATION_EVENT): 
+	* include/gom/dom/gomcomment.h (GOM_IMPLEMENT_COMMENT): 
+	* include/gom/dom/gomkeyboardevent.h (GOM_IMPLEMENT_KEYBOARD_EVENT): 
+	* include/gom/dom/gomcdatasection.h (GOM_IMPLEMENT_CDATA_SECTION): 
+	* include/gom/dom/gomabstractview.h (GOM_IMPLEMENT_ABSTRACT_VIEW): 
+	* include/gom/dom/gomnotation.h (GOM_IMPLEMENT_NOTATION): 
+	* include/gom/dom/gomeventlistener.h
+	(GOM_IMPLEMENT_EVENT_LISTENER): add helper macros for implementing
+	interfaces
+
 2008-03-27  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomwidget.c (get_priv): create a delegate

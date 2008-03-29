@@ -27,6 +27,8 @@ THE SOFTWARE.
 
 #include <gom/dom/gomnodelist.h>
 
+#include "gommacros.h"
+
 enum {
     PROP_LENGTH = 1
 };
@@ -68,16 +70,10 @@ gom_g_list_item (GomNodeList *list, gulong index)
     return g_list_nth_data (priv->glist, index);
 }
 
-static void
-gom_g_list_interface_init (gpointer g_iface, gpointer iface_data)
-{
-    GomNodeListInterface *iface = (GomNodeListInterface *)g_iface;
-
-    iface->item = gom_g_list_item;
-}
+GOM_IMPLEMENT (NODE_LIST, node_list, gom_g_list);
 
 G_DEFINE_TYPE_WITH_CODE (GomGList, gom_g_list, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (GOM_TYPE_NODE_LIST, gom_g_list_interface_init));
+                         GOM_IMPLEMENT_INTERFACE (NODE_LIST, node_list, gom_g_list));
 
 GomNodeList *
 gom_g_list_new (GList *glist)

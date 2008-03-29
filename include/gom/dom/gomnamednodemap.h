@@ -43,6 +43,18 @@ G_BEGIN_DECLS
 #define GOM_IS_NAMED_NODE_MAP(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_NAMED_NODE_MAP))
 #define GOM_NAMED_NODE_MAP_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_NAMED_NODE_MAP, GomNamedNodeMapInterface))
 
+#define _GOM_IMPLEMENT_NAMED_NODE_MAP(i, p, f) (((GomNamedNodeMapInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_NAMED_NODE_MAP(i, p)                              \
+    G_STMT_START {                                                      \
+        _GOM_IMPLEMENT_NAMED_NODE_MAP (i, p, get_named_item);           \
+        _GOM_IMPLEMENT_NAMED_NODE_MAP (i, p, set_named_item);           \
+        _GOM_IMPLEMENT_NAMED_NODE_MAP (i, p, remove_named_item);        \
+        _GOM_IMPLEMENT_NAMED_NODE_MAP (i, p, item);                     \
+        _GOM_IMPLEMENT_NAMED_NODE_MAP (i, p, get_named_item_ns);        \
+        _GOM_IMPLEMENT_NAMED_NODE_MAP (i, p, set_named_item_ns);        \
+        _GOM_IMPLEMENT_NAMED_NODE_MAP (i, p, remove_named_item_ns);     \
+    } G_STMT_END
+
 struct _GomNamedNodeMapInterface {
     GTypeInterface parent;
 

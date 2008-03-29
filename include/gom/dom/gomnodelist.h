@@ -42,6 +42,12 @@ G_BEGIN_DECLS
 #define GOM_IS_NODE_LIST(i)            (G_TYPE_CHECK_INSTANCE_TYPE ((i), GOM_TYPE_NODE_LIST))
 #define GOM_NODE_LIST_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_NODE_LIST, GomNodeListInterface))
 
+#define _GOM_IMPLEMENT_NODE_LIST(i, p, f) (((GomNodeListInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_NODE_LIST(i, p)           \
+    G_STMT_START {                              \
+        _GOM_IMPLEMENT_NODE_LIST (i, p, item);  \
+    } G_STMT_END
+
 struct _GomNodeListInterface {
     GTypeInterface parent;
 

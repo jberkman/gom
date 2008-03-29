@@ -42,6 +42,8 @@ G_BEGIN_DECLS
 #define GOM_IS_NOTATION(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_NOTATION))
 #define GOM_NOTATION_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_NOTATION, GomNotationInterface))
 
+#define GOM_IMPLEMENT_NOTATION(i, p)
+
 struct _GomNotationInterface {
     GTypeInterface parent;
 };

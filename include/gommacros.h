@@ -135,6 +135,15 @@ G_BEGIN_DECLS
         return I_N##_GET_INTERFACE (i_n)->func args_passed;             \
     }
 
+#define GOM_IMPLEMENT(I_N, i_n, p)                              \
+    static void                                                 \
+    p##_implement_##i_n (gpointer g_iface, gpointer iface_data) \
+    {                                                           \
+        GOM_IMPLEMENT_##I_N (g_iface, p);                       \
+    }
+
+#define GOM_IMPLEMENT_INTERFACE(I_N, i_n, p) (G_IMPLEMENT_INTERFACE (GOM_TYPE_##I_N, p##_implement_##i_n))
+
 G_END_DECLS
 
 #endif /* GOM_MACROS_H */

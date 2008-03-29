@@ -42,6 +42,18 @@ G_BEGIN_DECLS
 #define GOM_IS_EVENT_TARGET(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_EVENT_TARGET))
 #define GOM_EVENT_TARGET_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_EVENT_TARGET, GomEventTargetInterface))
 
+#define _GOM_IMPLEMENT_EVENT_TARGET(i, p, f) (((GomEventTargetInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_EVENT_TARGET(i, p)                                \
+    G_STMT_START {                                                      \
+        _GOM_IMPLEMENT_EVENT_TARGET(i, p, add_event_listener);          \
+        _GOM_IMPLEMENT_EVENT_TARGET(i, p, remove_event_listener);       \
+        _GOM_IMPLEMENT_EVENT_TARGET(i, p, dispatch_event);              \
+        _GOM_IMPLEMENT_EVENT_TARGET(i, p, add_event_listener_ns);       \
+        _GOM_IMPLEMENT_EVENT_TARGET(i, p, remove_event_listener_ns);    \
+        _GOM_IMPLEMENT_EVENT_TARGET(i, p, will_trigger_ns);             \
+        _GOM_IMPLEMENT_EVENT_TARGET(i, p, has_event_listener_ns);       \
+    } G_STMT_END
+
 struct _GomEventTargetInterface {
     GTypeInterface parent;
 
@@ -63,7 +75,8 @@ struct _GomEventTargetInterface {
                                           const char       *namespace_uri,
                                           const char       *type,
                                           GomEventListener *listener,
-                                          gboolean          use_capture);
+                                          gboolean          use_capture,
+                                          GObject          *evt_group);
 
     void     (*remove_event_listener_ns) (GomEventTarget   *target,
                                           const char       *namespace_uri,
@@ -100,7 +113,8 @@ void     gom_event_target_add_event_listener_ns    (GomEventTarget   *event_targ
                                                     const char       *namespace_uri,
                                                     const char       *type,
                                                     GomEventListener *listener,
-                                                    gboolean          use_capture);
+                                                    gboolean          use_capture,
+                                                    GObject          *evt_group);
 
 void     gom_event_target_remove_event_listener_ns (GomEventTarget   *target,
                                                     const char       *namespace_uri,

@@ -43,6 +43,8 @@ G_BEGIN_DECLS
 #define GOM_IS_DOCUMENT_TYPE(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_DOCUMENT_TYPE))
 #define GOM_DOCUMENT_TYPE_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_DOCUMENT_TYPE, GomDocumentTypeInterface))
 
+#define GOM_IMPLEMENT_DOCUMENT_TYPE(i, p)
+
 struct _GomDocumentTypeInterface {
     GTypeInterface parent;
 };

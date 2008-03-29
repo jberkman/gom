@@ -42,6 +42,12 @@ G_BEGIN_DECLS
 #define GOM_IS_EVENT_LISTENER(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_EVENT_LISTENER))
 #define GOM_EVENT_LISTENER_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_EVENT_LISTENER, GomEventListenerInterface))
 
+#define _GOM_IMPLEMENT_EVENT_LISTENER(i, p, f) (((GomEventListenerInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_EVENT_LISTENER(i, p)                      \
+    G_STMT_START {                                              \
+        _GOM_IMPLEMENT_EVENT_LISTENER (i, p, handle_event);     \
+    } G_STMT_END
+
 struct _GomEventListenerInterface {
     GTypeInterface parent;
 

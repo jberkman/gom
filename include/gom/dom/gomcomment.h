@@ -42,6 +42,8 @@ G_BEGIN_DECLS
 #define GOM_IS_COMMENT(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_COMMENT))
 #define GOM_COMMENT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_COMMENT, GomCommentInterface))
 
+#define GOM_IMPLEMENT_COMMENT(i, p)
+
 struct _GomCommentInterface {
     GTypeInterface parent;
 };

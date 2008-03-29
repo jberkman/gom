@@ -16,7 +16,11 @@
                            shadowType="GTK_SHADOW_IN">
           <GtkTextView id="output" wrapMode="GTK_WRAP_WORD" editable="false"/>
         </GtkScrolledWindow>
-        <GtkEntry id="entry" expand="false" fill="false"/>
+	<GtkHBox spacing="6" expand="false" fill="false">
+          <GtkLabel id="x" expand="false" fill="false"/>
+          <GtkLabel id="y" expand="false" fill="false"/>
+	  <GtkEntry id="entry" expand="true" fill="true"/>
+        </GtkHBox>
       </GtkVBox>
     </GtkWindow>
     <script contentType="text/javascript"><![CDATA[
@@ -34,6 +38,10 @@
               }
               return true;
           };
+	  $('#win').bind ("mousemove", function (evt) {
+              $('#x').get (0).label = evt.clientX;
+              $('#y').get (0).label = evt.clientY;
+          });
       })();
     ]]></script>
   </app>

@@ -316,28 +316,25 @@ widget_normalize (GomNode *node)
     GOM_NOT_IMPLEMENTED;
 }
 
-static void
-widget_impl_node (gpointer g_iface, gpointer iface_data)
+static gboolean
+widget_is_supported (GomNode    *node,
+                     const char *feature,
+                     const char *version)
 {
-    GomNodeInterface *node = (GomNodeInterface *)g_iface;
+    GOM_NOT_IMPLEMENTED;
+    return FALSE;
+}
 
-#define IFACE(func) node->func = widget_##func
-
-    IFACE (insert_before);
-    IFACE (replace_child);
-    IFACE (remove_child);
-    IFACE (append_child);
-    IFACE (has_child_nodes);
-    IFACE (clone_node);
-    IFACE (normalize);
-
-#undef IFACE
+static gboolean
+widget_has_attributes (GomNode *node)
+{
+    return TRUE;
 }
 
 /* GomElement implementation */
 
 static char *
-widget_get_attribute (GomElement *elem, const char *name)
+widget_get_attribute_ns (GomElement *elem, const char *namespace_uri, const char *name)
 {
     GParamSpec *spec;
     GValue gval = { 0 };
@@ -363,49 +360,88 @@ widget_get_attribute (GomElement *elem, const char *name)
     return ret;
 }
 
+static char *
+widget_get_attribute (GomElement *elem, const char *name)
+{
+    return widget_get_attribute_ns (elem, NULL, name);
+}
+
 static void
-widget_set_attribute (GomElement *elem, const char *name, const char *value, GError **error)
+widget_set_attribute_ns (GomElement *elem,
+                         const char *namespace_uri,
+                         const char *qualified_name,
+                         const char *value,
+                         GError **error)
 {
     GParamSpec *spec;
     GValue gval = { 0 };
 
-    spec = g_object_class_find_property (G_OBJECT_GET_CLASS (elem), name);
+    spec = g_object_class_find_property (G_OBJECT_GET_CLASS (elem), qualified_name);
     if (spec) {
         if (G_TYPE_FUNDAMENTAL (G_PARAM_SPEC_VALUE_TYPE (spec)) == G_TYPE_OBJECT) {
             g_set_error (error, GOM_DOM_EXCEPTION_ERROR,
                          GOM_INVALID_ATTRIBUTE_TYPE,
                          "Attribute %s.%s is a %s, which a string cannot be converted to",
-                         g_type_name (spec->owner_type), name,
+                         g_type_name (spec->owner_type), qualified_name,
                          g_type_name (G_PARAM_SPEC_VALUE_TYPE (spec)));
         } else if (gtk_builder_value_from_string (NULL, spec, value, &gval, error)) {
-            g_object_set_property (G_OBJECT (elem), name, &gval);
+            g_object_set_property (G_OBJECT (elem), qualified_name, &gval);
         }
     } else {
         g_value_init (&gval, G_TYPE_STRING);
         g_value_set_string (&gval, value);
-        gom_object_set_attribute (G_OBJECT (elem), name, &gval);
+        gom_object_set_attribute (G_OBJECT (elem), qualified_name, &gval);
     }
     g_value_unset (&gval);
 }
 
 static void
-widget_remove_attribute (GomElement *elem, const char *name, GError **error)
+widget_set_attribute (GomElement *elem, const char *name, const char *value, GError **error)
+{
+    widget_set_attribute_ns (elem, NULL, name, value, error);
+}
+
+static void
+widget_remove_attribute_ns (GomElement *elem,
+                                const char *namespace_uri,
+                                const char *local_name,
+                                GError    **error)
 {
     GOM_NOT_IMPLEMENTED;
 }
 
+static void
+widget_remove_attribute (GomElement *elem, const char *name, GError **error)
+{
+    widget_remove_attribute_ns (elem, NULL, name, error);
+}
+
 static GomAttr *
-widget_get_attribute_node (GomElement *elem, const char *name)
+widget_get_attribute_node_ns (GomElement *elem,
+                              const char *namespace_uri,
+                              const char *local_name)
 {
     GOM_NOT_IMPLEMENTED;
     return NULL;
 }
 
 static GomAttr *
-widget_set_attribute_node (GomElement *elem, GomAttr *new_atr, GError **error)
+widget_get_attribute_node (GomElement *elem, const char *name)
+{
+    return widget_get_attribute_node_ns (elem, NULL, name);
+}
+
+static GomAttr *
+widget_set_attribute_node_ns (GomElement *elem, GomAttr *new_atr, GError **error)
 {
     GOM_NOT_IMPLEMENTED;
     return new_atr;
+}
+
+static GomAttr *
+widget_set_attribute_node (GomElement *elem, GomAttr *new_atr, GError **error)
+{
+    return widget_set_attribute_node_ns (elem, new_atr, error);
 }
 
 static GomAttr *
@@ -416,10 +452,29 @@ widget_remove_attribute_node (GomElement *elem, GomAttr *old_attr, GError **erro
 }
 
 static GomNodeList *
-widget_get_elements_by_tag_name (GomElement *elem, const char *name)
+widget_get_elements_by_tag_name_ns (GomElement *elem, const char *namespace_uri, const char *name)
 {
     GOM_NOT_IMPLEMENTED;
     return NULL;
+}
+
+static GomNodeList *
+widget_get_elements_by_tag_name (GomElement *elem, const char *name)
+{
+    return widget_get_elements_by_tag_name_ns (elem, NULL, name);
+}
+
+static gboolean
+widget_has_attribute_ns (GomElement *elem, const char *namespace_uri, const char *local_name)
+{
+    GOM_NOT_IMPLEMENTED;
+    return FALSE;
+}    
+
+static gboolean
+widget_has_attribute (GomElement *elem, const char *name)
+{
+    return widget_has_attribute_ns (elem, NULL, name);
 }
 
 static void
@@ -668,24 +723,6 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
 }
 
 static void
-widget_impl_element (gpointer g_iface, gpointer iface_data)
-{
-    GomElementInterface *elem = (GomElementInterface *)g_iface;
-
-#define IFACE(func) elem->func = widget_##func
-
-    IFACE (get_attribute);
-    IFACE (set_attribute);
-    IFACE (remove_attribute);
-    IFACE (get_attribute_node);
-    IFACE (set_attribute_node);
-    IFACE (remove_attribute_node);
-    IFACE (get_elements_by_tag_name);
-
-#undef IFACE
-}
-
-static void
 widget_add_event_listener (GomEventTarget   *target,
                            const char       *type,
                            GomEventListener *listener,
@@ -712,36 +749,52 @@ widget_dispatch_event (GomEventTarget   *target,
 }
 
 static void
-widget_impl_target (gpointer g_iface, gpointer iface_data)
+widget_add_event_listener_ns (GomEventTarget   *target,
+                              const char       *namespace_uri,
+                              const char       *type,
+                              GomEventListener *listener,
+                              gboolean          use_capture,
+                              GObject          *group)
 {
-    GomEventTargetInterface *target = (GomEventTargetInterface *)g_iface;
-
-#define IFACE(func) target->func = widget_##func
-
-    IFACE (add_event_listener);
-    IFACE (remove_event_listener);
-    IFACE (dispatch_event);
-
-#undef IFACE
-}
-
-static GomEventTarget *
-widget_get_event_target_delegate (GomEventTargetHelper *helper)
-{
-    return PRIV (helper)->delegate;
+    gom_event_target_add_event_listener_ns (PRIV (target)->delegate, namespace_uri, type, listener, use_capture, group);
 }
 
 static void
-widget_impl_helper (gpointer g_iface, gpointer iface_data)
+widget_remove_event_listener_ns (GomEventTarget   *target,
+                                 const char       *namespace_uri,
+                                 const char       *type,
+                                 GomEventListener *listener,
+                                 gboolean          use_capture)
 {
-    GomEventTargetHelperInterface *helper = (GomEventTargetHelperInterface *)g_iface;
-
-#define IFACE(func) helper->func = widget_##func
-
-    IFACE (get_event_target_delegate);
-
-#undef IFACE
+    gom_event_target_remove_event_listener_ns (PRIV (target)->delegate, namespace_uri, type, listener, use_capture);
 }
+
+static gboolean
+widget_will_trigger_ns (GomEventTarget *target,
+                        const char     *namespace_uri,
+                        const char     *type)
+{
+    return gom_event_target_will_trigger_ns (PRIV (target)->delegate, namespace_uri, type);
+}
+
+static gboolean
+widget_has_event_listener_ns (GomEventTarget *target,
+                              const char     *namespace_uri,
+                              const char     *type)
+{
+    return gom_event_target_has_event_listener_ns (PRIV (target)->delegate, namespace_uri, type);
+}
+
+static GomEventTargetDelegate *
+widget_get_event_target_delegate (GomEventTargetHelper *helper)
+{
+    return GOM_EVENT_TARGET_DELEGATE (PRIV (helper)->delegate);
+}
+
+GOM_IMPLEMENT (NODE,                node,                widget);
+GOM_IMPLEMENT (ELEMENT,             element,             widget);
+GOM_IMPLEMENT (EVENT_TARGET,        event_target,        widget);
+GOM_IMPLEMENT (EVENT_TARGET_HELPER, event_target_helper, widget);
 
 static gpointer
 gom_widget_init_once (gpointer data)
@@ -751,22 +804,22 @@ gom_widget_init_once (gpointer data)
     GType type = 0;
 
     static const GInterfaceInfo node_info = {
-        widget_impl_node,
+        widget_implement_node,
         NULL, /* interface_finalize */
         NULL  /* interface_data */
     };
     static const GInterfaceInfo element_info = {
-        widget_impl_element,
+        widget_implement_element,
         NULL, /* interface_finalize */
         NULL  /* interface_data */
     };
     static const GInterfaceInfo target_info = {
-        widget_impl_target,
+        widget_implement_event_target,
         NULL,
         NULL,
     };
     static const GInterfaceInfo helper_info = {
-        widget_impl_helper,
+        widget_implement_event_target_helper,
         NULL,
         NULL
     };
@@ -863,7 +916,7 @@ gom_widget_init_once (gpointer data)
 
     g_object_class_install_property (
         oclass, PROP_NAMESPACE_URI,
-        g_param_spec_string ("namespace-uri", "namespace-u-r-i",
+        g_param_spec_string ("namespace-u-r-i", "namespace-uri",
                              "The namespace URI of this node, or null if it is unspecified.",
                              NULL,
                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));

@@ -69,8 +69,6 @@ typedef struct {
 
 GOM_DEFINE_QUARK(doc_error)
 
-/* GomNodeInterface */
-/* GomDocumentInterface */
 static void
 gom_doc_get_property (GObject    *object,
                       guint       property_id,
@@ -195,32 +193,37 @@ gom_doc_clone_node (GomNode *node, gboolean deep)
 }
 
 static void
-gom_doc_node_init (gpointer g_iface, gpointer iface_data)
+gom_doc_normalize (GomNode *node)
 {
-    GomNodeInterface *node = (GomNodeInterface *)g_iface;
-
-#define IFACE(func) node->func = gom_doc_##func
-
-    IFACE (insert_before);
-    IFACE (replace_child);
-    IFACE (remove_child);
-    IFACE (append_child);
-    IFACE (has_child_nodes);
-    IFACE (clone_node);
-
-#undef IFACE
+    GOM_NOT_IMPLEMENTED;
 }
 
-/* methods */
+static gboolean
+gom_doc_is_supported (GomNode    *node,
+                      const char *feature,
+                      const char *version)
+{
+    GOM_NOT_IMPLEMENTED;
+    return FALSE;
+}
+
+static gboolean
+gom_doc_has_attributes (GomNode *node)
+{
+    GOM_NOT_IMPLEMENTED;
+    return FALSE;
+}                         
+
 static GomElement *
-gom_doc_create_element (GomDocument *doc,
-                        const char  *tag_name,
-                        GError     **error)
+gom_doc_create_element_ns (GomDocument *doc,
+                           const char  *namespace_uri,
+                           const char  *qualified_name,
+                           GError     **error)
 {
     GType type;
     GObject *obj = NULL;
 
-    type = g_type_from_name (tag_name);
+    type = g_type_from_name (qualified_name);
     if (type != 0 && g_type_is_a (type, GOM_TYPE_ELEMENT)) {
         obj = g_object_new (type, NULL);
     }
@@ -229,7 +232,7 @@ gom_doc_create_element (GomDocument *doc,
                      GOM_DOM_EXCEPTION_ERROR,
                      GOM_UNKNOWN_TAG_NAME,
                      "%s is not a registered GType",
-                     tag_name);
+                     qualified_name);
         return NULL;
     }
 
@@ -238,6 +241,14 @@ gom_doc_create_element (GomDocument *doc,
     }
 
     return GOM_ELEMENT (obj);
+}
+
+static GomElement *
+gom_doc_create_element (GomDocument *doc,
+                        const char  *tag_name,
+                        GError     **error)
+{
+    return gom_doc_create_element_ns (doc, NULL, tag_name, error);
 }
 
 static GomDocumentFragment *
@@ -283,12 +294,21 @@ gom_doc_create_processing_instruction (GomDocument *doc,
 }
 
 static GomAttr *
+gom_doc_create_attribute_ns (GomDocument *doc,
+                             const char  *namespace_uri,
+                             const char  *qualified_name,
+                             GError     **error)
+{
+    GOM_NOT_IMPLEMENTED;
+    return NULL;
+}
+
+static GomAttr *
 gom_doc_create_attribute (GomDocument *doc,
                           const char  *name,
                           GError     **error)
 {
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
+    return gom_doc_create_attribute_ns (doc, NULL, name, error);
 }
 
 static GomEntityReference *
@@ -301,8 +321,26 @@ gom_doc_create_entity_reference (GomDocument *doc,
 }
 
 static GomNodeList *
+gom_doc_get_elements_by_tag_name_ns (GomDocument *doc,
+                                     const char  *namespace_uri,
+                                     const char  *qualified_name)
+{
+    GOM_NOT_IMPLEMENTED;
+    return NULL;
+}
+
+static GomNodeList *
 gom_doc_get_elements_by_tag_name (GomDocument *doc,
                                   const char  *tag_name)
+{
+    return gom_doc_get_elements_by_tag_name_ns (doc, NULL, tag_name);
+}
+
+static GomNode *
+gom_doc_import_node (GomDocument *doc,
+                          GomNode     *node,
+                          gboolean     deep,
+                          GError     **error)
 {
     GOM_NOT_IMPLEMENTED;
     return NULL;
@@ -351,32 +389,13 @@ gom_doc_get_element_by_id (GomDocument *doc,
     return NULL;
 }
 
-static void
-gom_doc_document_init (gpointer g_iface, gpointer iface_data)
-{
-    GomDocumentInterface *iface = (GomDocumentInterface *)g_iface;
-
-#define IFACE(func) iface->func = gom_doc_##func
-
-    IFACE (create_element);
-    IFACE (create_document_fragment);
-    IFACE (create_text_node);
-    IFACE (create_comment);
-    IFACE (create_cdata_section);
-    IFACE (create_processing_instruction);
-    IFACE (create_attribute);
-    IFACE (create_entity_reference);
-    IFACE (get_elements_by_tag_name);
-
-    /* Introduced in DOM Level 2: */
-    IFACE (get_element_by_id);
-#undef IFACE
-}
+GOM_IMPLEMENT (NODE,     node,     gom_doc);
+GOM_IMPLEMENT (DOCUMENT, document, gom_doc);
 
 G_DEFINE_TYPE_WITH_CODE (GomDoc, gom_doc, G_TYPE_OBJECT,
                          {
-                             G_IMPLEMENT_INTERFACE (GOM_TYPE_NODE, gom_doc_node_init);
-                             G_IMPLEMENT_INTERFACE (GOM_TYPE_DOCUMENT, gom_doc_document_init);
+                             GOM_IMPLEMENT_INTERFACE (NODE, node, gom_doc);
+                             GOM_IMPLEMENT_INTERFACE (DOCUMENT, document, gom_doc);
                          });
 
 static void gom_doc_init (GomDoc *doc) { }
@@ -402,7 +421,7 @@ gom_doc_class_init (GomDocClass *klass)
     g_object_class_override_property (oclass, PROP_NEXT_SIBLING,     "next-sibling");
     g_object_class_override_property (oclass, PROP_ATTRIBUTES,       "attributes");
     g_object_class_override_property (oclass, PROP_OWNER_DOCUMENT,   "owner-document");
-    g_object_class_override_property (oclass, PROP_NAMESPACE_URI,    "namespace-uri");
+    g_object_class_override_property (oclass, PROP_NAMESPACE_URI,    "namespace-u-r-i");
     g_object_class_override_property (oclass, PROP_PREFIX,           "prefix");
     g_object_class_override_property (oclass, PROP_LOCAL_NAME,       "local-name");
 

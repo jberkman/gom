@@ -37,7 +37,7 @@ THE SOFTWARE.
 static void
 gom_error_reporter (JSContext *cx, const char *message, JSErrorReport *report)
 {
-    g_printerr ("JS Error: %s\n", message);
+    g_warning ("JS Error: %s\n", message);
 }
 
 typedef struct {

@@ -42,6 +42,14 @@ G_BEGIN_DECLS
 #define GOM_IS_CUSTOM_EVENT(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_CUSTOM_EVENT))
 #define GOM_CUSTOM_EVENT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_CUSTOM_EVENT, GomCustomEventInterface))
 
+#define _GOM_IMPLEMENT_CUSTOM_EVENT(i, p, f) (((GomCustomEventInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_CUSTOM_EVENT(i, p)                                \
+    G_STMT_START {                                                      \
+        _GOM_IMPLEMENT_CUSTOM_EVENT (i, p, set_dispatch_state);         \
+        _GOM_IMPLEMENT_CUSTOM_EVENT (i, p, is_propagation_stopped);     \
+        _GOM_IMPLEMENT_CUSTOM_EVENT (i, p, is_immediate_propagation_stopped); \
+    } G_STMT_END
+
 struct _GomCustomEventInterface {
     GTypeInterface parent;
 

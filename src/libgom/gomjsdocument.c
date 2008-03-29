@@ -32,12 +32,14 @@ THE SOFTWARE.
 #include <gom/gomjsnode.h>
 #include <gom/gomjsobject.h>
 
-struct JSClass GomJSDocumentClass = {
-    "Document", 0,
+JSClass GomJSDocumentClass = {
+    "Document",
+    JSCLASS_NEW_ENUMERATE,
     
     JS_PropertyStub, JS_PropertyStub,
     JS_PropertyStub, JS_PropertyStub,
-    JS_EnumerateStub, JS_ResolveStub,
+    (JSEnumerateOp)gom_js_object_enumerate,
+    JS_ResolveStub,
     JS_ConvertStub, JS_FinalizeStub
 };
 
@@ -229,11 +231,9 @@ gom_js_document_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv
 JSObject *
 gom_js_document_init_class (JSContext *cx, JSObject *obj)
 {
-    JSObject *proto;
-
     gom_js_object_register_js_class (cx, GOM_TYPE_DOCUMENT, &GomJSDocumentClass);
-
-    proto = JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL);
-    return JS_InitClass (cx, obj, proto, &GomJSDocumentClass, gom_js_document_construct, 0,
+    return JS_InitClass (cx, obj,
+                         JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL),
+                         &GomJSDocumentClass, gom_js_document_construct, 0,
                          document_props, document_funcs, NULL, NULL);
 }

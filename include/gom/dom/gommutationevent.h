@@ -49,6 +49,13 @@ G_BEGIN_DECLS
 #define GOM_IS_MUTATION_EVENT(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_MUTATION_EVENT))
 #define GOM_MUTATION_EVENT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_MUTATION_EVENT, GomMutationEventInterface))
 
+#define _GOM_IMPLEMENT_MUTATION_EVENT(i, p, f) (((GomMutationEventInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_MUTATION_EVENT(i, p)                              \
+    G_STMT_START {                                                      \
+        _GOM_IMPLEMENT_MUTATION_EVENT (i, p, init_mutation_event);      \
+        _GOM_IMPLEMENT_MUTATION_EVENT (i, p, init_mutation_event_ns);   \
+    } G_STMT_END
+
 struct _GomMutationEventInterface {
     GTypeInterface parent;
 

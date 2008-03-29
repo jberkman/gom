@@ -38,8 +38,6 @@ THE SOFTWARE.
 
 #include <gommacros.h>
 
-#define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
-
 static JSBool
 gom_js_element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
@@ -122,6 +120,7 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
     JSObject *proto;
 
     if (JSVAL_IS_INT (id)) {
+        *objp = NULL;
         return JS_TRUE;
     }
 
@@ -145,6 +144,7 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
         g_print ("%s:%d:%s(): %s.%s already exists\n",
                  __FILE__, __LINE__, __FUNCTION__,
                  JS_GET_CLASS (cx, proto)->name, name);
+        *objp = NULL;
         return JS_TRUE;
     }
 
@@ -162,14 +162,14 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
     return JS_TRUE;
 }
 
-struct JSClass GomJSElementClass = {
+JSClass GomJSElementClass = {
     "Element",
-    JSCLASS_NEW_RESOLVE | JSCLASS_NEW_RESOLVE_GETS_START,
+    JSCLASS_NEW_RESOLVE | JSCLASS_NEW_RESOLVE_GETS_START | JSCLASS_NEW_ENUMERATE,
 
     JS_PropertyStub, JS_PropertyStub,
     JS_PropertyStub, JS_PropertyStub,
 
-    JS_EnumerateStub,
+    (JSEnumerateOp)gom_js_object_enumerate,
     (JSResolveOp)gom_js_element_resolve,
     JS_ConvertStub, JS_FinalizeStub
 };
@@ -380,11 +380,9 @@ gom_js_element_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
 JSObject *
 gom_js_element_init_class (JSContext *cx, JSObject *obj)
 {
-    JSObject *proto;
-
     gom_js_object_register_js_class (cx, GTK_TYPE_WIDGET, &GomJSElementClass);
-
-    proto = JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL);
-    return JS_InitClass (cx, obj, proto, &GomJSElementClass, gom_js_element_construct, 0,
+    return JS_InitClass (cx, obj,
+                         JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL),
+                         &GomJSElementClass, gom_js_element_construct, 0,
                          gom_js_element_props, gom_js_element_funcs, NULL, NULL);
 }

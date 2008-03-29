@@ -50,6 +50,14 @@ G_BEGIN_DECLS
 #define GOM_IS_KEYBOARD_EVENT(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_KEYBOARD_EVENT))
 #define GOM_KEYBOARD_EVENT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_KEYBOARD_EVENT, GomKeyboardEventInterface))
 
+#define _GOM_IMPLEMENT_KEYBOARD_EVENT(i, p, f) (((GomKeyboardEventInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_KEYBOARD_EVENT(i, p)                              \
+    G_STMT_START {                                                      \
+        _GOM_IMPLEMENT_KEYBOARD_EVENT (i, p, get_modifier_state);       \
+        _GOM_IMPLEMENT_KEYBOARD_EVENT (i, p, init_keyboard_event);      \
+        _GOM_IMPLEMENT_KEYBOARD_EVENT (i, p, init_keyboard_event_ns);   \
+    } G_STMT_END
+
 struct _GomKeyboardEventInterface {
     GTypeInterface parent;
 

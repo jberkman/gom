@@ -43,6 +43,14 @@ G_BEGIN_DECLS
 #define GOM_IS_DOM_IMPLEMENTATION(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_DOM_IMPLEMENTATION))
 #define GOM_DOM_IMPLEMENTATION_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_DOM_IMPLEMENTATION, GomDOMImplementationInterface))
 
+#define _GOM_IMPLEMENT_DOM_IMPLEMENTATION(i, p, f) (((GomDOMImplementationInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_DOM_IMPLEMENTATION(i, p)                          \
+    G_STMT_START {                                                      \
+        _GOM_IMPLEMENT_DOM_IMPLEMENTATION (i, p, has_feature);          \
+        _GOM_IMPLEMENT_DOM_IMPLEMENTATION (i, p, create_document_type); \
+        _GOM_IMPLEMENT_DOM_IMPLEMENTATION (i, p, create_document);      \
+    } G_STMT_END
+
 struct _GomDOMImplmentationInterface {
     GTypeInterface parent;
 

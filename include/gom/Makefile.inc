@@ -10,10 +10,16 @@ gominclude_HEADERS :=				\
 	include/gom/gomjscontext.h		\
 	include/gom/gomjsdocument.h		\
 	include/gom/gomjselement.h		\
+	include/gom/gomjsevent.h		\
+	include/gom/gomjseventlistener.h	\
+	include/gom/gomjseventtarget.h		\
 	include/gom/gomjsexception.h		\
+	include/gom/gomjskeyboardevent.h	\
+	include/gom/gomjsmouseevent.h		\
 	include/gom/gomjsnavigator.h		\
 	include/gom/gomjsnode.h			\
 	include/gom/gomjsobject.h		\
+	include/gom/gomjsuievent.h		\
 	include/gom/gomjswindow.h		\
 	include/gom/gomkeyboardevt.h		\
 	include/gom/gomkeyidentifiers.h		\

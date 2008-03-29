@@ -42,6 +42,16 @@ G_BEGIN_DECLS
 #define GOM_IS_CHARACTER_DATA(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_CHARACTER_DATA))
 #define GOM_CHARACTER_DATA_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_CHARACTER_DATA, GomCharacterDataInterface))
 
+#define _GOM_IMPLEMENT_CHARACTER_DATA(i, p, f) (((GomCharacterDataInterface *)i)->f = p##_##f)
+#define GOM_IMPLEMENT_CHARACTER_DATA(i, p)                     \
+    G_STMT_START {                                             \
+        _GOM_IMPLEMENT_CHARACTER_DATA (i, p, substring_data);  \
+        _GOM_IMPLEMENT_CHARACTER_DATA (i, p, append_data);     \
+        _GOM_IMPLEMENT_CHARACTER_DATA (i, p, insert_data);     \
+        _GOM_IMPLEMENT_CHARACTER_DATA (i, p, delete_data);     \
+        _GOM_IMPLEMENT_CHARACTER_DATA (i, p, replace_data);    \
+    } G_STMT_END
+
 struct _GomCharacterDataInterface {
     GTypeInterface parent;
 

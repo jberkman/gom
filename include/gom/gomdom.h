@@ -52,7 +52,7 @@ struct _GomDOM {
 };
 
 struct _GomDOMClass {
-    GObjectClass parent;
+    GObjectClass parent_class;
 };
 
 GType gom_dom_get_type (void);

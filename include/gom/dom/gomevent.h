@@ -48,6 +48,18 @@ G_BEGIN_DECLS
 #define GOM_IS_EVENT(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_EVENT))
 #define GOM_EVENT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_EVENT, GomEventInterface))
 
+#define _GOM_IMPLEMENT_EVENT(i, p, f) (((GomEventInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_EVENT(i, p)                               \
+    G_STMT_START {                                              \
+        _GOM_IMPLEMENT_EVENT(i, p, stop_propagation);           \
+        _GOM_IMPLEMENT_EVENT(i, p, prevent_default);            \
+        _GOM_IMPLEMENT_EVENT(i, p, init_event);                 \
+        _GOM_IMPLEMENT_EVENT(i, p, is_custom);                  \
+        _GOM_IMPLEMENT_EVENT(i, p, stop_immediate_propagation); \
+        _GOM_IMPLEMENT_EVENT(i, p, is_default_prevented);       \
+        _GOM_IMPLEMENT_EVENT(i, p, init_event_ns);              \
+    } G_STMT_END
+
 struct _GomEventInterface {
     GTypeInterface parent;
 

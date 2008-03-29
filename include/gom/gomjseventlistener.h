@@ -21,15 +21,15 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef GOM_ABSTRACT_VIEW_H
-#define GOM_ABSTRACT_VIEW_H
+#ifndef GOM_JS_EVENT_LISTENER_H
+#define GOM_JS_EVENT_LISTENER_H
 
 #include <glib/gmacros.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GomAbstractView          GomAbstractView; /*dummy object*/
-typedef struct _GomAbstractViewInterface GomAbstractViewInterface;
+typedef struct _GomJSEventListener      GomJSEventListener;
+typedef struct _GomJSEventListenerClass GomJSEventListenerClass;
 
 G_END_DECLS
 
@@ -37,19 +37,21 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-#define GOM_TYPE_ABSTRACT_VIEW             (gom_abstract_view_get_type ())
-#define GOM_ABSTRACT_VIEW(i)               (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_ABSTRACT_VIEW, GomAbstractView))
-#define GOM_IS_ABSTRACT_VIEW(i)            (G_TYPE_CHECK_INSTANCE_CAST    ((i), GOM_TYPE_ABSTRACT_VIEW))
-#define GOM_ABSTRACT_VIEW_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_ABSTRACT_VIEW, GomAbstractViewInterface))
+#define GOM_TYPE_JS_EVENT_LISTENER         (gom_js_event_listener_get_type ())
+#define GOM_JS_EVENT_LISTENER(i)           (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_JS_EVENT_LISTENER, GomJSEventListener))
+#define GOM_JS_EVENT_LISTENER_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST    ((k), GOM_TYPE_JS_EVENT_LISTENER, GomJSEventListenerClass))
+#define GOM_IS_JS_EVENT_LISTENER(i)        (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_JS_EVENT_LISTENER))
+#define GOM_IS_JS_EVENT_LISTENER_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_JS_EVENT_LISTENER))
+#define GOM_JS_EVENT_LISTENER_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_JS_EVENT_LISTENER, GomJSEventListenerClass))
 
-#define GOM_IMPLEMENT_ABSTRACT_VIEW(i, p)
-
-struct _GomAbstractViewInterface {
-    GTypeInterface parent;
+struct _GomJSEventListener {
+    GObject parent;
 };
 
-GType gom_abstract_view_get_type (void);
+struct _GomJSEventListenerClass {
+    GObjectClass parent_class;
+};
 
-G_END_DECLS
+GType gom_js_event_listener_get_type (void);
 
-#endif /* GOM_ABSTRACT_VIEW_H */
+#endif /* GOM_JS_EVENT_LISTENER */

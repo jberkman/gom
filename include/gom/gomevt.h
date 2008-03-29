@@ -49,7 +49,7 @@ struct _GomEvt {
 };
 
 struct _GomEvtClass {
-    GObjectClass parent;
+    GObjectClass parent_class;
 };
 
 GType gom_evt_get_type (void);

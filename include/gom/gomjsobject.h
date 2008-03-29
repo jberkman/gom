@@ -46,7 +46,13 @@ gboolean  gom_js_object_resolve (JSContext *cx, JSObject *obj, const char *name,
 
 gulong    gom_js_object_connect (JSContext *cx,   JSObject   *jsobj,
                                  guint signal_id, JSFunction *func);
-                                 
+
+JSBool    gom_js_object_enumerate (JSContext   *cx, 
+                                   JSObject    *obj,
+                                   JSIterateOp  enum_op,
+                                   jsval       *statep,
+                                   jsid        *idp);
+
 G_END_DECLS
 
 #endif /* GOM_JS_H */

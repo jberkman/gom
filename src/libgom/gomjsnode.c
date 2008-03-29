@@ -29,16 +29,17 @@ THE SOFTWARE.
 
 #include <gom/dom/gomnode.h>
 #include <gom/gomjsexception.h>
+#include <gom/gomjseventtarget.h>
 #include <gom/gomjsobject.h>
 
-struct JSClass GomJSNodeClass = {
-    "Node", 0,
+JSClass GomJSNodeClass = {
+    "Node", JSCLASS_NEW_ENUMERATE,
 
     JS_PropertyStub,
     JS_PropertyStub,
     JS_PropertyStub,
     JS_PropertyStub,
-    JS_EnumerateStub,
+    (JSEnumerateOp)gom_js_object_enumerate,
     JS_ResolveStub,
     JS_ConvertStub,
     JS_FinalizeStub
@@ -140,27 +141,6 @@ gom_js_node_has_attributes (JSContext *cx, JSObject *obj, uintN argc, jsval *arg
     return JS_FALSE;
 }
 
-static JSBool
-gom_js_node_add_event_listener (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
-{
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
-}
-
-static JSBool
-gom_js_node_remove_event_listener (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
-{
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
-}
-
-static JSBool
-gom_js_node_dispatch_event (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
-{
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
-}
-
 static JSFunctionSpec gom_js_node_funcs[] = {
     { "insertBefore",  gom_js_node_insert_before,   2 },
     { "replaceChild",  gom_js_node_replace_child,   2 },
@@ -172,11 +152,6 @@ static JSFunctionSpec gom_js_node_funcs[] = {
     { "normalize",     gom_js_node_normalize,       0 },
     { "isSupported",   gom_js_node_is_supported,    2 },
     { "hasAttributes", gom_js_node_has_attributes,  0 },
-
-    /* EventTarget */
-    { "addEventListener",    gom_js_node_add_event_listener, 3 },
-    { "removeEventListener", gom_js_node_remove_event_listener, 3 },
-    { "dispatchEvent",       gom_js_node_dispatch_event, 1 },
 
     { NULL }
 };
@@ -190,7 +165,8 @@ gom_js_node_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, js
 JSObject *
 gom_js_node_init_class (JSContext *cx, JSObject *obj)
 {
-    JSObject *proto = JS_ConstructObject (cx, &GomJSObjectClass, NULL, NULL);
-    return JS_InitClass (cx, obj, proto, &GomJSNodeClass, gom_js_node_construct, 0,
+    return JS_InitClass (cx, obj,
+                         JS_ConstructObject (cx, &GomJSEventTargetClass, NULL, NULL),
+                         &GomJSNodeClass, gom_js_node_construct, 0,
                          gom_js_node_props, gom_js_node_funcs, NULL, NULL);
 }

@@ -51,6 +51,25 @@ G_BEGIN_DECLS
 #define GOM_IS_DOCUMENT(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_DOCUMENT))
 #define GOM_DOCUMENT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_DOCUMENT, GomDocumentInterface))
 
+#define _GOM_IMPLEMENT_DOCUMENT(i, p, f) (((GomDocumentInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_DOCUMENT(i, p)                                    \
+    G_STMT_START {                                                      \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, create_element);                 \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, create_document_fragment);       \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, create_text_node);               \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, create_comment);                 \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, create_cdata_section);           \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, create_processing_instruction);  \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, create_attribute);               \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, create_entity_reference);        \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, get_elements_by_tag_name);       \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, import_node);                    \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, create_element_ns);              \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, create_attribute_ns);            \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, get_elements_by_tag_name_ns);    \
+        _GOM_IMPLEMENT_DOCUMENT (i, p, get_element_by_id);              \
+    } G_STMT_END
+
 struct _GomDocumentInterface {
     GTypeInterface parent;
 

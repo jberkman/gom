@@ -31,6 +31,8 @@ THE SOFTWARE.
 
 #include <gommacros.h>
 
+#include <string.h>
+
 GQuark gom_js_object_closures_quark (void);
 GQuark gom_js_object_g2js_quark (void);
 GQuark gom_js_object_js2g_quark (void);
@@ -51,6 +53,35 @@ GOM_DEFINE_QUARK (js_object_js2g);
 GOM_DEFINE_QUARK (js_object_gt2jsc);
 #define GT2JSC_QUARK (gom_js_object_gt2jsc_quark ())
 #define GT2JSC(cx) ((GHashTable *)GOM_JS_CONTEXT_GET_QDATA (cx, GT2JSC_QUARK))
+
+static char *
+camel_case (const char *s)
+{
+    int si, ri;
+    char *r = g_malloc (strlen (s) + 1);
+    gboolean upper = FALSE;
+    for (ri = si = 0; s[si]; si++) {
+        switch (s[si]) {
+        case '-':
+        case '_':
+            upper = TRUE;
+            break;
+        default:
+            if (upper) {
+                r[ri++] = g_ascii_toupper (s[si]);
+                upper = FALSE;
+            } else {
+                r[ri++] = s[si];
+            }
+            break;
+        }
+    }
+    r[ri] = s[si];
+#if 0
+    g_print ("\n%s:%d:%s: %s -> %s\n", __FILE__, __LINE__, __FUNCTION__, s, r);
+#endif
+    return r;
+}
 
 void
 gom_js_object_register_js_class (JSContext *cx, GType objtype, JSClass *jsclass)
@@ -384,7 +415,7 @@ gom_js_object_resolve_priv (JSContext *cx, JSObject *obj, jsval id, uintN flags,
 
     if (!JS_DefineProperty (cx, *objp, name, JSVAL_VOID,
                             gom_js_object_get_prop, gom_js_object_set_prop, 
-                            spec ? JSPROP_ENUMERATE|JSPROP_PERMANENT : 0)) {
+                            spec ? JSPROP_ENUMERATE | JSPROP_PERMANENT : 0)) {
         g_printerr ("Could not define a property for %s\n", name);
         return JS_FALSE;
     }
@@ -411,13 +442,75 @@ gom_js_object_finalize (JSContext *cx, JSObject *obj)
     }
 }
 
-struct JSClass GomJSObjectClass = {
+typedef struct {
+    GParamSpec  **specs;
+    guint         n_items;
+    guint         i;
+} EnumerateData;
+
+JSBool
+gom_js_object_enumerate (JSContext *cx, JSObject *obj, JSIterateOp enum_op, jsval *statep, jsid *idp)
+{
+    GObject *gobj;
+    EnumerateData *data;
+    GParamSpec *spec;
+    char *name;
+    JSString *jsname;
+    
+    gobj = gom_js_object_get_g_object (cx, obj);
+
+    g_print ("%s:%d:%s(%s, %d): -> %p\n",
+             __FILE__, __LINE__, __FUNCTION__,
+             JS_GET_CLASS (cx, obj)->name, enum_op, gobj);
+
+    switch (enum_op) {
+    case JSENUMERATE_INIT:
+        if (!gobj) {
+            *statep = JSVAL_NULL;
+            return JS_TRUE;
+        }
+        data = g_new0 (EnumerateData, 1);
+        data->specs = g_object_class_list_properties (G_OBJECT_GET_CLASS (gobj), &data->n_items);
+
+        *statep = PRIVATE_TO_JSVAL (data);
+        if (idp) {
+            *idp = JSVAL_ZERO;
+        }
+        break;
+    case JSENUMERATE_NEXT:
+        g_assert (G_IS_OBJECT (gobj));
+        data = JSVAL_TO_PRIVATE (*statep);
+
+        if (data->i < data->n_items) {
+            spec = data->specs[data->i++];
+            name = camel_case (spec->name);
+            g_print ("enumerating %s.%s\n", g_type_name (G_TYPE_FROM_INSTANCE (gobj)), name);
+            jsname = JS_NewStringCopyZ (cx, name);
+            g_free (name);
+            if (!JS_ValueToId (cx, STRING_TO_JSVAL (jsname), idp)) {
+                return JS_FALSE;
+            }
+            break;
+        }
+        *statep = JSVAL_NULL;
+        break;
+    case JSENUMERATE_DESTROY:
+        data = JSVAL_TO_PRIVATE (*statep);
+        g_free (data->specs);
+        g_free (data);
+        break;
+    }
+    return JS_TRUE;
+}
+                         
+
+JSClass GomJSObjectClass = {
     "GomObject",
-    JSCLASS_NEW_RESOLVE | JSCLASS_NEW_RESOLVE_GETS_START,
+    JSCLASS_NEW_RESOLVE | JSCLASS_NEW_RESOLVE_GETS_START | JSCLASS_NEW_ENUMERATE,
 
     JS_PropertyStub, JS_PropertyStub,
     JS_PropertyStub, JS_PropertyStub,
-    JS_EnumerateStub,
+    (JSEnumerateOp)gom_js_object_enumerate,
     (JSResolveOp)gom_js_object_resolve_priv,
     JS_ConvertStub,
     gom_js_object_finalize
@@ -459,14 +552,13 @@ gom_js_object_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
 JSObject *
 gom_js_object_init_class (JSContext *cx, JSObject *obj)
 {
-    JSObject *proto;
-
-    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, G2JS_QUARK, g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
-    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, JS2G_QUARK, g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
+    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, G2JS_QUARK,   g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
+    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, JS2G_QUARK,   g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
     GOM_JS_CONTEXT_SET_QDATA_FULL (cx, GT2JSC_QUARK, g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
 
-    proto = JS_ConstructObject (cx, NULL, NULL, NULL);
-    return JS_InitClass (cx, obj, proto, &GomJSObjectClass, gom_js_object_construct, 0,
+    return JS_InitClass (cx, obj,
+                         JS_ConstructObject (cx, NULL, NULL, NULL),
+                         &GomJSObjectClass, gom_js_object_construct, 0,
                          gom_js_object_props, gom_js_object_funcs, 
                          NULL, NULL);
 }

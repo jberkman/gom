@@ -38,7 +38,7 @@ GOM_DEFINE_QUARK (js_window_sources);
 #define SOURCES_QUARK (gom_js_window_sources_quark ())
 #define SOURCES(cx) ((GPtrArray *)GOM_JS_CONTEXT_GET_QDATA (cx, SOURCES_QUARK))
 
-struct JSClass GomJSWindowClass = {
+JSClass GomJSWindowClass = {
     "Window", 0,
 
     JS_PropertyStub, JS_PropertyStub,

@@ -24,7 +24,9 @@ THE SOFTWARE.
 #include "config.h"
 
 #include <gom/gomdom.h>
+
 #include <gom/gomdoc.h>
+
 #include <gommacros.h>
 
 static gboolean
@@ -33,16 +35,31 @@ gom_dom_has_feature (GomDOMImplementation *dom, const char *feature, const char 
     return !g_ascii_strcasecmp (feature, "xml") && !g_ascii_strcasecmp (version, "1.0");
 }
 
-static void
-gom_dom_interface_init (gpointer g_iface, gpointer iface_data)
+static GomDocumentType *
+gom_dom_create_document_type (GomDOMImplementation *dom,
+                              const char           *qualified_name,
+                              const char           *public_id,
+                              const char           *system_id,
+                              GError              **error)
 {
-    GomDOMImplementationInterface *iface = (GomDOMImplementationInterface *)g_iface;
-
-    iface->has_feature = gom_dom_has_feature;
+    GOM_NOT_IMPLEMENTED;
+    return NULL;
 }
 
-G_DEFINE_TYPE_WITH_CODE (GomDOM, gom_dom, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (GOM_TYPE_DOM_IMPLEMENTATION, gom_dom_interface_init));
+static GomDocument *
+gom_dom_create_document (GomDOMImplementation *dom,
+                         const char           *namespace_uri,
+                         const char           *qualified_name,
+                         GomDocumentType      *doctype,
+                         GError              **error)
+{
+    GOM_NOT_IMPLEMENTED;
+    return NULL;
+}
+
+GOM_IMPLEMENT (DOM_IMPLEMENTATION, dom_implementation, gom_dom);
+
+G_DEFINE_TYPE_WITH_CODE (GomDOM, gom_dom, G_TYPE_OBJECT, GOM_IMPLEMENT_INTERFACE (DOM_IMPLEMENTATION, dom_implementation, gom_dom));                         
 
 GomDOMImplementation *
 gom_dom_get_implementation (void)

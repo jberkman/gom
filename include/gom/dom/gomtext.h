@@ -42,6 +42,12 @@ G_BEGIN_DECLS
 #define GOM_IS_TEXT(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_TEXT))
 #define GOM_TEXT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_TEXT, GomTextInterface))
 
+#define _GOM_IMPLEMENT_TEXT(i, p, f) (((GomTextInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_TEXT(i, p)                \
+    G_STMT_START {                              \
+        _GOM_IMPLEMENT_TEXT (i, p, split_text); \
+    } G_STMT_END
+
 struct _GomTextInterface {
     GTypeInterface parent;
 

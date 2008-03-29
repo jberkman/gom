@@ -42,6 +42,13 @@ G_BEGIN_DECLS
 #define GOM_IS_UI_EVENT(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_UI_EVENT))
 #define GOM_UI_EVENT_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_UI_EVENT, GomUIEventInterface))
 
+#define _GOM_IMPLEMENT_UI_EVENT(i, p, f) (((GomUIEventInterface*)i)->f = p##_##f)
+#define GOM_IMPLEMENT_UI_EVENT(i, p)                            \
+    G_STMT_START {                                              \
+        _GOM_IMPLEMENT_UI_EVENT (i, p, init_ui_event);          \
+        _GOM_IMPLEMENT_UI_EVENT (i, p, init_ui_event_ns);       \
+    } G_STMT_END
+
 struct _GomUIEventInterface {
     GTypeInterface parent;
 
