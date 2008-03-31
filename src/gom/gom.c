@@ -51,6 +51,10 @@ parse_idle (gpointer data)
 {
     MainData *d = data;
     gom_js_window_parse_file (d->cx, d->window, d->filename);
+    if (JS_IsExceptionPending (d->cx)) {
+        JS_ReportPendingException (d->cx);
+        JS_ClearPendingException (d->cx);
+    }
     return FALSE;
 }
 

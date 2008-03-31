@@ -1,5 +1,7 @@
 2008-03-31  jacob berkman  <jacob@ilovegom.org>
 
+	* src/gom/gom.c (parse_idle): report any pending exceptions
+
 	* src/libgom/gomwidget.c (gom_widget_get_property)
 	(gom_widget_set_property): handle level 2 properties better
 	(widget_set_parent, widget_set_next_sibling)
