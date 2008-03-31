@@ -128,6 +128,9 @@ static void
 gom_js_event_listener_finalize (GObject *obj)
 {
     GomJSEventListenerPrivate *priv = PRIV (obj);
+    g_print ("%s:%d:%s (%s %p)\n",
+             __FILE__, __LINE__, __FUNCTION__,
+             g_type_name (G_TYPE_FROM_INSTANCE (obj)), obj);
     if (priv->obj) {
         if (!priv->cx) {
             g_warning ("%s:%d:%s(): %p has an Object but no Context",

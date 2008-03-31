@@ -23,10 +23,17 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomjswindow.h>
+#include "gom/gomjswindow.h"
 
-#include <gom/gomjscontext.h>
-#include <gommacros.h>
+#include "gom/dom/gomdocument.h"
+#include "gom/dom/gomdomimplementation.h"
+#include "gom/gomdom.h"
+#include "gom/gomjscontext.h"
+#include "gom/gomjsexception.h"
+#include "gom/gomjsobject.h"
+#include "gom/gomobject.h"
+
+#include "gommacros.h"
 
 #include <gtk/gtk.h>
 
@@ -276,4 +283,264 @@ gom_js_window_init_object (JSContext *cx, JSObject *window)
                        JSPROP_READONLY | JSPROP_PERMANENT);
 
     return window;
+}
+
+typedef struct {
+    const char  *filename;
+    JSContext   *cx;
+    JSObject    *window;
+    GomDocument *doc;
+    JSObject    *jsdoc;
+    GSList      *elems;
+    GString     *script;
+} ParserData;
+
+static void
+gom_js_window_parser_start_script (GMarkupParseContext *context,
+                                   const gchar         *element_name,
+                                   const gchar        **attribute_names,
+                                   const gchar        **attribute_values,
+                                   gpointer             user_data,
+                                   GError             **error)
+{
+    ParserData *data = user_data;
+    char *script;
+    gsize script_len;
+    jsval rval; 
+    JSString *str; 
+    const char **name, **value;
+    char *file;
+
+    for (name = attribute_names, value = attribute_values; *name; ++name, ++value) {
+        if (strcmp (*name, "src")) {
+            continue;
+        }
+        if (g_path_is_absolute (*value)) {
+            file = (char *)*value;
+        } else {
+            char *dir = g_path_get_dirname (data->filename);
+            file = g_build_filename (dir, *value, NULL);
+            g_free (dir);
+        }
+        if (!g_file_get_contents (file, &script, &script_len, error)) {
+            if (*value == file) {
+                g_free (file);
+            }
+            return;
+        }
+        
+        if (!JS_EvaluateScript(data->cx, data->window,
+                               script, script_len,
+                               *value, 0, &rval)) {
+            if (*value == file) {
+                g_free (file);
+            }
+            g_free (script);
+            return;
+        }
+        if (*value == file) {
+            g_free (file);
+        }
+        g_free (script);
+        str = JS_ValueToString(data->cx, rval); 
+        g_print ("script result: %s\n", JS_GetStringBytes(str));
+        /* Rhino 4th Ed. p. 189: "Any code that does appear between
+         * these tags is ignored by browsers that support the src
+         * attribute..."
+         */
+        return;
+    }
+    data->script = g_string_sized_new (1024);
+}
+
+/* Called for open tags <foo bar="baz"> */
+static void
+gom_js_window_parser_start_element (GMarkupParseContext *context,
+                                    const gchar         *element_name,
+                                    const gchar        **attribute_names,
+                                    const gchar        **attribute_values,
+                                    gpointer             user_data,
+                                    GError             **error)
+{
+    JSObject *jsobj = NULL;
+    GomElement *elem;
+    ParserData *data = user_data;
+    GParamSpec *spec;
+    const char **name, **value;
+    guint signal_id;
+    JSFunction *fun;
+    int lineno;
+
+    if (!data->doc) {
+        GomDOMImplementation *dom;
+        dom = g_object_new (GOM_TYPE_DOM, NULL);
+        data->doc = gom_dom_implementation_create_document (dom, NULL, element_name, NULL, error);
+        if (!data->doc) {
+            return;
+        }
+        data->jsdoc = gom_js_object_get_or_create_js_object (data->cx, data->doc);
+        JS_DefineProperty (data->cx, data->window, "document",
+                           OBJECT_TO_JSVAL (data->jsdoc), NULL, NULL,
+                           JSPROP_PERMANENT | JSPROP_READONLY);
+        g_object_get (data->doc, "document-element", &elem, NULL);
+    } else {
+        if (!strcmp (element_name, "script")) {
+            gom_js_window_parser_start_script (context, element_name, attribute_names, attribute_values, user_data, error);
+            return;
+        }
+
+        elem = gom_document_create_element (data->doc, element_name, error);
+    }
+    g_print ("start_element: %s -> %p\n", element_name, elem);
+    if (!elem) {
+        return;
+    }
+
+    for (name = attribute_names, value = attribute_values; *name; name++, value++) {
+        if (!gom_object_resolve (G_OBJECT (elem), *name, &spec, &signal_id)) {
+            gom_element_set_attribute (elem, *name, *value, error);
+        } else if (signal_id) {
+            if (!jsobj) {
+                jsobj = gom_js_object_get_or_create_js_object (data->cx, elem);
+                if (!jsobj) {
+                    if (!gom_js_exception_get_error (data->cx, error)) {
+                        g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
+                                     "Could not get JSObject for elem %s",
+                                     element_name);
+                    }
+                    return;
+                }
+            }
+            
+            g_markup_parse_context_get_position (context, &lineno, NULL);
+            fun = JS_CompileFunction (data->cx, data->window, NULL, 0, NULL,
+                                      *value, strlen (*value),
+                                      data->filename, lineno);
+            
+            if (!fun) {
+                if (!gom_js_exception_get_error (data->cx, error)) {
+                    g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
+                                 "Could not compile function at %s:%d", data->filename, lineno);
+                }
+                return;
+            }
+            
+            if (!gom_js_object_connect (data->cx, jsobj,
+                                        signal_id,
+                                        fun)) {
+                if (!gom_js_exception_get_error (data->cx, error)) {
+                    g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
+                                 "Could not connect signal '%s' to a %s\n",
+                                 &(*name)[2], g_type_name (G_TYPE_FROM_INSTANCE (elem)));
+                }
+                return;
+            }
+        } else {
+            gom_element_set_attribute (elem, spec->name, *value, error);
+        }
+        if (*error) {
+            return;
+        }
+    }
+    if (data->elems) {
+        gom_node_append_child (data->elems->data, GOM_NODE (elem), error);
+    }
+    data->elems = g_slist_prepend (data->elems, elem);
+}
+
+/* Called for close tags </foo> */
+static void
+gom_js_window_parser_end_element (GMarkupParseContext *context,
+                                  const gchar         *element_name,
+                                  gpointer             user_data,
+                                  GError             **error)
+{
+    ParserData *data = user_data;
+
+    if (!strcmp (element_name, "script")) {
+        jsval rval; 
+        JSString *str; 
+        int lineno;
+        /* src tag */
+        if (!data->script) {
+            return;
+        }
+        g_markup_parse_context_get_position (context, &lineno, NULL);
+        if (!JS_EvaluateScript(data->cx, data->window,
+                               data->script->str, data->script->len,
+                               data->filename, lineno, &rval)) {
+            if (!gom_js_exception_get_error (data->cx, error)) {
+                g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
+                             "Unknown error encountered while running script at %s:%d\n",
+                             data->filename, lineno);
+            }
+            return;
+        }
+        str = JS_ValueToString(data->cx, rval); 
+        g_print ("script result: %s\n", JS_GetStringBytes(str));
+        g_string_free (data->script, TRUE);
+        data->script = NULL;
+    } else {
+        data->elems = g_slist_delete_link (data->elems, data->elems);
+    }
+}
+
+/* Called for character data */
+/* text is not nul-terminated */
+static void
+gom_js_window_parser_text (GMarkupParseContext *context,
+                           const gchar         *text,
+                           gsize                text_len,  
+                           gpointer             user_data,
+                           GError             **error)
+{
+    ParserData *data = user_data;
+
+    if (data->script) {
+        g_string_append_len (data->script, text, text_len);
+    }
+}
+
+static GMarkupParser gom_js_window_parser = {
+    gom_js_window_parser_start_element,
+    gom_js_window_parser_end_element,
+    gom_js_window_parser_text,
+    NULL, NULL
+};
+
+JSObject *
+gom_js_window_parse_file (JSContext  *cx,
+                          JSObject   *window,
+                          const char *filename)
+{
+    ParserData data = { NULL };
+    GMarkupParseContext *ctx;
+    char *xml;
+    gsize xmllen;
+    GError *error = NULL;
+
+    if (!g_file_get_contents (filename, &xml, &xmllen, &error)) {
+        goto out;
+    }
+
+    data.filename = filename;
+    data.cx = cx;
+    data.window = window;
+    
+    ctx = g_markup_parse_context_new (&gom_js_window_parser,
+                                      G_MARKUP_TREAT_CDATA_AS_TEXT,
+                                      &data, NULL);
+    if (g_markup_parse_context_parse (ctx, xml, xmllen, &error)) {
+        g_markup_parse_context_end_parse (ctx, &error);
+    }
+    g_markup_parse_context_free (ctx);
+    g_free (xml);
+
+out:
+    if (error) {
+        gom_js_exception_set_error (cx, error);
+        g_clear_error (&error);
+    }
+
+    return data.jsdoc;
 }

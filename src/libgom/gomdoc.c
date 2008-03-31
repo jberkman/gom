@@ -23,51 +23,32 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomdoc.h>
+#include "gom/gomdoc.h"
 
-#include <gommacros.h>
+#include "gom/dom/gomdocumenttype.h"
+#include "gom/dom/gomdomexception.h"
+#include "gom/gomelem.h"
+#include "gom/gomobject.h"
 
-#include <gom/dom/gomdomexception.h>
-#include <gom/gomglist.h>
-#include <gom/gomjsdocument.h>
-#include <gom/gomjsexception.h>
-#include <gom/gomjsobject.h>
-#include <gom/gomobject.h>
-
-#include <glib/gmarkup.h>
+#include "gommacros.h"
 
 #include <gtk/gtkwidget.h>
 
 #include <string.h>
 
 enum {
-    PROP_NODE_NAME = 1,
-    PROP_NODE_VALUE,
-    PROP_NODE_TYPE,
-    PROP_PARENT_NODE,
-    PROP_CHILD_NODES,
-    PROP_FIRST_CHILD,
-    PROP_LAST_CHILD,
-    PROP_PREVIOUS_SIBLING,
-    PROP_NEXT_SIBLING,
-    PROP_ATTRIBUTES,
-    PROP_OWNER_DOCUMENT,
-    PROP_NAMESPACE_URI,
-    PROP_PREFIX,
-    PROP_LOCAL_NAME,
-
-    PROP_DOCTYPE,
+    PROP_DOCTYPE = 1,
     PROP_IMPLEMENTATION,
     PROP_DOCUMENT_ELEMENT
 };
 
 typedef struct {
-    GList *children;
+    GomDOMImplementation *implementation;
+    GomDocumentType      *doctype;
+    guint                 constructed : 1;
 } GomDocPrivate;
 
 #define PRIV(o) G_TYPE_INSTANCE_GET_PRIVATE ((o), GOM_TYPE_DOC, GomDocPrivate)
-
-GOM_DEFINE_QUARK(doc_error)
 
 static void
 gom_doc_get_property (GObject    *object,
@@ -76,43 +57,19 @@ gom_doc_get_property (GObject    *object,
                       GParamSpec *pspec)
 {
     GomDocPrivate *priv = PRIV (object);
-
+    GomElement *elem;
     switch (property_id) {
-    case PROP_LOCAL_NAME:
-    case PROP_NODE_NAME:
-        g_value_set_static_string (value, "document");
-        break;
-    case PROP_NODE_TYPE:
-        g_value_set_uint (value, GOM_DOCUMENT_NODE);
-        break;
-    case PROP_OWNER_DOCUMENT:
-    case PROP_PREVIOUS_SIBLING:
-    case PROP_NEXT_SIBLING:
-    case PROP_PARENT_NODE:
-        g_value_set_object (value, NULL);
-        break;
-    case PROP_CHILD_NODES:
-        g_value_set_object (value, priv->children ? gom_g_list_new (priv->children) : NULL);
-        break;
-    case PROP_FIRST_CHILD:
-        g_value_set_object (value, priv->children ? priv->children->data : NULL);
-        break;
-    case PROP_LAST_CHILD: {
-        GList *last;
-        last = g_list_last (priv->children);
-        g_value_set_object (value, last ? last->data : NULL);
-        break;
-    }
-    case PROP_NAMESPACE_URI:
-    case PROP_PREFIX:
-        g_value_set_string (value, NULL);
-        break;
-    case PROP_NODE_VALUE:
-    case PROP_ATTRIBUTES:
     case PROP_DOCTYPE:
+        g_value_set_object (value, priv->doctype);
+        break;
     case PROP_IMPLEMENTATION:
+        g_value_set_object (value, priv->implementation);
+        break;
     case PROP_DOCUMENT_ELEMENT:
-        GOM_NOT_IMPLEMENTED;
+        g_object_get (object, "first-child", &elem, NULL);
+        if (GOM_IS_ELEMENT (elem)) {
+            g_value_set_object (value, elem);
+        }
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -126,93 +83,19 @@ gom_doc_set_property (GObject *object,
                       const GValue *value,
                       GParamSpec *pspec)
 {
-    switch (property_id) {
-    case PROP_NODE_VALUE:
-        GOM_NOT_IMPLEMENTED;
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-        break;
+    GomDocPrivate *priv = PRIV (object);
+    if (!priv->constructed) {
+        switch (property_id) {
+        case PROP_DOCTYPE:
+            priv->doctype = g_value_dup_object (value);
+            return;
+        case PROP_IMPLEMENTATION:
+            priv->implementation = g_value_dup_object (value);
+            return;
+        }
     }
+    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
 }
-
-static GomNode *
-gom_doc_insert_before (GomNode *node,
-                      GomNode *new_child,
-                      GomNode *ref_child,
-                      GError  **error)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomNode *
-gom_doc_replace_child (GomNode *node,
-                      GomNode *new_child,
-                      GomNode *ref_child,
-                      GError  **error)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomNode *
-gom_doc_remove_child (GomNode *node,
-                     GomNode *old_child,
-                     GError  **error)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static GomNode *
-gom_doc_append_child (GomNode *node,
-                      GomNode *new_child,
-                      GError  **error)
-{
-    GomDocPrivate *priv = PRIV (node);
-
-    priv->children = g_list_append (priv->children, new_child);
-
-    return new_child;
-}
-
-static gboolean
-gom_doc_has_child_nodes (GomNode *node)
-{
-    GomDocPrivate *priv = PRIV (node);
-
-    return g_list_length (priv->children) != 0;
-}
-
-static GomNode *
-gom_doc_clone_node (GomNode *node, gboolean deep)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
-
-static void
-gom_doc_normalize (GomNode *node)
-{
-    GOM_NOT_IMPLEMENTED;
-}
-
-static gboolean
-gom_doc_is_supported (GomNode    *node,
-                      const char *feature,
-                      const char *version)
-{
-    GOM_NOT_IMPLEMENTED;
-    return FALSE;
-}
-
-static gboolean
-gom_doc_has_attributes (GomNode *node)
-{
-    GOM_NOT_IMPLEMENTED;
-    return FALSE;
-}                         
 
 static GomElement *
 gom_doc_create_element_ns (GomDocument *doc,
@@ -224,14 +107,28 @@ gom_doc_create_element_ns (GomDocument *doc,
     GObject *obj = NULL;
 
     type = g_type_from_name (qualified_name);
-    if (type != 0 && g_type_is_a (type, GOM_TYPE_ELEMENT)) {
-        obj = g_object_new (type, NULL);
+    if (!type || !g_type_is_a (type, GOM_TYPE_ELEMENT)) {
+        if (!strcmp (qualified_name, "gom") ||
+            !strcmp (qualified_name, "config") ||
+            !strcmp (qualified_name, "module") ||
+            !strcmp (qualified_name, "app")) {
+            type = GOM_TYPE_ELEM;
+        } else {
+            type = 0;
+        }
+    }
+    if (type) {
+        obj = g_object_new (type, 
+                            "owner-document",  doc,
+                            "namespace-u-r-i", namespace_uri,
+                            "node-name",       qualified_name,
+                            NULL);
     }
     if (!obj) {
         g_set_error (error,
                      GOM_DOM_EXCEPTION_ERROR,
                      GOM_UNKNOWN_TAG_NAME,
-                     "%s is not a registered GType",
+                     "%s is not a valid tag or registered GType",
                      qualified_name);
         return NULL;
     }
@@ -338,9 +235,9 @@ gom_doc_get_elements_by_tag_name (GomDocument *doc,
 
 static GomNode *
 gom_doc_import_node (GomDocument *doc,
-                          GomNode     *node,
-                          gboolean     deep,
-                          GError     **error)
+                     GomNode     *node,
+                     gboolean     deep,
+                     GError     **error)
 {
     GOM_NOT_IMPLEMENTED;
     return NULL;
@@ -374,31 +271,82 @@ element_get_element_by_id (GomElement *elem,
 /* Introduced in DOM Level 2: */
 static GomElement *
 gom_doc_get_element_by_id (GomDocument *doc,
-                           const char *element_id)
-{
-    GomDocPrivate *priv = PRIV (doc);
-    GomElement *elem;
-    GList *li;
-
-    for (li = priv->children; li; li = li->next) {
-        elem = element_get_element_by_id (GOM_ELEMENT (li->data), element_id);
-        if (elem) {
-            return elem;
+                           const char  *element_id)
+ {
+    GomNodeList *children;
+    GomNode *node;
+    GomElement *elem = NULL;
+    gulong i, length;
+    
+    g_object_get (doc, "child-nodes", &children, NULL);
+    g_object_get (children, "length", &length, NULL);
+    for (i = 0; i < length; i++) {
+        node = gom_node_list_item (children, i);
+        if (GOM_IS_ELEMENT (node)) {
+            elem = element_get_element_by_id (GOM_ELEMENT (node), element_id);
+            if (elem) {
+                break;
+            }
         }
     }
-    return NULL;
+    g_object_unref (children);
+    return elem;
 }
 
-GOM_IMPLEMENT (NODE,     node,     gom_doc);
 GOM_IMPLEMENT (DOCUMENT, document, gom_doc);
 
-G_DEFINE_TYPE_WITH_CODE (GomDoc, gom_doc, G_TYPE_OBJECT,
-                         {
-                             GOM_IMPLEMENT_INTERFACE (NODE, node, gom_doc);
-                             GOM_IMPLEMENT_INTERFACE (DOCUMENT, document, gom_doc);
-                         });
+G_DEFINE_TYPE_WITH_CODE (GomDoc, gom_doc, GOM_TYPE_NOODLE,
+                         GOM_IMPLEMENT_INTERFACE (DOCUMENT, document, gom_doc));
 
 static void gom_doc_init (GomDoc *doc) { }
+
+static GObject *
+gom_doc_constructor (GType                  type, 
+                     guint                  n_construct_properties,
+                     GObjectConstructParam *construct_properties)
+{
+    GObject *object;
+
+    object = G_OBJECT_CLASS (gom_doc_parent_class)->constructor (
+        type, n_construct_properties, construct_properties);
+
+    g_object_set (object,
+                  "owner-document",  object,
+                  "node-name",       "document",
+                  "node-type",       GOM_DOCUMENT_NODE,
+                  NULL);
+
+    return object;
+}
+static void
+gom_doc_constructed (GObject *object)
+{
+    GomDocPrivate *priv = PRIV (object);
+
+    if (G_OBJECT_CLASS (gom_doc_parent_class)->constructed) {
+        G_OBJECT_CLASS (gom_doc_parent_class)->constructed (object);
+    }
+
+    priv->constructed = TRUE;
+}
+
+static void
+gom_doc_finalize (GObject *object)
+{
+    GomDocPrivate *priv = PRIV (object);
+    g_print ("%s:%d:%s (%s %p)\n",
+             __FILE__, __LINE__, __FUNCTION__,
+             g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
+    if (priv->doctype) {
+        g_object_unref (priv->doctype);
+        priv->doctype = NULL;
+    }
+    if (priv->implementation) {
+        g_object_unref (priv->implementation);
+        priv->implementation = NULL;
+    }
+    G_OBJECT_CLASS (gom_doc_parent_class)->finalize (object);
+}
 
 static void
 gom_doc_class_init (GomDocClass *klass)
@@ -407,293 +355,13 @@ gom_doc_class_init (GomDocClass *klass)
 
     g_type_class_add_private (klass, sizeof (GomDocPrivate));
 
+    oclass->constructor  = gom_doc_constructor;
+    oclass->constructed  = gom_doc_constructed;
+    oclass->finalize     = gom_doc_finalize;
     oclass->get_property = gom_doc_get_property;
     oclass->set_property = gom_doc_set_property;
-
-    g_object_class_override_property (oclass, PROP_NODE_NAME,        "node-name");
-    g_object_class_override_property (oclass, PROP_NODE_VALUE,       "node-value");
-    g_object_class_override_property (oclass, PROP_NODE_TYPE,        "node-type");
-    g_object_class_override_property (oclass, PROP_PARENT_NODE,      "parent-node");
-    g_object_class_override_property (oclass, PROP_CHILD_NODES,      "child-nodes");
-    g_object_class_override_property (oclass, PROP_FIRST_CHILD,      "first-child");
-    g_object_class_override_property (oclass, PROP_LAST_CHILD,       "last-child");
-    g_object_class_override_property (oclass, PROP_PREVIOUS_SIBLING, "previous-sibling");
-    g_object_class_override_property (oclass, PROP_NEXT_SIBLING,     "next-sibling");
-    g_object_class_override_property (oclass, PROP_ATTRIBUTES,       "attributes");
-    g_object_class_override_property (oclass, PROP_OWNER_DOCUMENT,   "owner-document");
-    g_object_class_override_property (oclass, PROP_NAMESPACE_URI,    "namespace-u-r-i");
-    g_object_class_override_property (oclass, PROP_PREFIX,           "prefix");
-    g_object_class_override_property (oclass, PROP_LOCAL_NAME,       "local-name");
 
     g_object_class_override_property (oclass, PROP_DOCTYPE,          "doctype");
     g_object_class_override_property (oclass, PROP_IMPLEMENTATION,   "implementation");
     g_object_class_override_property (oclass, PROP_DOCUMENT_ELEMENT, "document-element");
-}
-
-typedef struct {
-    const char *filename;
-    JSContext *cx;
-    JSObject *jsobj;
-    GomDocument *doc;
-    GSList *elems;
-    GString *script;
-} GomDomParserData;
-
-static void
-gom_dom_parser_start_script (GMarkupParseContext *context,
-                             const gchar         *element_name,
-                             const gchar        **attribute_names,
-                             const gchar        **attribute_values,
-                             gpointer             user_data,
-                             GError             **error)
-{
-    GomDomParserData *data = user_data;
-    char *script;
-    gsize script_len;
-    jsval rval; 
-    JSString *str; 
-    const char **name, **value;
-    char *file;
-
-    for (name = attribute_names, value = attribute_values; *name; ++name, ++value) {
-        if (strcmp (*name, "src")) {
-            continue;
-        }
-        if (g_path_is_absolute (*value)) {
-            file = (char *)*value;
-        } else {
-            char *dir = g_path_get_dirname (data->filename);
-            file = g_build_filename (dir, *value, NULL);
-            g_free (dir);
-        }
-        if (!g_file_get_contents (file, &script, &script_len, error)) {
-            if (*value == file) {
-                g_free (file);
-            }
-            return;
-        }
-        
-        if (!JS_EvaluateScript(data->cx, data->jsobj,
-                               script, script_len,
-                               *value, 0, &rval)) {
-            if (!gom_js_exception_get_error (data->cx, error)) {
-                g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
-                             "Unknown error encountered while running script at %s\n",
-                             *value);
-            }
-            if (*value == file) {
-                g_free (file);
-            }
-            g_free (script);
-            return;
-        }
-        if (*value == file) {
-            g_free (file);
-        }
-        g_free (script);
-        str = JS_ValueToString(data->cx, rval); 
-        g_print ("script result: %s\n", JS_GetStringBytes(str));
-        /* Rhino 4th Ed. p. 189: "Any code that does appear between
-         * these tags is ignored by browsers that support the src
-         * attribute..."
-         */
-        return;
-    }
-    data->script = g_string_sized_new (1024);
-}
-
-/* Called for open tags <foo bar="baz"> */
-static void
-gom_dom_parser_start_element (GMarkupParseContext *context,
-                              const gchar         *element_name,
-                              const gchar        **attribute_names,
-                              const gchar        **attribute_values,
-                              gpointer             user_data,
-                              GError             **error)
-{
-    JSObject *jsobj = NULL;
-    GomElement *elem;
-    GomDomParserData *data = user_data;
-    GParamSpec *spec;
-    const char **name, **value;
-    guint signal_id;
-    JSFunction *fun;
-    int lineno;
-
-    if (!strcmp (element_name, "gom") ||
-        !strcmp (element_name, "config") ||
-        !strcmp (element_name, "module") ||
-        !strcmp (element_name, "app")) {
-        return;
-    }
-
-    if (!strcmp (element_name, "script")) {
-        gom_dom_parser_start_script (context, element_name, attribute_names, attribute_values, user_data, error);
-        return;
-    }
-
-    elem = gom_document_create_element (data->doc, element_name, error);
-    g_print ("start_element: %s -> %p\n", element_name, elem);
-    if (!elem) {
-        return;
-    }
-
-    for (name = attribute_names, value = attribute_values; *name; name++, value++) {
-        if (!gom_object_resolve (G_OBJECT (elem), *name, &spec, &signal_id)) {
-            gom_element_set_attribute (elem, *name, *value, error);
-        } else if (signal_id) {
-            if (!jsobj) {
-                jsobj = gom_js_object_get_or_create_js_object (data->cx, elem);
-                if (!jsobj) {
-                    if (!gom_js_exception_get_error (data->cx, error)) {
-                        g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
-                                     "Could not get JSObject for elem %s",
-                                     element_name);
-                    }
-                    return;
-                }
-            }
-            
-            g_markup_parse_context_get_position (context, &lineno, NULL);
-            fun = JS_CompileFunction (data->cx, data->jsobj, NULL, 0, NULL,
-                                      *value, strlen (*value),
-                                      data->filename, lineno);
-            
-            if (!fun) {
-                if (!gom_js_exception_get_error (data->cx, error)) {
-                    g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
-                                 "Could not compile function at %s:%d", data->filename, lineno);
-                }
-                return;
-            }
-            
-            if (!gom_js_object_connect (data->cx, jsobj,
-                                        signal_id,
-                                        fun)) {
-                if (!gom_js_exception_get_error (data->cx, error)) {
-                    g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
-                                 "Could not connect signal '%s' to a %s\n",
-                                 &(*name)[2], g_type_name (G_TYPE_FROM_INSTANCE (elem)));
-                }
-                return;
-            }
-        } else {
-            gom_element_set_attribute (elem, spec->name, *value, error);
-        }
-        if (*error) {
-            return;
-        }
-    }
-    data->elems = g_slist_prepend (data->elems, elem);
-}
-
-/* Called for close tags </foo> */
-static void
-gom_dom_parser_end_element (GMarkupParseContext *context,
-                            const gchar         *element_name,
-                            gpointer             user_data,
-                            GError             **error)
-{
-    GomDomParserData *data = user_data;
-
-    if (!strcmp (element_name, "gom") ||
-        !strcmp (element_name, "config") ||
-        !strcmp (element_name, "module") ||
-        !strcmp (element_name, "app")) {
-        return;
-    }
-
-    if (!strcmp (element_name, "script")) {
-        jsval rval; 
-        JSString *str; 
-        int lineno;
-        /* src tag */
-        if (!data->script) {
-            return;
-        }
-        g_markup_parse_context_get_position (context, &lineno, NULL);
-        if (!JS_EvaluateScript(data->cx, data->jsobj,
-                               data->script->str, data->script->len,
-                               data->filename, lineno, &rval)) {
-            if (!gom_js_exception_get_error (data->cx, error)) {
-                g_set_error (error, GOM_DOC_ERROR, GOM_DOC_ERROR_UNKNOWN,
-                             "Unknown error encountered while running script at %s:%d\n",
-                             data->filename, lineno);
-            }
-            return;
-        }
-        str = JS_ValueToString(data->cx, rval); 
-        g_print ("script result: %s\n", JS_GetStringBytes(str));
-        g_string_free (data->script, TRUE);
-        data->script = NULL;
-    } else {
-        GomNode *parent;
-        GomNode *elem;
-
-        elem = data->elems->data;
-        data->elems = g_slist_delete_link (data->elems, data->elems);
-        
-        parent = data->elems ? data->elems->data : data->doc;
-        
-        g_print ("end_element: %s -> %p => %p\n", element_name, elem, parent);
-
-        gom_node_append_child (parent, elem, error);
-    }
-}
-
-/* Called for character data */
-/* text is not nul-terminated */
-static void
-gom_dom_parser_text (GMarkupParseContext *context,
-                     const gchar         *text,
-                     gsize                text_len,  
-                     gpointer             user_data,
-                     GError             **error)
-{
-    GomDomParserData *data = user_data;
-
-    if (data->script) {
-        g_string_append_len (data->script, text, text_len);
-    }
-}
-
-static GMarkupParser gom_dom_parser = {
-    gom_dom_parser_start_element,
-    gom_dom_parser_end_element,
-    gom_dom_parser_text,
-    NULL, NULL
-};
-
-gboolean
-gom_doc_parse_file (GomDocument *doc,
-                    JSContext *cx, JSObject *jsobj,
-                    const char *filename,
-                    GError **error)
-{
-    GomDomParserData data;
-    GMarkupParseContext *ctx;
-    char *xml;
-    gsize xmllen;
-    gboolean ret;
-
-    if (!g_file_get_contents (filename, &xml, &xmllen, error)) {
-        return FALSE;
-    }
-
-    data.filename = filename;
-    data.cx = cx;
-    data.jsobj = jsobj;
-    data.doc = doc;
-    data.elems = NULL;
-    data.script = NULL;
-    
-    ctx = g_markup_parse_context_new (&gom_dom_parser, G_MARKUP_TREAT_CDATA_AS_TEXT, &data, NULL);
-    ret = g_markup_parse_context_parse (ctx, xml, xmllen, error);
-    if (ret) {
-        ret = g_markup_parse_context_end_parse (ctx, error);
-    }
-    g_markup_parse_context_free (ctx);
-    g_free (xml);
-
-    return ret;
 }

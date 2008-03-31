@@ -33,6 +33,8 @@ JSObject *gom_js_window_init_object (JSContext *cx, JSObject *window);
 
 extern JSClass GomJSWindowClass;
 
+JSObject *gom_js_window_parse_file (JSContext *cx, JSObject *window, const char *filename);
+
 G_END_DECLS
 
 #endif /* GOM_JS_WINDOW_H */

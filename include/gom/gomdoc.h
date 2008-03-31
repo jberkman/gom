@@ -33,8 +33,7 @@ typedef struct _GomDocClass GomDocClass;
 
 G_END_DECLS
 
-#include <gom/dom/gomdocument.h>
-#include <jsapi.h>
+#include <gom/gomnoodle.h>
 
 G_BEGIN_DECLS
 
@@ -45,24 +44,16 @@ G_BEGIN_DECLS
 #define GOM_IS_DOC_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_DOC))
 #define GOM_DOC_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_DOC, GomDocClass))
 
-#define GOM_DOC_ERROR (gom_doc_error_quark ())
-typedef enum {
-    GOM_DOC_ERROR_UNKNOWN,
-} GomDocError;
-
 struct _GomDoc {
-    GObject parent;
+    GomNoodle parent;
 };
 
 struct _GomDocClass {
-    GObjectClass parent_class;
+    GomNoodleClass parent_class;
 };
 
 GType gom_doc_get_type (void);
 
-GQuark gom_doc_error_quark (void);
-
-gboolean gom_doc_parse_file (GomDocument *doc, JSContext *cx, JSObject *global,
-                             const char *filename, GError **error);
+G_END_DECLS
 
 #endif /* GOM_DOC_H */

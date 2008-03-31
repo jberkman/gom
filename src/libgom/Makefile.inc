@@ -8,7 +8,7 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomdom.c			\
 	src/libgom/gomdombuiltins.c		\
 	src/libgom/gomdominterfaces.c		\
-	src/libgom/gomeventtargetdelegate.c	\
+	src/libgom/gomelem.c			\
 	src/libgom/gomevt.c			\
 	src/libgom/gomglist.c			\
 	src/libgom/gomjscontext.c		\
@@ -27,7 +27,9 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomjswindow.c		\
 	src/libgom/gomkeyboardevt.c		\
 	src/libgom/gommouseevt.c		\
+	src/libgom/gomnoodle.c			\
 	src/libgom/gomobject.c			\
+	src/libgom/gomtarget.c			\
 	src/libgom/gomuievt.c			\
 	src/libgom/gomvalue.c			\
 	src/libgom/gomwidget.c

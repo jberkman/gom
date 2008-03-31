@@ -226,7 +226,9 @@ static void
 gom_evt_finalize (GObject *object)
 {
     GomEvtPrivate *priv = PRIV (object);
-
+    g_print ("%s:%d:%s (%s %p)\n",
+             __FILE__, __LINE__, __FUNCTION__,
+             g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
     g_free (priv->namespace_uri);
     priv->namespace_uri = NULL;
 

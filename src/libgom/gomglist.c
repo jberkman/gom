@@ -91,11 +91,7 @@ gom_g_list_new (GList *glist)
     return GOM_NODE_LIST (list);
 }
 
-static void
-gom_g_list_init (GomGList *self)
-{
-
-}
+static void gom_g_list_init (GomGList *self) { }
 
 static void
 gom_g_list_dispose (GObject *obj)

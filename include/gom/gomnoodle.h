@@ -21,39 +21,39 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef GOM_JS_EVENT_LISTENER_H
-#define GOM_JS_EVENT_LISTENER_H
+#ifndef GOM_NOODLE_H
+#define GOM_NOODLE_H
 
 #include <glib/gmacros.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GomJSEventListener      GomJSEventListener;
-typedef struct _GomJSEventListenerClass GomJSEventListenerClass;
+typedef struct _GomNoodle      GomNoodle;
+typedef struct _GomNoodleClass GomNoodleClass;
 
 G_END_DECLS
 
-#include <glib-object.h>
+#include <gom/gomtarget.h>
 
 G_BEGIN_DECLS
 
-#define GOM_TYPE_JS_EVENT_LISTENER         (gom_js_event_listener_get_type ())
-#define GOM_JS_EVENT_LISTENER(i)           (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_JS_EVENT_LISTENER, GomJSEventListener))
-#define GOM_JS_EVENT_LISTENER_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST    ((k), GOM_TYPE_JS_EVENT_LISTENER, GomJSEventListenerClass))
-#define GOM_IS_JS_EVENT_LISTENER(i)        (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_JS_EVENT_LISTENER))
-#define GOM_IS_JS_EVENT_LISTENER_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_JS_EVENT_LISTENER))
-#define GOM_JS_EVENT_LISTENER_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_JS_EVENT_LISTENER, GomJSEventListenerClass))
+#define GOM_TYPE_NOODLE         (gom_noodle_get_type ())
+#define GOM_NOODLE(i)           (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_NOODLE, GomNoodle))
+#define GOM_NOODLE_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST    ((k), GOM_TYPE_NOODLE, GomNoodleClass))
+#define GOM_IS_NOODLE(i)        (G_TYPE_CHECK_INSTANCE_TYPE ((i), GOM_TYPE_NOODLE))
+#define GOM_IS_NOODLE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_NOODLE))
+#define GOM_NOODLE_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_NOODLE, GomNoodleClass))
 
-struct _GomJSEventListener {
-    GObject parent;
+struct _GomNoodle {
+    GomTarget parent;
 };
 
-struct _GomJSEventListenerClass {
-    GObjectClass parent_class;
+struct _GomNoodleClass {
+    GomTargetClass parent_class;
 };
 
-GType gom_js_event_listener_get_type (void);
+GType gom_noodle_get_type (void);
 
 G_END_DECLS
 
-#endif /* GOM_JS_EVENT_LISTENER */
+#endif /* GOM_NOODLE_H */

@@ -30,6 +30,13 @@ THE SOFTWARE.
 
 G_BEGIN_DECLS
 
+#define GOM_JS_ERROR (gom_js_error_quark ())
+typedef enum {
+    GOM_JS_ERROR_UNKNOWN,
+} GomJsError;
+
+GQuark gom_js_error_quark (void);
+
 JSObject *gom_js_context_init (JSContext *cx);
 
 #define GOM_JS_CONTEXT_PRIV(cx) (G_OBJECT (JS_GetContextPrivate ((cx))))

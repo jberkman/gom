@@ -136,7 +136,6 @@ static JSFunctionSpec gom_js_event_target_funcs[] = {
 static JSBool
 gom_js_event_target_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_NOT_IMPLEMENTED;
     return JS_TRUE;
 }
 

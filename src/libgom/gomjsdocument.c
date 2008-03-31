@@ -23,14 +23,15 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomjsdocument.h>
+#include "gom/gomjsdocument.h"
 
-#include <gommacros.h>
+#include "gommacros.h"
 
-#include <gom/gomdoc.h>
-#include <gom/gomjsexception.h>
-#include <gom/gomjsnode.h>
-#include <gom/gomjsobject.h>
+#include "gom/dom/gomdocument.h"
+#include "gom/gomdoc.h"
+#include "gom/gomjsexception.h"
+#include "gom/gomjsnode.h"
+#include "gom/gomjsobject.h"
 
 JSClass GomJSDocumentClass = {
     "Document",

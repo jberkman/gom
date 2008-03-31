@@ -21,39 +21,39 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef GOM_JS_EVENT_LISTENER_H
-#define GOM_JS_EVENT_LISTENER_H
+#ifndef GOM_ELEM_H
+#define GOM_ELEM_H
 
 #include <glib/gmacros.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GomJSEventListener      GomJSEventListener;
-typedef struct _GomJSEventListenerClass GomJSEventListenerClass;
+typedef struct _GomElem      GomElem;
+typedef struct _GomElemClass GomElemClass;
 
 G_END_DECLS
 
-#include <glib-object.h>
+#include <gom/gomnoodle.h>
 
 G_BEGIN_DECLS
 
-#define GOM_TYPE_JS_EVENT_LISTENER         (gom_js_event_listener_get_type ())
-#define GOM_JS_EVENT_LISTENER(i)           (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_JS_EVENT_LISTENER, GomJSEventListener))
-#define GOM_JS_EVENT_LISTENER_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST    ((k), GOM_TYPE_JS_EVENT_LISTENER, GomJSEventListenerClass))
-#define GOM_IS_JS_EVENT_LISTENER(i)        (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_JS_EVENT_LISTENER))
-#define GOM_IS_JS_EVENT_LISTENER_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_JS_EVENT_LISTENER))
-#define GOM_JS_EVENT_LISTENER_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_JS_EVENT_LISTENER, GomJSEventListenerClass))
+#define GOM_TYPE_ELEM         (gom_elem_get_type ())
+#define GOM_ELEM(i)           (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_ELEM, GomElem))
+#define GOM_ELEM_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST    ((k), GOM_TYPE_ELEM, GomElemClass))
+#define GOM_IS_ELEM(i)        (G_TYPE_CHECK_INSTANCE_TYPE ((i), GOM_TYPE_ELEM))
+#define GOM_IS_ELEM_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_ELEM))
+#define GOM_ELEM_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_ELEM, GomElemClass))
 
-struct _GomJSEventListener {
-    GObject parent;
+struct _GomElem {
+    GomNoodle parent;
 };
 
-struct _GomJSEventListenerClass {
-    GObjectClass parent_class;
+struct _GomElemClass {
+    GomNoodleClass parent_class;
 };
 
-GType gom_js_event_listener_get_type (void);
+GType gom_elem_get_type (void);
 
 G_END_DECLS
 
-#endif /* GOM_JS_EVENT_LISTENER */
+#endif /* GOM_ELEM_H */

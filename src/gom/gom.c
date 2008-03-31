@@ -21,14 +21,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-
 #include "config.h"
 
-#include <gom/gomdoc.h>
-#include <gom/gomjsdocument.h>
-#include <gom/gomjsobject.h>
-#include <gom/gomjscontext.h>
-#include <gom/gomwidget.h>
+#include "gom/gomjscontext.h"
+#include "gom/gomjswindow.h"
+#include "gom/gomjsobject.h"
+#include "gom/gomwidget.h"
 
 #include <gtk/gtk.h>
 
@@ -37,7 +35,9 @@ THE SOFTWARE.
 static void
 gom_error_reporter (JSContext *cx, const char *message, JSErrorReport *report)
 {
-    g_warning ("JS Error: %s\n", message);
+    g_warning ("%s:%d: Unhandled JavaScript exception: %s (%d)\n",
+               report->filename, report->lineno,
+               message, report->errorNumber);
 }
 
 typedef struct {
@@ -50,22 +50,7 @@ static gboolean
 parse_idle (gpointer data)
 {
     MainData *d = data;
-    GError *error = NULL;
-    GomDocument *doc;
-    JSObject *jsdoc;
-
-    doc   = g_object_new (GOM_TYPE_DOC, NULL);
-    jsdoc = gom_js_object_get_or_create_js_object (d->cx, doc);
-    
-    JS_DefineProperty (d->cx, d->window, "document",
-                       OBJECT_TO_JSVAL (jsdoc), NULL, NULL,
-                       JSPROP_PERMANENT | JSPROP_READONLY);
-
-    if (!gom_doc_parse_file (doc, d->cx, d->window, d->filename, &error)) {
-        g_printerr ("Error parsing %s: %s\n", d->filename, error->message);
-        gtk_main_quit ();
-    }
-
+    gom_js_window_parse_file (d->cx, d->window, d->filename);
     return FALSE;
 }
 
@@ -87,11 +72,18 @@ main (int argc, char *argv[])
 
     gom_widget_init ();
 
-    rt = JS_NewRuntime(0x100000); 
-    d.cx = JS_NewContext(rt, 0x1000); 
+    rt   = JS_NewRuntime (0x100000); 
+    d.cx = JS_NewContext (rt, 0x1000); 
 
     JS_SetErrorReporter (d.cx, gom_error_reporter);
-
+#if 0
+    JS_SetOptions (d.cx,
+                   JSOPTION_STRICT  |
+                   JSOPTION_WERROR  |
+                   JSOPTION_XML     |
+                   JSOPTION_RELIMIT |
+                   JSOPTION_ANONFUNFIX);
+#endif
     d.window = gom_js_context_init (d.cx);
 
     if (!d.window) {

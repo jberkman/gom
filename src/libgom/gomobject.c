@@ -77,13 +77,15 @@ resolve_again:
     if (!*spec && n == name) {
         n = camel_uncase (name);
         goto resolve_again;
-    } else if (n != name) {
-        g_free (n);
     }
     *signal_id = 0;
     g_print ("resolve %s.%s -> %s\n", 
              g_type_name (G_TYPE_FROM_INSTANCE (gobj)), n,
              *spec ? g_type_name (G_PARAM_SPEC_VALUE_TYPE (*spec)) : "FAIL");
+
+    if (n != name) {
+        g_free (n);
+    }
 
     return *spec != NULL;
 }

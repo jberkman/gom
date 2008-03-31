@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include "gom/gomeventtargetdelegate.h"
+#include "gom/gomtarget.h"
 
 #include "gom/dom/gomcustomevent.h"
 #include "gom/dom/gomeventtarget.h"
@@ -47,9 +47,9 @@ typedef struct {
 typedef struct {
     GomEventTarget *target;
     GSList         *handlers;
-} GomEventTargetDelegatePrivate;
+} GomTargetPrivate;
 
-#define PRIV(i) G_TYPE_INSTANCE_GET_PRIVATE ((i), GOM_TYPE_EVENT_TARGET_DELEGATE, GomEventTargetDelegatePrivate)
+#define PRIV(i) G_TYPE_INSTANCE_GET_PRIVATE ((i), GOM_TYPE_TARGET, GomTargetPrivate)
 
 static GSList *
 find_entry (GSList           *li, 
@@ -96,25 +96,16 @@ entry_free (gpointer data)
 }
 
 static void
-gom_event_target_delegate_set_property (GObject      *object,
-                                        guint         property_id,
-                                        const GValue *value,
-                                        GParamSpec   *pspec)
+gom_target_set_property (GObject      *object,
+                         guint         property_id,
+                         const GValue *value,
+                         GParamSpec   *pspec)
 {
-    GomEventTargetDelegatePrivate *priv = PRIV (object);
+    GomTargetPrivate *priv = PRIV (object);
 
     switch (property_id) {
     case PROP_TARGET:
-        if (priv->target) {
-            g_warning ("%s:%d:%s(): target already set on %p\n",
-                       __FILE__, __LINE__, __FUNCTION__, object);
-            return;
-        }
         priv->target = g_value_get_object (value);
-        if (!priv->target) {
-            g_warning ("%s:%d:%s(): target for %p should not be NULL\n",
-                       __FILE__, __LINE__, __FUNCTION__, object);
-        }
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -123,14 +114,14 @@ gom_event_target_delegate_set_property (GObject      *object,
 }
 
 static void
-gom_event_target_delegate_add_event_listener_ns (GomEventTarget   *event_target,
-                                                 const char       *namespace_uri,
-                                                 const char       *type,
-                                                 GomEventListener *listener,
-                                                 gboolean          use_capture,
-                                                 GObject          *evt_group)
+gom_target_add_event_listener_ns (GomEventTarget   *event_target,
+                                  const char       *namespace_uri,
+                                  const char       *type,
+                                  GomEventListener *listener,
+                                  gboolean          use_capture,
+                                  GObject          *evt_group)
 {
-    GomEventTargetDelegatePrivate *priv = PRIV (event_target);
+    GomTargetPrivate *priv = PRIV (event_target);
     ListenerEntry *entry;
     GSList *li;
 
@@ -149,22 +140,22 @@ gom_event_target_delegate_add_event_listener_ns (GomEventTarget   *event_target,
 }
 
 static void
-gom_event_target_delegate_add_event_listener (GomEventTarget   *target,
-                                              const char       *type,
-                                              GomEventListener *listener,
-                                              gboolean          use_capture)
+gom_target_add_event_listener (GomEventTarget   *target,
+                               const char       *type,
+                               GomEventListener *listener,
+                               gboolean          use_capture)
 {
-    gom_event_target_delegate_add_event_listener_ns (target, NULL, type, listener, use_capture, NULL);
+    gom_target_add_event_listener_ns (target, NULL, type, listener, use_capture, NULL);
 }
 
 static void
-gom_event_target_delegate_remove_event_listener_ns (GomEventTarget   *target,
-                                                    const char       *namespace_uri,
-                                                    const char       *type,
-                                                    GomEventListener *listener,
-                                                    gboolean          use_capture)
+gom_target_remove_event_listener_ns (GomEventTarget   *target,
+                                     const char       *namespace_uri,
+                                     const char       *type,
+                                     GomEventListener *listener,
+                                     gboolean          use_capture)
 {
-    GomEventTargetDelegatePrivate *priv = PRIV (target);
+    GomTargetPrivate *priv = PRIV (target);
     GSList *li;
 
     li = find_entry (priv->handlers, namespace_uri, type, listener, use_capture);
@@ -175,34 +166,38 @@ gom_event_target_delegate_remove_event_listener_ns (GomEventTarget   *target,
 }
 
 static void
-gom_event_target_delegate_remove_event_listener (GomEventTarget   *target,
-                                                 const char       *type,
-                                                 GomEventListener *listener,
-                                                 gboolean          use_capture)
+gom_target_remove_event_listener (GomEventTarget   *target,
+                                  const char       *type,
+                                  GomEventListener *listener,
+                                  gboolean          use_capture)
 {
-    gom_event_target_delegate_remove_event_listener_ns (target, NULL, type, listener, use_capture);
+    gom_target_remove_event_listener_ns (target, NULL, type, listener, use_capture);
 }
 
 static gboolean
-gom_event_target_delegate_has_event_listener_ns (GomEventTarget   *target,
-                                                 const char       *namespace_uri,
-                                                 const char       *type)
+gom_target_has_event_listener_ns (GomEventTarget   *target,
+                                  const char       *namespace_uri,
+                                  const char       *type)
 {
-    GomEventTargetDelegatePrivate *priv = PRIV (target);
+    GomTargetPrivate *priv = PRIV (target);
     return find_entry (priv->handlers, namespace_uri, type, NULL, TRUE) ||
         find_entry (priv->handlers, namespace_uri, type, NULL, FALSE);
 }
 
 static gboolean
-gom_event_target_delegate_will_trigger_ns (GomEventTarget   *target,
-                                           const char       *namespace_uri,
-                                           const char       *type)
+gom_target_will_trigger_ns (GomEventTarget   *target,
+                            const char       *namespace_uri,
+                            const char       *type)
 {
+    GomTargetPrivate *priv = PRIV (target);
     GomNode *parent;
-    if (gom_event_target_delegate_has_event_listener_ns (target, namespace_uri, type)) {
+    if (gom_target_has_event_listener_ns (target, namespace_uri, type)) {
         return TRUE;
     }
-    g_object_get (PRIV (target)->target, "parent", &parent, NULL);
+    if (priv->target) {
+        target = priv->target;
+    }
+    g_object_get (target, "parent", &parent, NULL);
     if (parent && !GOM_IS_EVENT_TARGET (parent)) {
         g_warning ("Parent is not an EventTarget.");
         return FALSE;
@@ -217,11 +212,16 @@ dispatch_events (GomEventTarget *target,
                  const char     *type_name,
                  GomPhaseType    phase)
 {
-    GomEventTargetDelegate *del;
+    GomTarget *del = NULL;
     ListenerEntry *entry;
     GSList *li;
     
-    if (!GOM_HAS_EVENT_TARGET_DELEGATE (target)) {
+    if (GOM_IS_TARGET (target)) {
+        del = GOM_TARGET (target);
+    } else if (GOM_IS_TARGET_PROXY (target)) {
+        del = gom_target_proxy_get_target (GOM_TARGET_PROXY (target));
+    }
+    if (!del) {
         char *name;
         g_object_get (target, "node-name", &name, NULL);
         g_warning ("%s:%d:%s(): Node %s w/o a delegate, skipping.",
@@ -229,8 +229,6 @@ dispatch_events (GomEventTarget *target,
         g_free (name);
         return;
     }
-
-    del = gom_event_target_helper_get_event_target_delegate (GOM_EVENT_TARGET_HELPER (target));
     
     li = PRIV (del)->handlers;
     while ((li = find_entry (li, namespace_uri, type_name, NULL, phase == GOM_CAPTURING_PHASE))) {
@@ -245,11 +243,11 @@ dispatch_events (GomEventTarget *target,
 }
 
 static gboolean
-gom_event_target_delegate_dispatch_event (GomEventTarget *target,
-                                          GomEvent       *evt,
-                                          GError        **error)
+gom_target_dispatch_event (GomEventTarget *target,
+                           GomEvent       *evt,
+                           GError        **error)
 {
-    GomEventTargetDelegatePrivate *priv = PRIV (target);
+    GomTargetPrivate *priv = PRIV (target);
     char *namespace_uri, *type_name;
     gboolean bubbles;
     GList  *parents, *li;
@@ -260,8 +258,12 @@ gom_event_target_delegate_dispatch_event (GomEventTarget *target,
         return FALSE;
     }
 
+    if (priv->target) {
+        target = priv->target;
+    }
+
     /* this happens to ref our target for us */
-    gom_evt_set_target (GOM_EVT (evt), priv->target);
+    gom_evt_set_target (GOM_EVT (evt), target);
 
     g_object_get (evt,
                   "namespace-u-r-i", &namespace_uri,
@@ -270,7 +272,7 @@ gom_event_target_delegate_dispatch_event (GomEventTarget *target,
                   NULL);
 
     parents = NULL;
-    for (g_object_get (priv->target, "parent", &node, NULL); node; g_object_get (node, "parent", &node, NULL)) {
+    for (g_object_get (target, "parent", &node, NULL); node; g_object_get (node, "parent", &node, NULL)) {
         parents = g_list_prepend (parents, g_object_ref (node));
     }
     
@@ -284,7 +286,7 @@ gom_event_target_delegate_dispatch_event (GomEventTarget *target,
     }
 
     /* AT_TARGET */
-    dispatch_events (priv->target, evt, namespace_uri, type_name, GOM_AT_TARGET);
+    dispatch_events (target, evt, namespace_uri, type_name, GOM_AT_TARGET);
     if (gom_custom_event_is_propagation_stopped (GOM_CUSTOM_EVENT (evt)) ||
         gom_custom_event_is_immediate_propagation_stopped (GOM_CUSTOM_EVENT (evt))) {
         goto dispatch_out;
@@ -310,15 +312,18 @@ dispatch_out:
     return gom_event_is_default_prevented (evt);
 }
 
-GOM_IMPLEMENT (EVENT_TARGET, event_target, gom_event_target_delegate);
+GOM_IMPLEMENT (EVENT_TARGET, event_target, gom_target);
 
-G_DEFINE_TYPE_WITH_CODE (GomEventTargetDelegate, gom_event_target_delegate, G_TYPE_OBJECT,
-                         GOM_IMPLEMENT_INTERFACE (EVENT_TARGET, event_target, gom_event_target_delegate));
+G_DEFINE_TYPE_WITH_CODE (GomTarget, gom_target, G_TYPE_OBJECT,
+                         GOM_IMPLEMENT_INTERFACE (EVENT_TARGET, event_target, gom_target));
 
 static void
-gom_event_target_delegate_finalize (GObject *object)
+gom_target_finalize (GObject *object)
 {
-    GomEventTargetDelegatePrivate *priv = PRIV (object);
+    GomTargetPrivate *priv = PRIV (object);
+    g_print ("%s:%d:%s (%s %p)\n",
+             __FILE__, __LINE__, __FUNCTION__,
+             g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
 
     if (priv->handlers) {
         g_slist_foreach (priv->handlers, (GFunc)entry_free, NULL);
@@ -326,20 +331,20 @@ gom_event_target_delegate_finalize (GObject *object)
         priv->handlers = NULL;
     }
 
-    G_OBJECT_CLASS (gom_event_target_delegate_parent_class)->finalize (object);
+    G_OBJECT_CLASS (gom_target_parent_class)->finalize (object);
 }
 
-static void gom_event_target_delegate_init (GomEventTargetDelegate *del) { }
+static void gom_target_init (GomTarget *del) { }
 
 static void
-gom_event_target_delegate_class_init (GomEventTargetDelegateClass *klass)
+gom_target_class_init (GomTargetClass *klass)
 {
     GObjectClass *oclass = G_OBJECT_CLASS (klass);
 
-    g_type_class_add_private (klass, sizeof (GomEventTargetDelegatePrivate));
+    g_type_class_add_private (klass, sizeof (GomTargetPrivate));
 
-    oclass->set_property = gom_event_target_delegate_set_property;
-    oclass->finalize = gom_event_target_delegate_finalize;
+    oclass->set_property = gom_target_set_property;
+    oclass->finalize     = gom_target_finalize;
 
     g_object_class_install_property (
         oclass, PROP_TARGET,
@@ -349,8 +354,8 @@ gom_event_target_delegate_class_init (GomEventTargetDelegateClass *klass)
                              G_PARAM_CONSTRUCT_ONLY | G_PARAM_WRITABLE | G_PARAM_STATIC_STRINGS));
 }
 
-GOM_DEFINE_INTERFACE_WITH_PREREQUISITE(GomEventTargetHelper, gom_event_target_helper, {}, GOM_TYPE_EVENT_TARGET);
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE(GomTargetProxy, gom_target_proxy, {}, GOM_TYPE_EVENT_TARGET);
 
-GOM_STUB_FUNC (GOM_EVENT_TARGET_HELPER, gom_event_target_helper, get_event_target_delegate,
-               (GomEventTargetHelper *gom_event_target_helper), (gom_event_target_helper),
-               GomEventTargetDelegate *);
+GOM_STUB_FUNC (GOM_TARGET_PROXY, gom_target_proxy, get_target,
+               (GomTargetProxy *gom_target_proxy), (gom_target_proxy),
+               GomTarget *);

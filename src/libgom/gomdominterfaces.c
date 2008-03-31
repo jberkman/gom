@@ -52,14 +52,14 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE(GomAttr, gom_attr,
         g_param_spec_string ("name", NULL,
                              "The name of this attribute",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_boolean ("specified", NULL,
                               "Whether this attribute was explicitly given a value in the original document.",
                               FALSE,
-                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                              G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
@@ -81,7 +81,7 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE(GomAttr, gom_attr,
 
 #include <gom/dom/gomcdatasection.h>
 
-GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomCDATASection, gom_cdata_section, GOM_NOT_IMPLEMENTED, GOM_TYPE_TEXT);
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomCDATASection, gom_cdata_section, {}, GOM_TYPE_TEXT);
 
 #include <gom/dom/gomcharacterdata.h>
 
@@ -123,11 +123,11 @@ GOM_STUB_VOID (GOM_CHARACTER_DATA, gom_character_data, replace_data,
 
 #include <gom/dom/gomcomment.h>
 
-GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomComment, gom_comment, GOM_NOT_IMPLEMENTED, GOM_TYPE_CHARACTER_DATA);
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomComment, gom_comment, {}, GOM_TYPE_CHARACTER_DATA);
 
 #include <gom/dom/gomcustomevent.h>
 
-GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomCustomEvent, gom_custom_event, GOM_NOT_IMPLEMENTED, GOM_TYPE_EVENT);
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomCustomEvent, gom_custom_event, {}, GOM_TYPE_EVENT);
 
 GOM_STUB_VOID (GOM_CUSTOM_EVENT, gom_custom_event, set_dispatch_state,
                (GomCustomEvent *gom_custom_event,
@@ -150,13 +150,13 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomDocument, gom_document,
         g_param_spec_object ("doctype", NULL,
                              "The Document Type Declaration (see DocumentType) associated with this document.",
                              GOM_TYPE_DOCUMENT_TYPE,
-                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
     g_object_interface_install_property (
         g_iface,
         g_param_spec_object ("implementation", NULL,
                              "The DOMImplementation object that handles this document.",
                              GOM_TYPE_DOM_IMPLEMENTATION,
-                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
@@ -222,7 +222,7 @@ GOM_STUB_FUNC (GOM_DOCUMENT, gom_document, get_element_by_id,
 
 #include <gom/dom/gomdocumentevent.h>
 
-GOM_DEFINE_INTERFACE (GomDocumentEvent, gom_document_event, GOM_NOT_IMPLEMENTED);
+GOM_DEFINE_INTERFACE (GomDocumentEvent, gom_document_event, {});
 
 GOM_STUB_FUNC (GOM_DOCUMENT_EVENT, gom_document_event, create_event,
                (GomDocumentEvent *gom_document_event, const char *event_type, GError **error),
@@ -234,7 +234,7 @@ GOM_STUB_FUNC (GOM_DOCUMENT_EVENT, gom_document_event, can_dispatch,
 
 #include <gom/dom/gomdocumentfragment.h>
 
-GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomDocumentFragment, gom_document_fragment, GOM_NOT_IMPLEMENTED, GOM_TYPE_NODE);
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomDocumentFragment, gom_document_fragment, {}, GOM_TYPE_NODE);
 
 #include <gom/dom/gomdocumenttype.h>
 
@@ -291,7 +291,7 @@ GOM_DEFINE_INTERFACE(GomDocumentView, gom_document_view,
         g_param_spec_object ("default-view", NULL,
                              "The default AbstractView for this Document, or null if none available.",
                              GOM_TYPE_ABSTRACT_VIEW,
-                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 });
 
 #include <gom/dom/gomdomexception.h>
@@ -300,7 +300,7 @@ GOM_DEFINE_QUARK (dom_exception_error);
 
 #include <gom/dom/gomdomimplementation.h>
 
-GOM_DEFINE_INTERFACE (GomDOMImplementation, gom_dom_implementation, GOM_NOT_IMPLEMENTED);
+GOM_DEFINE_INTERFACE (GomDOMImplementation, gom_dom_implementation, {});
 
 GOM_STUB_FUNC (GOM_DOM_IMPLEMENTATION, gom_dom_implementation, has_feature,
                (GomDOMImplementation *gom_dom_implementation, const char *feature, const char *version),
@@ -410,7 +410,7 @@ GOM_STUB_FUNC (GOM_ELEMENT, gom_element, has_attribute_ns,
 
 #include <gom/dom/gomentityreference.h>
 
-GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomEntityReference, gom_entity_reference, GOM_NOT_IMPLEMENTED, GOM_TYPE_NODE);
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomEntityReference, gom_entity_reference, {}, GOM_TYPE_NODE);
 
 #include <gom/dom/gomevent.h>
 
@@ -512,7 +512,7 @@ GOM_DEFINE_QUARK (event_exception_error);
 
 #include <gom/dom/gomeventtarget.h>
 
-GOM_DEFINE_INTERFACE (GomEventTarget, gom_event_target, GOM_NOT_IMPLEMENTED);
+GOM_DEFINE_INTERFACE (GomEventTarget, gom_event_target, {});
 
 GOM_STUB_VOID (GOM_EVENT_TARGET, gom_event_target, add_event_listener,
                (GomEventTarget *gom_event_target, const char *type, GomEventListener *listener, gboolean use_capture),
@@ -557,7 +557,7 @@ GOM_STUB_FUNC (GOM_EVENT_TARGET, gom_event_target, has_event_listener_ns,
 
 #include <gom/dom/gomeventlistener.h>
 
-GOM_DEFINE_INTERFACE (GomEventListener, gom_event_listener, GOM_NOT_IMPLEMENTED);
+GOM_DEFINE_INTERFACE (GomEventListener, gom_event_listener, {});
 
 GOM_STUB_VOID (GOM_EVENT_LISTENER, gom_event_listener, handle_event,
                (GomEventListener *gom_event_listener, GomEvent *evt),
@@ -915,7 +915,7 @@ GOM_DEFINE_INTERFACE (GomNode, gom_node,
         g_param_spec_string ("node-name", NULL,
                              "The name of this node, depending on its type",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
@@ -926,11 +926,10 @@ GOM_DEFINE_INTERFACE (GomNode, gom_node,
 
     g_object_interface_install_property (
         g_iface,
-        g_param_spec_uint ("node-type", NULL,
+        g_param_spec_enum ("node-type", NULL,
                            "A code representing the type of the underlying object",
-                           GOM_ELEMENT_NODE, GOM_NOTATION_NODE,
-                           GOM_ELEMENT_NODE,
-                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                           GOM_TYPE_NODE_TYPE, GOM_ELEMENT_NODE,
+                           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
@@ -986,28 +985,28 @@ GOM_DEFINE_INTERFACE (GomNode, gom_node,
         g_param_spec_object ("owner-document", NULL,
                              "The Document object associated with this node.",
                              GOM_TYPE_DOCUMENT,
-                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("namespace-u-r-i", "namespace-uri",
                              "The namespace URI of this node, or null if it is unspecified.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("prefix", NULL,
                              "The namespace prefix of this node, or null if it is unspecified.",
                              NULL,
-                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
         g_param_spec_string ("local-name", NULL,
                              "Returns the local part of the qualified name of this node.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 });
 
 GOM_STUB_FUNC (GOM_NODE, gom_node, insert_before,
@@ -1096,7 +1095,7 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomProcessingInstruction, gom_processing
 
 #include <gom/dom/gomtext.h>
 
-GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomText, gom_text, GOM_NOT_IMPLEMENTED, GOM_TYPE_CHARACTER_DATA);
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomText, gom_text, {}, GOM_TYPE_CHARACTER_DATA);
 
 GOM_STUB_FUNC (GOM_TEXT, gom_text, split_text, 
                (GomText *gom_text, gulong offset, GError **error),

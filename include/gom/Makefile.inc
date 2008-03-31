@@ -2,10 +2,11 @@
 
 gomincludedir := $(includedir)/gom-0/gom
 gominclude_HEADERS :=				\
+	include/gom/gomchild.h			\
 	include/gom/gomdoc.h			\
 	include/gom/gomdom.h			\
-	include/gom/gomeventtargetdelegate.h	\
 	include/gom/gomevt.h			\
+	include/gom/gomelem.h			\
 	include/gom/gomglist.h			\
 	include/gom/gomjscontext.h		\
 	include/gom/gomjsdocument.h		\
@@ -24,7 +25,9 @@ gominclude_HEADERS :=				\
 	include/gom/gomkeyboardevt.h		\
 	include/gom/gomkeyidentifiers.h		\
 	include/gom/gommouseevt.h		\
+	include/gom/gomnoodle.h			\
 	include/gom/gomobject.h			\
+	include/gom/gomtarget.h			\
 	include/gom/gomuievt.h			\
 	include/gom/gomvalue.h			\
 	include/gom/gomwidget.h

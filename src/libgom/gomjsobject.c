@@ -97,9 +97,9 @@ get_js_class (GHashTable *table, GType type)
     if (!type) {
         return NULL;
     }
-
+#if 0
     g_print ("type: %s\n", g_type_name (type));
-
+#endif
     klass = g_hash_table_lookup (table, GSIZE_TO_POINTER (type));
     if (klass) {
         g_print ("%s:%d:%s(): GType %s -> JSClass %s\n",
@@ -129,7 +129,9 @@ gom_js_object_get_js_class (JSContext *cx, gpointer gobj)
     if (!klass) {
         types = g_type_interfaces (type, &n_interfaces);
         for (i = 0; i < n_interfaces; i++) {
+#if 0
             g_print ("iface: %s\n", g_type_name (types[i]));
+#endif
             klass = get_js_class (table, types[i]);
             if (klass) {
                 return klass;

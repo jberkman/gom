@@ -28,15 +28,12 @@ THE SOFTWARE.
 
 G_BEGIN_DECLS
 
-typedef struct _GomDOM GomDOM;
+typedef struct _GomDOM      GomDOM;
 typedef struct _GomDOMClass GomDOMClass;
 
 G_END_DECLS
 
-#include <gom/dom/gomdomimplementation.h>
-#include <gom/dom/gomdocument.h>
-
-#include <jsapi.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
@@ -57,6 +54,6 @@ struct _GomDOMClass {
 
 GType gom_dom_get_type (void);
 
-GomDOMImplementation *gom_dom_get_implementation (void);
+G_END_DECLS
 
 #endif /* GOM_DOM_H */

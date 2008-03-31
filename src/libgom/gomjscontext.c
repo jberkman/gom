@@ -23,21 +23,25 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomjscontext.h>
+#include "gom/gomjscontext.h"
 
-#include <gom/gomjsdocument.h>
-#include <gom/gomjselement.h>
-#include <gom/gomjsevent.h>
-#include <gom/gomjseventtarget.h>
-#include <gom/gomjskeyboardevent.h>
-#include <gom/gomjsmouseevent.h>
-#include <gom/gomjsnavigator.h>
-#include <gom/gomjsnode.h>
-#include <gom/gomjsobject.h>
-#include <gom/gomjsuievent.h>
-#include <gom/gomjswindow.h>
+#include "gom/gomjsdocument.h"
+#include "gom/gomjselement.h"
+#include "gom/gomjsevent.h"
+#include "gom/gomjseventtarget.h"
+#include "gom/gomjskeyboardevent.h"
+#include "gom/gomjsmouseevent.h"
+#include "gom/gomjsnavigator.h"
+#include "gom/gomjsnode.h"
+#include "gom/gomjsobject.h"
+#include "gom/gomjsuievent.h"
+#include "gom/gomjswindow.h"
+
+#include "gommacros.h"
 
 #include <glib-object.h>
+
+GOM_DEFINE_QUARK(js_error);
 
 static void
 gom_js_context_init_standard_classes (JSContext *cx, JSObject *obj)

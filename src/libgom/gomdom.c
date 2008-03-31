@@ -23,16 +23,39 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomdom.h>
+#include "gom/gomdom.h"
 
-#include <gom/gomdoc.h>
+#include "gom/dom/gomdomimplementation.h"
+#include "gom/gomdoc.h"
 
-#include <gommacros.h>
+#include "gommacros.h"
 
 static gboolean
 gom_dom_has_feature (GomDOMImplementation *dom, const char *feature, const char *version)
 {
-    return !g_ascii_strcasecmp (feature, "xml") && !g_ascii_strcasecmp (version, "1.0");
+    if (!feature) {
+        return FALSE;
+    }
+    if (!g_ascii_strcasecmp (feature, "xml")) {
+        return !version || !g_ascii_strcasecmp (version, "1.0");
+    } else if (!g_ascii_strcasecmp (feature, "Core")) {
+        return !version || !g_ascii_strcasecmp (version, "2.0");
+    } else if (!g_ascii_strcasecmp (feature, "Views")) {
+        return !version || !g_ascii_strcasecmp (version, "2.0");
+    } else if (!g_ascii_strcasecmp (feature, "Events")) {
+        return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
+    } else if (!g_ascii_strcasecmp (feature, "KeyboardEvents")) {
+        return !version || !g_ascii_strcasecmp (version, "3.0");
+    } else if (!g_ascii_strcasecmp (feature, "MouseEvents")) {
+        return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
+    } else if (!g_ascii_strcasecmp (feature, "MutationEvents")) {
+        return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
+    } else if (!g_ascii_strcasecmp (feature, "MutationNameEvents")) {
+        return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
+    } else if (!g_ascii_strcasecmp (feature, "UIEvents")) {
+        return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
+    }
+    return FALSE;
 }
 
 static GomDocumentType *
@@ -53,25 +76,72 @@ gom_dom_create_document (GomDOMImplementation *dom,
                          GomDocumentType      *doctype,
                          GError              **error)
 {
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
+    GError *err = NULL;
+    GomDocument *doc;
+    GomElement  *elem;
+
+    doc = g_object_new (GOM_TYPE_DOC,
+                        "doctype",         doctype,
+                        "implementation",  dom,
+                        NULL);
+
+    elem = gom_document_create_element_ns (doc,
+                                           namespace_uri,
+                                           qualified_name,
+                                           &err);
+    if (!elem) {
+        g_object_unref (doc);
+        g_propagate_error (error, err);
+        return NULL;
+    }
+
+    gom_node_append_child (GOM_NODE (doc), GOM_NODE (elem), &err);
+    if (err) {
+        g_object_unref (elem);
+        g_object_unref (doc);
+        g_propagate_error (error, err);
+        return NULL;
+    }
+    return doc;
 }
 
 GOM_IMPLEMENT (DOM_IMPLEMENTATION, dom_implementation, gom_dom);
 
 G_DEFINE_TYPE_WITH_CODE (GomDOM, gom_dom, G_TYPE_OBJECT, GOM_IMPLEMENT_INTERFACE (DOM_IMPLEMENTATION, dom_implementation, gom_dom));                         
 
-GomDOMImplementation *
-gom_dom_get_implementation (void)
+typedef struct {
+    GType                  type;
+    guint                  n_construct_properties;
+    GObjectConstructParam *construct_properties;
+} OnceData;
+
+static gpointer
+gom_dom_once (gpointer data)
 {
-    static GomDOMImplementation *dom = NULL;
+    OnceData *d = data;
+    return G_OBJECT_CLASS (gom_dom_parent_class)->constructor (
+        d->type, d->n_construct_properties, d->construct_properties);
+}
 
-    if (dom == NULL) {
-        dom = g_object_new (GOM_TYPE_DOM, NULL);
-    }
+static GObject *
+gom_dom_constructor (GType                  type,
+                     guint                  n_construct_properties,
+                     GObjectConstructParam *construct_properties)
+{
+    static GOnce once = G_ONCE_INIT;
+    OnceData data;
 
-    return dom;
+    data.type = type;
+    data.n_construct_properties = n_construct_properties;
+    data.construct_properties = construct_properties;
+
+    return g_object_ref (g_once (&once, gom_dom_once, &data));
 }
 
 static void gom_dom_init (GomDOM *dom) { }
-static void gom_dom_class_init (GomDOMClass *klass) { }
+
+static void
+gom_dom_class_init (GomDOMClass *klass)
+{
+    G_OBJECT_CLASS (klass)->constructor = gom_dom_constructor;
+}
