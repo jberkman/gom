@@ -1,3 +1,15 @@
+2008-04-01  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomjsnavigator.c: 
+	* src/libgom/gomjselement.c: 
+	* src/libgom/gomjseventlistener.c: 
+	* src/libgom/gomwidget.c:
+	* src/libgom/gomnoodle.c: 
+	* src/libgom/gomobject.c: 
+	* src/libgom/gomjswindow.c: 
+	* src/libgom/gomjsobject.c: tone down debugging output until we
+	get a better logging situation in place
+
 2008-03-31  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomwidget.c (widget_append_child): make the errors

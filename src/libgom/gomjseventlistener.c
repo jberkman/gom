@@ -101,12 +101,16 @@ gom_js_event_listener_handle_event (GomEventListener *listener,
     argv = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (priv->cx, evt));
 
     if (JS_ObjectIsFunction (priv->cx, priv->obj)) {
+#if 0
         JSString *str;
+#endif
 
         fval = OBJECT_TO_JSVAL (priv->obj);
+#if 0
         str = JS_ValueToString (priv->cx, fval);
 
         g_print ("handleEvent(): %s\n", JS_GetStringBytes (str));
+#endif
 
         g_object_get (evt, "target", &target, NULL);
         obj = gom_js_object_get_or_create_js_object (priv->cx, target);

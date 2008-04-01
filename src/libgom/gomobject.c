@@ -65,7 +65,9 @@ gom_object_resolve (GObject *gobj, const char *name, GParamSpec **spec, guint *s
 resolve_again:
     if (n[0] == 'o' && n[1] == 'n' &&
         (*signal_id = g_signal_lookup (&n[2], G_TYPE_FROM_INSTANCE (gobj)))) {
+#if 0
         g_print ("resolve %s.%s -> signal %u\n", g_type_name (G_TYPE_FROM_INSTANCE (gobj)), n, *signal_id);
+#endif
         *spec = NULL;
         if (n != name) {
             g_free (n);
@@ -79,10 +81,11 @@ resolve_again:
         goto resolve_again;
     }
     *signal_id = 0;
+#if 0
     g_print ("resolve %s.%s -> %s\n", 
              g_type_name (G_TYPE_FROM_INSTANCE (gobj)), n,
              *spec ? g_type_name (G_PARAM_SPEC_VALUE_TYPE (*spec)) : "FAIL");
-
+#endif
     if (n != name) {
         g_free (n);
     }

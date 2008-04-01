@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
 
-#define GOM_NOT_IMPLEMENTED (g_printerr ("\n%s:%d:%s(): Not implemented yet.\n", __FILE__, __LINE__, __FUNCTION__))
+#define GOM_NOT_IMPLEMENTED (g_warning ("%s:%d:%s(): Not implemented yet.", __FILE__, __LINE__, __FUNCTION__))
 
 #define GOM_JS_NOT_IMPLEMENTED(cx)                                      \
     G_STMT_START {                                                      \

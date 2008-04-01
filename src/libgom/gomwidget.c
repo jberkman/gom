@@ -180,11 +180,12 @@ append_child_attrs_foreach (gpointer key, gpointer value, gpointer user_data)
         G_TYPE_FUNDAMENTAL (G_PARAM_SPEC_VALUE_TYPE (spec)) == G_TYPE_OBJECT) {
         return;
     }
+#if 0
     g_print ("found child property %s.%s on %s\n",
              g_type_name (G_TYPE_FROM_INSTANCE (data->node)),
              spec->name,
              g_type_name (G_TYPE_FROM_INSTANCE (data->new_child)));
-    
+#endif
     if (gtk_builder_value_from_string (NULL, spec, g_value_get_string (value), &gval, &error)) {
         gtk_container_child_set_property (GTK_CONTAINER (data->node),
                                           GTK_WIDGET (data->new_child),
@@ -774,6 +775,7 @@ static void
 widget_set_parent (GomChild *child, GomNode *parent)
 {
     GomWidgetPrivate *priv = PRIV (child);
+#if 0
     char *child_name, *parent_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
     if (parent) {
@@ -785,6 +787,7 @@ widget_set_parent (GomChild *child, GomNode *parent)
              parent_name ? parent_name : "(no parent)", parent);
     g_free (child_name);
     g_free (parent_name);
+#endif
     priv->next_sibling = NULL;
     priv->prev_sibling = NULL;
     priv->parent_node  = parent;
@@ -793,6 +796,7 @@ widget_set_parent (GomChild *child, GomNode *parent)
 static void
 widget_set_next_sibling (GomChild *child, GomNode *sibling)
 {
+#if 0
     char *child_name, *sibling_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
     if (sibling) {
@@ -804,12 +808,14 @@ widget_set_next_sibling (GomChild *child, GomNode *sibling)
              sibling_name ? sibling_name : "(no sibling)", sibling);
     g_free (child_name);
     g_free (sibling_name);
+#endif
     PRIV (child)->next_sibling = sibling;
 }
 
 static void
 widget_set_prev_sibling (GomChild *child, GomNode *sibling)
 {
+#if 0
     char *child_name, *sibling_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
     if (sibling) {
@@ -821,6 +827,7 @@ widget_set_prev_sibling (GomChild *child, GomNode *sibling)
              sibling_name ? sibling_name : "(no sibling)", sibling);
     g_free (child_name);
     g_free (sibling_name);
+#endif
     PRIV (child)->prev_sibling = sibling;
 }
 
@@ -908,6 +915,7 @@ gom_widget_constructed (GObject *object)
         }
     }
 
+#if 0
     g_print ("%s:%d:%s(%s %p): namespaceURI: %s prefix: %s localName: %s nodeName: %s\n",
              __FILE__, __LINE__, __FUNCTION__,
              g_type_name (G_TYPE_FROM_INSTANCE (object)),
@@ -916,6 +924,7 @@ gom_widget_constructed (GObject *object)
              priv->prefix,
              priv->local_name,
              priv->node_name);
+#endif
 
     gtk_widget_add_events (GTK_WIDGET (object), 
                            GDK_BUTTON_PRESS  | GDK_BUTTON_RELEASE |

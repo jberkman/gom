@@ -53,7 +53,9 @@ gom_js_element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
         return JS_TRUE;
     }
 
+#if 0
     g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+#endif
     name = JSVAL_CHARS (id);
 
     /* let handled properties fall through */
@@ -89,7 +91,9 @@ gom_js_element_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
         return JS_TRUE;
     }
 
+#if 0
     g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+#endif
     name = JSVAL_CHARS (id);
 
     /* let resolvable properties fall through */
@@ -124,7 +128,9 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
         return JS_TRUE;
     }
 
+#if 0
     g_print ("%s:%d:%s(%p, %p): ", __FILE__, __LINE__, __FUNCTION__, obj, *objp);
+#endif
     name = JSVAL_CHARS (id);
 
     /* let GomJSObject pick it up for defined properties */
@@ -141,9 +147,11 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
         return JS_FALSE;
     }
     if (has_prop) {
+#if 0
         g_print ("%s:%d:%s(): %s.%s already exists\n",
                  __FILE__, __LINE__, __FUNCTION__,
                  JS_GET_CLASS (cx, proto)->name, name);
+#endif
         *objp = NULL;
         return JS_TRUE;
     }
@@ -156,9 +164,11 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
         }
         return JS_FALSE;
     }
+#if 0
     g_print ("%s:%d:%s(): defined new property: %s.%s (%s)\n", 
              __FILE__, __LINE__, __FUNCTION__,
              JS_GET_CLASS (cx, *objp)->name, name, JS_GET_CLASS (cx, obj)->name);
+#endif
     return JS_TRUE;
 }
 

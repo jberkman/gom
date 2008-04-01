@@ -343,7 +343,9 @@ gom_js_window_parser_start_script (GMarkupParseContext *context,
         }
         g_free (script);
         str = JS_ValueToString(data->cx, rval); 
-        g_print ("script result: %s\n", JS_GetStringBytes(str));
+        g_print ("%s:%d:%s(): script result: %s\n",
+                 __FILE__, __LINE__, __FUNCTION__,
+                 JS_GetStringBytes(str));
         /* Rhino 4th Ed. p. 189: "Any code that does appear between
          * these tags is ignored by browsers that support the src
          * attribute..."
@@ -391,7 +393,9 @@ gom_js_window_parser_start_element (GMarkupParseContext *context,
 
         elem = gom_document_create_element (data->doc, element_name, error);
     }
+#if 0
     g_print ("start_element: %s -> %p\n", element_name, elem);
+#endif
     if (!elem) {
         return;
     }
@@ -477,7 +481,9 @@ gom_js_window_parser_end_element (GMarkupParseContext *context,
             return;
         }
         str = JS_ValueToString(data->cx, rval); 
-        g_print ("script result: %s\n", JS_GetStringBytes(str));
+        g_print ("%s:%d:%s(): script result: %s\n", 
+                 __FILE__, __LINE__, __FUNCTION__,
+                 JS_GetStringBytes(str));
         g_string_free (data->script, TRUE);
         data->script = NULL;
     } else {

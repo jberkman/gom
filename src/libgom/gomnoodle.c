@@ -334,6 +334,7 @@ static void
 gom_noodle_set_parent (GomChild *child, GomNode *parent)
 {
     GomNoodlePrivate *priv = PRIV (child);
+#if 0
     char *child_name, *parent_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
     if (parent) {
@@ -345,6 +346,7 @@ gom_noodle_set_parent (GomChild *child, GomNode *parent)
              parent_name ? parent_name : "(no parent)", parent);
     g_free (child_name);
     g_free (parent_name);
+#endif
     priv->next_sibling = NULL;
     priv->prev_sibling = NULL;
     priv->parent_node  = parent;
@@ -353,6 +355,7 @@ gom_noodle_set_parent (GomChild *child, GomNode *parent)
 static void
 gom_noodle_set_prev_sibling (GomChild *child, GomNode *sibling)
 {
+#if 0
     char *child_name, *sibling_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
     if (sibling) {
@@ -364,12 +367,14 @@ gom_noodle_set_prev_sibling (GomChild *child, GomNode *sibling)
              sibling_name? sibling_name : "(no sibling)", sibling);
     g_free (child_name);
     g_free (sibling_name);
+#endif
     PRIV (child)->prev_sibling = sibling;
 }
 
 static void
 gom_noodle_set_next_sibling (GomChild *child, GomNode *sibling)
 {
+#if 0
     char *child_name, *sibling_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
     if (sibling) {
@@ -381,6 +386,7 @@ gom_noodle_set_next_sibling (GomChild *child, GomNode *sibling)
              sibling_name ? sibling_name : "(no sibling)", sibling);
     g_free (child_name);
     g_free (sibling_name);
+#endif
     PRIV (child)->next_sibling = sibling;
 }
 
@@ -496,6 +502,7 @@ gom_noodle_constructed (GObject *object)
         }
     }
 
+#if 0
     g_print ("%s:%d:%s(%s %p): namespaceURI: %s prefix: %s localName: %s nodeName: %s\n",
              __FILE__, __LINE__, __FUNCTION__,
              g_type_name (G_TYPE_FROM_INSTANCE (object)),
@@ -504,6 +511,7 @@ gom_noodle_constructed (GObject *object)
              priv->prefix,
              priv->local_name,
              priv->node_name);
+#endif
 }
 
 static void

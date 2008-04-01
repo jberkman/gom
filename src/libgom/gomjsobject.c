@@ -102,9 +102,11 @@ get_js_class (GHashTable *table, GType type)
 #endif
     klass = g_hash_table_lookup (table, GSIZE_TO_POINTER (type));
     if (klass) {
+#if 0
         g_print ("%s:%d:%s(): GType %s -> JSClass %s\n",
                  __FILE__, __LINE__, __FUNCTION__,
                  g_type_name (type), klass->name);
+#endif
         return klass;
     }
 
@@ -284,7 +286,9 @@ gom_js_object_resolve (JSContext *cx, JSObject *obj, const char *name,
 {
     *gobj = gom_js_object_get_g_object (cx, obj);
     if (!*gobj) {
+#if 0
         g_print ("resolve %s.%s -> FAIL (no GObject)\n", JS_GET_CLASS (cx, obj)->name, name);
+#endif
         return FALSE;
     }
     g_assert (G_IS_OBJECT (*gobj));
@@ -307,7 +311,9 @@ gom_js_object_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
         return JS_TRUE;
     }
 
+#if 0
     g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+#endif
     name = JSVAL_CHARS (id);
     if (!gom_js_object_resolve (cx, obj, name, &gobj, &spec, &signal_id)) {
         return JS_TRUE;
@@ -351,7 +357,9 @@ gom_js_object_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
         return JS_TRUE;
     }
 
+#if 0
     g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+#endif
     name = JSVAL_CHARS (id);
     if (!gom_js_object_resolve (cx, obj, name, &gobj, &spec, &signal_id)) {
         return JS_TRUE;
@@ -409,7 +417,9 @@ gom_js_object_resolve_priv (JSContext *cx, JSObject *obj, jsval id, uintN flags,
     g_assert (JSVAL_IS_STRING (id));
     name = JSVAL_CHARS (id);
 
+#if 0
     g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+#endif
     if (!gom_js_object_resolve (cx, *objp, name, &gobj, &spec, &signal_id)) {
         *objp = NULL;
         return JS_TRUE;
@@ -422,9 +432,11 @@ gom_js_object_resolve_priv (JSContext *cx, JSObject *obj, jsval id, uintN flags,
         return JS_FALSE;
     }
 
+#if 0
     g_print ("%s:%d:%s(): defined new property: %s.%s (%s)\n", 
              __FILE__, __LINE__, __FUNCTION__,
              JS_GET_CLASS (cx, *objp)->name, name, JS_GET_CLASS (cx, obj)->name);
+#endif
     
     return JS_TRUE;
 }
@@ -460,11 +472,11 @@ gom_js_object_enumerate (JSContext *cx, JSObject *obj, JSIterateOp enum_op, jsva
     JSString *jsname;
     
     gobj = gom_js_object_get_g_object (cx, obj);
-
+#if 0
     g_print ("%s:%d:%s(%s, %d): -> %p\n",
              __FILE__, __LINE__, __FUNCTION__,
              JS_GET_CLASS (cx, obj)->name, enum_op, gobj);
-
+#endif
     switch (enum_op) {
     case JSENUMERATE_INIT:
         if (!gobj) {
@@ -486,7 +498,9 @@ gom_js_object_enumerate (JSContext *cx, JSObject *obj, JSIterateOp enum_op, jsva
         if (data->i < data->n_items) {
             spec = data->specs[data->i++];
             name = camel_case (spec->name);
+#if 0
             g_print ("enumerating %s.%s\n", g_type_name (G_TYPE_FROM_INSTANCE (gobj)), name);
+#endif
             jsname = JS_NewStringCopyZ (cx, name);
             g_free (name);
             if (!JS_ValueToId (cx, STRING_TO_JSVAL (jsname), idp)) {
@@ -568,9 +582,11 @@ gom_js_object_init_class (JSContext *cx, JSObject *obj)
 void
 gom_js_object_set_g_object (JSContext *cx, JSObject *jsobj, gpointer gobject)
 {
+#if 0
     g_print ("Binding %s %p to JSObject %p\n",
              g_type_name (G_TYPE_FROM_INSTANCE (gobject)),
              gobject, jsobj);
+#endif
     g_hash_table_insert (JS2G (cx), jsobj, g_object_ref (gobject));
     g_hash_table_insert (G2JS (cx), gobject, jsobj);
 }
