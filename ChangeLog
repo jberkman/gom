@@ -1,5 +1,35 @@
 2008-03-31  jacob berkman  <jacob@ilovegom.org>
 
+	* src/libgom/gomwidget.c (widget_append_child): make the errors
+	correspond with the failed tests
+	(gom_widget_get_property): inline/refactor a few properties
+	(widget_set_parent, widget_set_next_sibling)
+	(widget_set_prev_sibling): print the same debugging spew as our
+	Noodle complement
+	(widget_sibling_requested): if our child list is dirty, update our
+	children's siblings
+	(widget_dirty_children): dirty our child list
+	(gom_widget_constructed): if we are a container, dirty our child
+	list when it changes
+	(gom_widget_init_once): implement Parent
+
+	* src/libgom/gomnoodle.c (gom_noodle_get_property): tickle our
+	parent when we are asked for a sibling
+	(find_node): find one of our child nodes
+	(gom_noodle_insert_before): implement
+	(gom_noodle_replace_child): ditto
+	(gom_noodle_remove_child): refactor
+	(gom_noodle_append_child): ditto
+	(gom_noodle_set_parent): NULL our siblings, and handle a NULL
+	parent
+	(gom_noodle_set_prev_sibling): handle a NULL sibling
+	(gom_noodle_set_next_sibling): handle a NULL sibling
+	(gom_noodle_sibling_requested): if our children have changed since
+	the last time a sibling was requested, update our children's
+	siblings (implements Parent)
+
+	* include/gom/gomparent.h: interface for parent nodes to implement
+
 	* src/gom/gom.c (parse_idle): report any pending exceptions
 
 	* src/libgom/gomwidget.c (gom_widget_get_property)

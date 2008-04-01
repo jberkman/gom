@@ -17,9 +17,9 @@
           <GtkTextView id="output" wrapMode="GTK_WRAP_WORD" editable="false"/>
         </GtkScrolledWindow>
 	<GtkHBox spacing="6" expand="false" fill="false">
+	  <GtkEntry id="entry" expand="true" fill="true"/>
           <GtkLabel id="x" expand="false" fill="false"/>
           <GtkLabel id="y" expand="false" fill="false"/>
-	  <GtkEntry id="entry" expand="true" fill="true"/>
         </GtkHBox>
       </GtkVBox>
     </GtkWindow>

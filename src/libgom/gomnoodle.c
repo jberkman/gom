@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "gom/dom/gomnode.h"
 #include "gom/gomchild.h"
 #include "gom/gomglist.h"
+#include "gom/gomparent.h"
 
 #include "gommacros.h"
 
@@ -64,7 +65,8 @@ typedef struct {
     GomNode        *prev_sibling;
     GomNode        *next_sibling;
     GomNodeType     node_type;
-    guint           constructed : 1;
+    guint           constructed    : 1;
+    guint           dirty_children : 1;
 } GomNoodlePrivate;
 
 #define PRIV(i) G_TYPE_INSTANCE_GET_PRIVATE ((i), GOM_TYPE_NOODLE, GomNoodlePrivate)
@@ -91,9 +93,15 @@ gom_noodle_get_property (GObject    *object,
         g_value_set_object (value, priv->owner_document);
         break;
     case PROP_PREVIOUS_SIBLING:
+        if (GOM_IS_PARENT (priv->parent_node)) {
+            gom_parent_sibling_requested (GOM_PARENT (priv->parent_node), GOM_NODE (object));
+        }
         g_value_set_object (value, priv->prev_sibling);
         break;
     case PROP_NEXT_SIBLING:
+        if (GOM_IS_PARENT (priv->parent_node)) {
+            gom_parent_sibling_requested (GOM_PARENT (priv->parent_node), GOM_NODE (object));
+        }
         g_value_set_object (value, priv->next_sibling);
         break;
     case PROP_PARENT_NODE:
@@ -172,14 +180,50 @@ gom_noodle_set_property (GObject *object,
     }
 }
 
+static GList *
+find_node (GomNode *node, GomNode *child, GError **error)
+{
+    GomNoodlePrivate *priv = PRIV (node);
+    GomNode *parent;
+    GList *li = NULL;
+    char *child_name;
+    g_object_get (child, "parent-node", &parent, NULL);
+    if (parent == node) {
+        li = g_list_find (priv->children, child);
+    }
+    if (parent) {
+        g_object_unref (parent);
+    }
+    if (!li) {
+        g_object_get (child, "node-name", &child_name, NULL);
+        g_set_error (error,
+                     GOM_DOM_EXCEPTION_ERROR,
+                     GOM_NOT_FOUND_ERR,
+                     "child <%s %p> is not a child of <%s %p>",
+                     child_name, child,
+                     priv->node_name, node);
+        g_free (child_name);
+    }
+    return li;
+}
+
 static GomNode *
 gom_noodle_insert_before (GomNode *node,
                           GomNode *new_child,
                           GomNode *ref_child,
                           GError  **error)
 {
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
+    GomNoodlePrivate *priv = PRIV (node);
+    GList *li;
+    li = find_node (node, ref_child, error);
+    if (li) {
+        priv->children = g_list_insert_before (priv->children, li, g_object_ref (new_child));
+        priv->dirty_children = 1;
+        if (GOM_IS_CHILD (new_child)) {
+            gom_child_set_parent (GOM_CHILD (new_child), node);
+        }
+    }
+    return ref_child;
 }
 
 static GomNode *
@@ -188,8 +232,21 @@ gom_noodle_replace_child (GomNode *node,
                           GomNode *ref_child,
                           GError  **error)
 {
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
+    GomNoodlePrivate *priv = PRIV (node);
+    GList *li;
+    li = find_node (node, ref_child, error);
+    if (li) {
+        li->data = g_object_ref (new_child);
+        priv->dirty_children = 1;
+        if (GOM_IS_CHILD (ref_child)) {
+            gom_child_set_parent (GOM_CHILD (ref_child), NULL);
+        }
+        g_object_unref (ref_child);
+        if (GOM_IS_CHILD (new_child)) {
+            gom_child_set_parent (GOM_CHILD (new_child), node);
+        }
+    }
+    return ref_child;
 }
 
 static GomNode *
@@ -199,13 +256,14 @@ gom_noodle_remove_child (GomNode *node,
 {
     GomNoodlePrivate *priv = PRIV (node);
     GList *li;
-    li = g_list_find (priv->children, old_child);
+    li = find_node (node, old_child, error);
     if (li) {
         if (GOM_IS_CHILD (old_child)) {
             gom_child_set_parent (GOM_CHILD (old_child), NULL);
         }
         g_object_unref (old_child);
         priv->children = g_list_delete_link (priv->children, li);
+        priv->dirty_children = 1;
     }
     return old_child;
 }
@@ -216,17 +274,21 @@ gom_noodle_append_child (GomNode *node,
                          GError  **error)
 {
     GomNoodlePrivate *priv = PRIV (node);
-    GList *li;
+    GomNode *parent;
+    GError *err = NULL;
+    g_object_get (new_child, "parent-node", &parent, NULL);
+    if (parent) {
+        gom_node_remove_child (parent, new_child, &err);
+        g_object_unref (parent);
+        if (err) {
+            g_propagate_error (error, err);
+            return new_child;
+        }
+    }
     priv->children = g_list_append (priv->children, g_object_ref (new_child));
+    priv->dirty_children = 1;
     if (GOM_IS_CHILD (new_child)) {
         gom_child_set_parent (GOM_CHILD (new_child), node);
-        li = g_list_last (priv->children)->prev;
-        if (li) {
-            gom_child_set_prev_sibling (GOM_CHILD (new_child), li->data);
-            if (GOM_IS_CHILD (li->data)) {
-                gom_child_set_next_sibling (li->data, new_child);
-            }
-        }
     }
     return new_child;
 }
@@ -271,26 +333,35 @@ gom_noodle_has_attributes (GomNode *node)
 static void
 gom_noodle_set_parent (GomChild *child, GomNode *parent)
 {
-    char *child_name, *parent_name;
+    GomNoodlePrivate *priv = PRIV (child);
+    char *child_name, *parent_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
-    g_object_get (parent, "node-name", &parent_name, NULL);
-    g_print ("%s:%d:%s(<%s>, <%s>)\n",
+    if (parent) {
+        g_object_get (parent, "node-name", &parent_name, NULL);
+    }
+    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
              __FILE__, __LINE__, __FUNCTION__,
-             child_name, parent_name);
+             child_name, child, 
+             parent_name ? parent_name : "(no parent)", parent);
     g_free (child_name);
     g_free (parent_name);
-    PRIV (child)->parent_node = parent;
+    priv->next_sibling = NULL;
+    priv->prev_sibling = NULL;
+    priv->parent_node  = parent;
 }
 
 static void
 gom_noodle_set_prev_sibling (GomChild *child, GomNode *sibling)
 {
-    char *child_name, *sibling_name;
+    char *child_name, *sibling_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
-    g_object_get (sibling, "node-name", &sibling_name, NULL);
-    g_print ("%s:%d:%s(<%s>, <%s>)\n",
+    if (sibling) {
+        g_object_get (sibling, "node-name", &sibling_name, NULL);
+    }
+    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
              __FILE__, __LINE__, __FUNCTION__,
-             child_name, sibling_name);
+             child_name, child,
+             sibling_name? sibling_name : "(no sibling)", sibling);
     g_free (child_name);
     g_free (sibling_name);
     PRIV (child)->prev_sibling = sibling;
@@ -299,24 +370,46 @@ gom_noodle_set_prev_sibling (GomChild *child, GomNode *sibling)
 static void
 gom_noodle_set_next_sibling (GomChild *child, GomNode *sibling)
 {
-    char *child_name, *sibling_name;
+    char *child_name, *sibling_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
-    g_object_get (sibling, "node-name", &sibling_name, NULL);
-    g_print ("%s:%d:%s(<%s>, <%s>)\n",
+    if (sibling) {
+        g_object_get (sibling, "node-name", &sibling_name, NULL);
+    }
+    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
              __FILE__, __LINE__, __FUNCTION__,
-             child_name, sibling_name);
+             child_name, child,
+             sibling_name ? sibling_name : "(no sibling)", sibling);
     g_free (child_name);
     g_free (sibling_name);
     PRIV (child)->next_sibling = sibling;
 }
 
-GOM_IMPLEMENT (NODE,  node,  gom_noodle);
-GOM_IMPLEMENT (CHILD, child, gom_noodle);
+static void
+gom_noodle_sibling_requested (GomParent *node, GomNode *child)
+{
+    GomNoodlePrivate *priv = PRIV (node);
+    GList *li;
+    if (!priv->dirty_children) {
+        return;
+    }
+    for (li = priv->children; li; li = li->next) {
+        if (GOM_IS_CHILD (li->data)) {
+            gom_child_set_prev_sibling (li->data, li->prev ? li->prev->data : NULL);
+            gom_child_set_next_sibling (li->data, li->next ? li->next->data : NULL);
+        }
+    }
+    priv->dirty_children = 0;
+}
+
+GOM_IMPLEMENT (NODE,   node,   gom_noodle);
+GOM_IMPLEMENT (CHILD,  child,  gom_noodle);
+GOM_IMPLEMENT (PARENT, parent, gom_noodle);
 
 G_DEFINE_TYPE_WITH_CODE (GomNoodle, gom_noodle, GOM_TYPE_TARGET,
                          {
-                             GOM_IMPLEMENT_INTERFACE (NODE,  node,  gom_noodle);
-                             GOM_IMPLEMENT_INTERFACE (CHILD, child, gom_noodle);
+                             GOM_IMPLEMENT_INTERFACE (NODE,   node,   gom_noodle);
+                             GOM_IMPLEMENT_INTERFACE (CHILD,  child,  gom_noodle);
+                             GOM_IMPLEMENT_INTERFACE (PARENT, parent, gom_noodle);
                          });
 
 static void gom_noodle_init (GomNoodle *noodle) { }
@@ -362,7 +455,7 @@ gom_noodle_constructed (GObject *object)
         G_OBJECT_CLASS (gom_noodle_parent_class)->constructed (object);
     }
 
-    priv->constructed = TRUE;
+    priv->constructed = 1;
 
     if (!priv->owner_document) {
         g_warning ("%s:%d:%s(%s %p): No document set",
@@ -451,3 +544,8 @@ GOM_STUB_VOID (GOM_CHILD, gom_child, set_next_sibling,
 
 GOM_STUB_VOID (GOM_CHILD, gom_child, set_prev_sibling,
                (GomChild *gom_child, GomNode *sibling), (gom_child, sibling));
+
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomParent, gom_parent, {}, GOM_TYPE_NODE);
+
+GOM_STUB_VOID (GOM_PARENT, gom_parent, sibling_requested,
+               (GomParent *gom_parent, GomNode *child), (gom_parent, child));

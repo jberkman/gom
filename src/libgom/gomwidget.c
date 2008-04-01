@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include "gom/gomkeyboardevt.h"
 #include "gom/gommouseevt.h"
 #include "gom/gomobject.h"
+#include "gom/gomparent.h"
 #include "gom/gomtarget.h"
 
 #include "gommacros.h"
@@ -83,7 +84,8 @@ typedef struct {
     GomNode        *prev_sibling;
     GomNodeType     node_type;
     guint           click_state;
-    guint           constructed : 1;
+    guint           constructed    : 1;
+    guint           dirty_children : 1;
 } GomWidgetPrivate;
 
 static void
@@ -129,70 +131,6 @@ static gboolean (*_gtk_widget_event)    (GtkWidget      *widget,
                                          GdkEvent       *event);
 
 static void     (*_gtk_widget_constructed) (GObject *object);
-
-static GomNode *
-widget_get_first_child (GomNode *node)
-{
-    if (GTK_IS_CONTAINER (node)) {
-        GList *children = gtk_container_get_children (GTK_CONTAINER (node));
-        GomNode *child = children ? children->data : NULL;
-        g_list_free (children);
-        return child;
-    }
-    return NULL;
-}
-
-static GomNode *
-widget_get_last_child (GomNode *node)
-{
-    if (GTK_IS_CONTAINER (node)) {
-        GList *children = gtk_container_get_children (GTK_CONTAINER (node));
-        GList *last = g_list_last (children);
-        GomNode *child = last ? last->data : NULL;
-        g_list_free (children);
-        return child;
-    }
-    return NULL;
-}
-
-static GomNode *
-widget_get_previous_sibling (GomNode *node)
-{
-    GomNode *sib = NULL;
-    GtkWidget *parent = gtk_widget_get_parent (GTK_WIDGET (node));
-    if (parent && GTK_IS_CONTAINER (parent)) {
-        GList *children = gtk_container_get_children (GTK_CONTAINER (parent));
-        GList *self = g_list_find (children, GTK_WIDGET (node));
-        if (self) {
-            sib = self && self->prev ? GOM_NODE (self->prev->data) : NULL;
-        }
-        g_list_free (children);
-    }
-    return sib ? sib : PRIV (node)->prev_sibling;
-}
-
-static GomNode *
-widget_get_next_sibling (GomNode *node)
-{
-    GomNode *sib = NULL;
-    GtkWidget *parent = gtk_widget_get_parent (GTK_WIDGET (node));
-    if (parent && GTK_IS_CONTAINER (parent)) {
-        GList *children = gtk_container_get_children (GTK_CONTAINER (parent));
-        GList *self = g_list_find (children, GTK_WIDGET (node));
-        if (self) {
-            sib = self && self->next ? GOM_NODE (self->next->data) : NULL;
-        }
-        g_list_free (children);
-    }
-    return sib ? sib : PRIV (node)->next_sibling;
-}
-
-static GomNamedNodeMap *
-widget_get_attributes (GomNode *node)
-{
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
-}
 
 static GomNode *
 widget_insert_before (GomNode *node,
@@ -275,16 +213,16 @@ widget_append_child (GomNode *node,
         g_set_error (error,
                      GOM_DOM_EXCEPTION_ERROR,
                      GOM_HIERCHY_REQUEST_ERR,
-                     "Cannot append a child that is not a GtkWidget");
-        return NULL;
+                     "Cannot append to a parent that is not a GtkContainer");
+        return new_child;
     }
 
     if (!GTK_IS_WIDGET (new_child)) {
         g_set_error (error,
                      GOM_DOM_EXCEPTION_ERROR,
                      GOM_HIERCHY_REQUEST_ERR,
-                     "Cannot append to a parent that is not a GtkContainer");
-        return NULL;
+                     "Cannot append a child that is not a GtkWidget");
+        return new_child;
     }
 
     gtk_container_add (GTK_CONTAINER (node), GTK_WIDGET (new_child));
@@ -295,7 +233,11 @@ widget_append_child (GomNode *node,
 
     gom_object_attributes_foreach (G_OBJECT (new_child), append_child_attrs_foreach, &data);
 
-    return error && *error ? NULL : new_child;
+    if (GOM_IS_CHILD (new_child)) {
+        gom_child_set_parent (GOM_CHILD (new_child), node);
+    }
+
+    return new_child;
 }
 
 static gboolean
@@ -490,6 +432,8 @@ gom_widget_get_property (GObject    *object,
                          GParamSpec *pspec)
 {
     GomWidgetPrivate *priv = PRIV (object);
+    GList *children = NULL;
+    GList *li = NULL;
 
     switch (property_id) {
     case PROP_NODE_NAME:
@@ -513,11 +457,9 @@ gom_widget_get_property (GObject    *object,
     case PROP_LOCAL_NAME:
         g_value_set_string (value, priv->local_name);
         break;
-    case PROP_PARENT_NODE: {
-        GtkWidget *parent = gtk_widget_get_parent (GTK_WIDGET (object));
-        g_value_set_object (value, parent ? (GObject *)parent : (GObject *)priv->parent_node);
+    case PROP_PARENT_NODE:
+        g_value_set_object (value, priv->parent_node);
         break;
-    }
     case PROP_CHILD_NODES:
         g_value_set_object (value, 
                             GTK_IS_CONTAINER (object)
@@ -525,19 +467,34 @@ gom_widget_get_property (GObject    *object,
                             : NULL);
         break;
     case PROP_FIRST_CHILD:
-        g_value_set_object (value, widget_get_first_child (GOM_NODE (object)));
+        if (GTK_IS_CONTAINER (object)) {
+            children = gtk_container_get_children (GTK_CONTAINER (object));
+        }
+        g_value_set_object (value, children ? children->data : NULL);
+        g_list_free (children);
         break;
     case PROP_LAST_CHILD:
-        g_value_set_object (value, widget_get_last_child (GOM_NODE (object)));
+        if (GTK_IS_CONTAINER (object)) {
+            children = gtk_container_get_children (GTK_CONTAINER (object));
+            li = g_list_last (children);
+        }
+        g_value_set_object (value, li ? li->data : NULL);
+        g_list_free (children);
         break;
     case PROP_PREVIOUS_SIBLING:
-        g_value_set_object (value, widget_get_previous_sibling (GOM_NODE (object)));
+        if (GOM_IS_PARENT (priv->parent_node)) {
+            gom_parent_sibling_requested (GOM_PARENT (priv->parent_node), GOM_NODE (object));
+        }
+        g_value_set_object (value, priv->prev_sibling);
         break;
     case PROP_NEXT_SIBLING:
-        g_value_set_object (value, widget_get_next_sibling (GOM_NODE (object)));
+        if (GOM_IS_PARENT (priv->parent_node)) {
+            gom_parent_sibling_requested (GOM_PARENT (priv->parent_node), GOM_NODE (object));
+        }
+        g_value_set_object (value, priv->next_sibling);
         break;
     case PROP_ATTRIBUTES:
-        g_value_set_object (value, widget_get_attributes (GOM_NODE (object)));
+        g_value_set_object (value, NULL);
         break;
     default:
         if (_gtk_widget_get_property) {
@@ -816,19 +773,82 @@ widget_get_target (GomTargetProxy *proxy)
 static void
 widget_set_parent (GomChild *child, GomNode *parent)
 {
-    PRIV (child)->parent_node = parent;
+    GomWidgetPrivate *priv = PRIV (child);
+    char *child_name, *parent_name = NULL;
+    g_object_get (child, "node-name", &child_name, NULL);
+    if (parent) {
+        g_object_get (parent, "node-name", &parent_name, NULL);
+    }
+    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
+             __FILE__, __LINE__, __FUNCTION__,
+             child_name, child,
+             parent_name ? parent_name : "(no parent)", parent);
+    g_free (child_name);
+    g_free (parent_name);
+    priv->next_sibling = NULL;
+    priv->prev_sibling = NULL;
+    priv->parent_node  = parent;
 }
 
 static void
 widget_set_next_sibling (GomChild *child, GomNode *sibling)
 {
+    char *child_name, *sibling_name = NULL;
+    g_object_get (child, "node-name", &child_name, NULL);
+    if (sibling) {
+        g_object_get (sibling, "node-name", &sibling_name, NULL);
+    }
+    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
+             __FILE__, __LINE__, __FUNCTION__,
+             child_name, child,
+             sibling_name ? sibling_name : "(no sibling)", sibling);
+    g_free (child_name);
+    g_free (sibling_name);
     PRIV (child)->next_sibling = sibling;
 }
 
 static void
 widget_set_prev_sibling (GomChild *child, GomNode *sibling)
 {
+    char *child_name, *sibling_name = NULL;
+    g_object_get (child, "node-name", &child_name, NULL);
+    if (sibling) {
+        g_object_get (sibling, "node-name", &sibling_name, NULL);
+    }
+    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
+             __FILE__, __LINE__, __FUNCTION__,
+             child_name, child,
+             sibling_name ? sibling_name : "(no sibling)", sibling);
+    g_free (child_name);
+    g_free (sibling_name);
     PRIV (child)->prev_sibling = sibling;
+}
+
+static void
+widget_sibling_requested (GomParent *node, GomNode *child)
+{
+    GomWidgetPrivate *priv = PRIV (node);
+    GList *children;
+    GList *li;
+    g_assert (GTK_IS_CONTAINER (node));
+    if (!priv->dirty_children) {
+        return;
+    }
+    children = gtk_container_get_children (GTK_CONTAINER (node));
+    for (li = children; li; li = li->next) {
+        if (GOM_IS_CHILD (li->data)) {
+            gom_child_set_prev_sibling (li->data, li->prev ? li->prev->data : NULL);
+            gom_child_set_next_sibling (li->data, li->next ? li->next->data : NULL);
+        }
+    }
+    g_list_free (children);
+    priv->dirty_children = 0;
+}
+
+static void
+widget_dirty_children (GtkContainer *container, GtkWidget *widget)
+{
+    PRIV (container)->dirty_children = 1;
 }
 
 GOM_IMPLEMENT (NODE,         node,         widget);
@@ -836,6 +856,7 @@ GOM_IMPLEMENT (ELEMENT,      element,      widget);
 GOM_IMPLEMENT (EVENT_TARGET, event_target, widget);
 GOM_IMPLEMENT (TARGET_PROXY, target_proxy, widget);
 GOM_IMPLEMENT (CHILD,        child,        widget);
+GOM_IMPLEMENT (PARENT,       parent,       widget);
 
 static void
 gom_widget_constructed (GObject *object)
@@ -901,6 +922,11 @@ gom_widget_constructed (GObject *object)
                            GDK_ENTER_NOTIFY  | GDK_LEAVE_NOTIFY   |
                            GDK_KEY_PRESS     | GDK_KEY_RELEASE    |
                            GDK_MOTION_NOTIFY | GDK_SCROLL);
+
+    if (GTK_IS_CONTAINER (object)) {
+        g_signal_connect (object, "add",    G_CALLBACK (widget_dirty_children), NULL);
+        g_signal_connect (object, "remove", G_CALLBACK (widget_dirty_children), NULL);
+    }
 }
 
 static gpointer
@@ -932,6 +958,11 @@ gom_widget_init_once (gpointer data)
     };
     static const GInterfaceInfo child_info = {
         widget_implement_child,
+        NULL,
+        NULL
+    };
+    static const GInterfaceInfo parent_info = {
+        widget_implement_parent,
         NULL,
         NULL
     };
@@ -1056,11 +1087,12 @@ gom_widget_init_once (gpointer data)
                              NULL,
                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE, &node_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT, &element_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE,         &node_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT,      &element_info);
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET, &target_info);
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_TARGET_PROXY, &proxy_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_CHILD, &child_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_CHILD,        &child_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_PARENT,       &parent_info);
 
 #define WIDGET(w) type ^= (w);
 #include "gomwidgets.c"

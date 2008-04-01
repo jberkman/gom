@@ -27,6 +27,7 @@ gominclude_HEADERS :=				\
 	include/gom/gommouseevt.h		\
 	include/gom/gomnoodle.h			\
 	include/gom/gomobject.h			\
+	include/gom/gomparent.h			\
 	include/gom/gomtarget.h			\
 	include/gom/gomuievt.h			\
 	include/gom/gomvalue.h			\
