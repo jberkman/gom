@@ -1,5 +1,30 @@
 2008-04-02  jacob berkman  <jacob@ilovegom.org>
 
+	* examples/console.gom: use bind("DOMActivate") rather than
+	.onactivate
+
+	* src/libgom/gomjscontext.c
+	(gom_js_context_init_standard_classes): init the new exception
+	classes
+
+	* src/libgom/gomjsexception.c (gom_js_exception_get_error): if
+	this is a known exception class, pull out its GError and use that
+	directly, if it's there
+	(gom_js_exception_set_error): create an object rather than a
+	string for the exception for DOMExceptions and EventExceptions
+
+	* include/gom/gomjsgerrorexception.h: 
+	* src/libgom/gomjsgerrorexception.c: a base class for the
+	exceptions below based on a GError
+
+	* include/gom/gomjseventexception.h: 
+	* src/libgom/gomjseventexception.c: a javascript class for
+	EventExceptions
+
+	* include/gom/gomjsdomexception.h: 
+	* src/libgom/gomjsdomexception.c: a javascript class for
+	DOMExceptions
+
 	* src/libgom/gomwidget.c (INIT_MOUSE_EVENT, INIT_KEY_EVENT): use
 	the standard DOM interfaces for creating events
 	(widget_activate): dispatch the DOMActivate for button clicks and

@@ -10,8 +10,11 @@ gominclude_HEADERS :=				\
 	include/gom/gomglist.h			\
 	include/gom/gomjscontext.h		\
 	include/gom/gomjsdocument.h		\
+	include/gom/gomjsdomexception.h		\
 	include/gom/gomjselement.h		\
+	include/gom/gomjsgerrorexception.h	\
 	include/gom/gomjsevent.h		\
+	include/gom/gomjseventexception.h	\
 	include/gom/gomjseventlistener.h	\
 	include/gom/gomjseventtarget.h		\
 	include/gom/gomjsexception.h		\

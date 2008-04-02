@@ -25,7 +25,7 @@
     </GtkWindow>
     <script contentType="text/javascript"><![CDATA[
       (function(){
-          $('#entry').get (0).onactivate = function () {
+          $('#entry').bind ("DOMActivate", function () {
               if (this.text) {
                   var res;
 	          try {
@@ -36,8 +36,7 @@
    	          $('#output').get (0).buffer.text += res + '\n';
 	          this.text = '';
               }
-              return true;
-          };
+          });
 	  $('#win').bind ("mousemove", function (evt) {
               $('#x').get (0).label = evt.clientX;
               $('#y').get (0).label = evt.clientY;

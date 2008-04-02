@@ -13,11 +13,14 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomglist.c			\
 	src/libgom/gomjscontext.c		\
 	src/libgom/gomjsdocument.c		\
+	src/libgom/gomjsdomexception.c		\
 	src/libgom/gomjselement.c		\
 	src/libgom/gomjsevent.c			\
+	src/libgom/gomjseventexception.c	\
 	src/libgom/gomjseventlistener.c		\
 	src/libgom/gomjseventtarget.c		\
 	src/libgom/gomjsexception.c		\
+	src/libgom/gomjsgerrorexception.c	\
 	src/libgom/gomjskeyboardevent.c		\
 	src/libgom/gomjsmouseevent.c		\
 	src/libgom/gomjsnavigator.c		\

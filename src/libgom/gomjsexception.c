@@ -23,9 +23,16 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomjsexception.h>
-#include <glib.h>
+#include "gom/gomjsexception.h"
+
+#include "gom/dom/gomdomexception.h"
+#include "gom/dom/gomeventexception.h"
+#include "gom/gomjsdomexception.h"
+#include "gom/gomjseventexception.h"
+
 #include "gommacros.h"
+
+#include <glib.h>
 
 GOM_DEFINE_QUARK(js_exception)
 
@@ -33,25 +40,48 @@ gboolean
 gom_js_exception_get_error (JSContext *cx, GError **error)
 {
     JSString *str;
+    GError *err = NULL;
     jsval exc;
 
     if (!JS_GetPendingException (cx, &exc)) {
         return FALSE;
     }
-
-    str = JS_ValueToString (cx, exc);
-    if (!str) {
-        return FALSE;
+    if (JSVAL_IS_OBJECT (exc)) {
+        if (JS_GET_CLASS (cx, JSVAL_TO_OBJECT (exc)) == &GomJSDOMExceptionClass ||
+            JS_GET_CLASS (cx, JSVAL_TO_OBJECT (exc)) == &GomJSEventExceptionClass) {
+            err = JS_GetPrivate (cx, JSVAL_TO_OBJECT (exc));
+        }
     }
-
-    g_set_error (error, GOM_JS_EXCEPTION_ERROR, GOM_JS_EXCEPTION_ERROR_GENERIC,
-                 "%s", JS_GetStringBytes (str));
-
+    if (err) {
+        if (*error) {
+            *error = g_error_copy (err);
+        }
+    } else {
+        str = JS_ValueToString (cx, exc);
+        if (!str) {
+            return FALSE;
+        }
+        g_set_error (error, GOM_JS_EXCEPTION_ERROR, GOM_JS_EXCEPTION_ERROR_GENERIC,
+                     "%s", JS_GetStringBytes (str));
+    }
     return TRUE;
 }
 
 void
-gom_js_exception_set_error (JSContext *cx, GError  *error)
+gom_js_exception_set_error (JSContext *cx, GError *error)
 {
-    JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, error->message)));
+    JSObject *obj;
+    JSClass  *klass;
+    klass = (error->domain == GOM_DOM_EXCEPTION_ERROR)
+        ? &GomJSDOMExceptionClass
+        : (error->domain == GOM_EVENT_EXCEPTION_ERROR)
+        ? &GomJSEventExceptionClass
+        : NULL;
+    obj = klass ? JS_ConstructObject (cx, klass, NULL, NULL) : NULL;
+    if (obj) {
+        JS_SetPrivate (cx, obj, g_error_copy (error));
+    }
+    JS_SetPendingException (cx, obj 
+                            ? OBJECT_TO_JSVAL (obj)
+                            : STRING_TO_JSVAL (JS_NewStringCopyZ (cx, error->message)));
 }

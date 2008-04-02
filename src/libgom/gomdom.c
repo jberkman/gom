@@ -40,8 +40,6 @@ gom_dom_has_feature (GomDOMImplementation *dom, const char *feature, const char 
         return !version || !g_ascii_strcasecmp (version, "1.0");
     } else if (!g_ascii_strcasecmp (feature, "Core")) {
         return !version || !g_ascii_strcasecmp (version, "2.0");
-    } else if (!g_ascii_strcasecmp (feature, "Views")) {
-        return !version || !g_ascii_strcasecmp (version, "2.0");
     } else if (!g_ascii_strcasecmp (feature, "Events")) {
         return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
     } else if (!g_ascii_strcasecmp (feature, "KeyboardEvents")) {
@@ -54,6 +52,8 @@ gom_dom_has_feature (GomDOMImplementation *dom, const char *feature, const char 
         return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
     } else if (!g_ascii_strcasecmp (feature, "UIEvents")) {
         return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
+    } else if (!g_ascii_strcasecmp (feature, "Views")) {
+        return !version || !g_ascii_strcasecmp (version, "2.0");
     }
     return FALSE;
 }

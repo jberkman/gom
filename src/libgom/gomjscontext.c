@@ -26,9 +26,12 @@ THE SOFTWARE.
 #include "gom/gomjscontext.h"
 
 #include "gom/gomjsdocument.h"
+#include "gom/gomjsdomexception.h"
 #include "gom/gomjselement.h"
 #include "gom/gomjsevent.h"
+#include "gom/gomjseventexception.h"
 #include "gom/gomjseventtarget.h"
+#include "gom/gomjsgerrorexception.h"
 #include "gom/gomjskeyboardevent.h"
 #include "gom/gomjsmouseevent.h"
 #include "gom/gomjsnavigator.h"
@@ -47,6 +50,7 @@ static void
 gom_js_context_init_standard_classes (JSContext *cx, JSObject *obj)
 {
     gom_js_object_init_class (cx, obj);
+
     gom_js_event_target_init_class (cx, obj);
     gom_js_node_init_class (cx, obj);
     gom_js_element_init_class (cx, obj);
@@ -58,6 +62,10 @@ gom_js_context_init_standard_classes (JSContext *cx, JSObject *obj)
     gom_js_ui_event_init_class (cx, obj);
     gom_js_mouse_event_init_class (cx, obj);
     gom_js_keyboard_event_init_class (cx, obj);
+
+    gom_js_g_error_exception_init_class (cx, obj);
+    gom_js_dom_exception_init_class (cx, obj);
+    gom_js_event_exception_init_class (cx, obj);
 }
 
 static gboolean
