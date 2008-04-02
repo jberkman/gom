@@ -60,6 +60,8 @@ G_BEGIN_DECLS
         _GOM_IMPLEMENT_EVENT(i, p, init_event_ns);              \
     } G_STMT_END
 
+#define GOM_EVENTS_NAMESPACE_URI "http://www.w3.org/2001/xml-events"
+
 struct _GomEventInterface {
     GTypeInterface parent;
 

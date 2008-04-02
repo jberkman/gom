@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 #include "gom/gomwidget.h"
 
+#include "gom/dom/gomdocumentevent.h"
 #include "gom/dom/gomdombuiltins.h"
 #include "gom/dom/gomdomexception.h"
 #include "gom/dom/gomelement.h"
@@ -37,7 +38,6 @@ THE SOFTWARE.
 #include "gom/gomjselement.h"
 #include "gom/gomjsobject.h"
 #include "gom/gomkeyboardevt.h"
-#include "gom/gommouseevt.h"
 #include "gom/gomobject.h"
 #include "gom/gomparent.h"
 #include "gom/gomtarget.h"
@@ -577,34 +577,46 @@ Meanwhile, for the DOM...
 
 #define INIT_MOUSE_EVENT(name, f)                                       \
     G_STMT_START {                                                      \
-        evt = g_object_new (GOM_TYPE_MOUSE_EVT, NULL);                  \
-        gom_mouse_event_init_mouse_event (                              \
-            GOM_MOUSE_EVENT (evt),                                      \
-            (name), TRUE, event->type != GDK_MOTION_NOTIFY,             \
-            NULL, priv->click_state,                                    \
-            event->f.x_root,                                            \
-            event->f.y_root,                                            \
-            event->f.x,                                                 \
-            event->f.y,                                                 \
-            event->f.state & GDK_CONTROL_MASK,                          \
-            event->f.state & GDK_MOD1_MASK,                             \
-            event->f.state & GDK_SHIFT_MASK,                            \
-            event->f.state & GDK_META_MASK,                             \
-            (event->f.state & (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK | GDK_BUTTON3_MASK)) >> 8, \
-            NULL);                                                      \
+        if (GOM_IS_DOCUMENT_EVENT (priv->owner_document)) {             \
+            evt = gom_document_event_create_event (                     \
+                GOM_DOCUMENT_EVENT (priv->owner_document),              \
+                "MouseEvent", &error);                                  \
+        }                                                               \
+        if (GOM_IS_MOUSE_EVENT (evt)) {                                 \
+            gom_mouse_event_init_mouse_event (                          \
+                GOM_MOUSE_EVENT (evt),                                  \
+                (name), TRUE, event->type != GDK_MOTION_NOTIFY,         \
+                NULL, priv->click_state,                                \
+                event->f.x_root,                                        \
+                event->f.y_root,                                        \
+                event->f.x,                                             \
+                event->f.y,                                             \
+                event->f.state & GDK_CONTROL_MASK,                      \
+                event->f.state & GDK_MOD1_MASK,                         \
+                event->f.state & GDK_SHIFT_MASK,                        \
+                event->f.state & GDK_META_MASK,                         \
+                (event->f.state & (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK | GDK_BUTTON3_MASK)) >> 8, \
+                NULL);                                                  \
+        }                                                               \
     } G_STMT_END
     
 #define INIT_KEY_EVENT(name)                                            \
     G_STMT_START {                                                      \
-        modifiers = gom_keyboard_evt_string_from_state (event->key.state); \
-        gom_keyboard_evt_lookup_keyval (event->key.keyval, &key_identifier, &key_location); \
-        evt = g_object_new (GOM_TYPE_KEYBOARD_EVT, NULL);               \
-        gom_keyboard_event_init_keyboard_event (                        \
-            GOM_KEYBOARD_EVENT (evt),                                   \
-            (name), TRUE, TRUE,                                         \
-            NULL,                                                       \
-            key_identifier, key_location, modifiers);                   \
-        g_free (modifiers);                                             \
+        if (GOM_IS_DOCUMENT_EVENT (priv->owner_document)) {             \
+            evt = gom_document_event_create_event (                     \
+                GOM_DOCUMENT_EVENT (priv->owner_document),              \
+                "KeyboardEvent", &error);                               \
+        }                                                               \
+        if (GOM_IS_KEYBOARD_EVENT (evt)) {                              \
+            modifiers = gom_keyboard_evt_string_from_state (event->key.state); \
+            gom_keyboard_evt_lookup_keyval (event->key.keyval, &key_identifier, &key_location); \
+            gom_keyboard_event_init_keyboard_event (                    \
+                GOM_KEYBOARD_EVENT (evt),                               \
+                (name), TRUE, TRUE,                                     \
+                NULL,                                                   \
+                key_identifier, key_location, modifiers);               \
+            g_free (modifiers);                                         \
+        }                                                               \
     } G_STMT_END
 
 static gboolean
@@ -631,35 +643,38 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
     case GDK_MOTION_NOTIFY:        
         priv = PRIV (widget);
         priv->click_state = 0;
-        INIT_MOUSE_EVENT ("mousemove", motion);
+        INIT_MOUSE_EVENT (GOM_MOUSEMOVE, motion);
         break;
     case GDK_BUTTON_PRESS:
         priv = PRIV (widget);
         ++priv->click_state;
-        INIT_MOUSE_EVENT ("mousedown", button);
+        INIT_MOUSE_EVENT (GOM_MOUSEDOWN, button);
         break;
     case GDK_BUTTON_RELEASE:
         priv = PRIV (widget);
-        INIT_MOUSE_EVENT ("mouseup", button);
+        INIT_MOUSE_EVENT (GOM_MOUSEUP, button);
         break;
     case GDK_ENTER_NOTIFY:
         priv = PRIV (widget);
-        INIT_MOUSE_EVENT ("mouseover", crossing);
+        INIT_MOUSE_EVENT (GOM_MOUSEOVER, crossing);
         break;
     case GDK_LEAVE_NOTIFY:
         priv = PRIV (widget);
-        INIT_MOUSE_EVENT ("mouseout", crossing);
+        INIT_MOUSE_EVENT (GOM_MOUSEOUT, crossing);
         break;
     case GDK_KEY_PRESS:
         priv = PRIV (widget);
-        INIT_KEY_EVENT ("keydown");
+        INIT_KEY_EVENT (GOM_KEYDOWN);
         break;
     case GDK_KEY_RELEASE:
         priv = PRIV (widget);
-        INIT_KEY_EVENT ("keyup");
+        INIT_KEY_EVENT (GOM_KEYUP);
         break;
-    case GDK_SCROLL:
     default:
+        break;
+    }
+
+    if (!evt) {
         return _gtk_widget_event 
             ? _gtk_widget_event (widget, event)
             : FALSE;
@@ -685,7 +700,7 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         return TRUE;
     }
     if (event->type == GDK_BUTTON_RELEASE && priv->click_state) {
-        INIT_MOUSE_EVENT ("click", button);
+        INIT_MOUSE_EVENT (GOM_CLICK, button);
         gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
         if (error) {
             g_print ("%s:%d:%s(): Error dispatching event: %s\n",
@@ -853,9 +868,47 @@ widget_sibling_requested (GomParent *node, GomNode *child)
 }
 
 static void
-widget_dirty_children (GtkContainer *container, GtkWidget *widget)
+widget_dirty_children (GtkContainer *container, GtkWidget *widget, gpointer data)
 {
     PRIV (container)->dirty_children = 1;
+}
+
+
+static void
+widget_activate (GtkWidget *w, gpointer data)
+{
+    GomWidgetPrivate *priv = PRIV (w);
+    GomEvent *event;
+    GError   *error = NULL;
+    if (!GOM_IS_DOCUMENT_EVENT (priv->owner_document)) {
+        return;
+    }
+    event = gom_document_event_create_event (GOM_DOCUMENT_EVENT (priv->owner_document),
+                                             "UIEvent", &error);
+    if (!event) {
+        g_printerr ("%s:%d:%s(): could not create activate events: %s\n",
+                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_clear_error (&error);
+        return;
+    }
+    if (!GOM_IS_UI_EVENT (event)) {
+        g_printerr ("%s:%d:%s(): event is a %s, but not a UIEvent\n",
+                    __FILE__, __LINE__, __FUNCTION__,
+                    g_type_name (G_TYPE_FROM_INSTANCE (event)));
+        g_object_unref (event);
+        return;
+    }
+    gom_ui_event_init_ui_event_ns (GOM_UI_EVENT (event),
+                                   GOM_EVENTS_NAMESPACE_URI,
+                                   GOM_DOM_ACTIVATE,
+                                   TRUE, TRUE, NULL, 0);
+    gom_event_target_dispatch_event (GOM_EVENT_TARGET (w), event, &error);
+    g_object_unref (event);
+    if (error) {
+        g_printerr ("%s:%d:%s(): Error dispatching event: %s\n",
+                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_clear_error (&error);
+    }
 }
 
 GOM_IMPLEMENT (NODE,         node,         widget);
@@ -935,6 +988,12 @@ gom_widget_constructed (GObject *object)
     if (GTK_IS_CONTAINER (object)) {
         g_signal_connect (object, "add",    G_CALLBACK (widget_dirty_children), NULL);
         g_signal_connect (object, "remove", G_CALLBACK (widget_dirty_children), NULL);
+    }
+    if (GTK_IS_BUTTON (object)) {
+        g_signal_connect (object, "clicked", G_CALLBACK (widget_activate), NULL);
+    }
+    if (GTK_IS_ENTRY (object)) {
+        g_signal_connect (object, "activate", G_CALLBACK (widget_activate), NULL);
     }
 }
 

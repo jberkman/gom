@@ -50,6 +50,9 @@ G_BEGIN_DECLS
         _GOM_IMPLEMENT_MUTATION_NAME_EVENT (i, p, init_mutation_name_event_ns); \
     } G_STMT_END
 
+#define GOM_DOM_ELEMENT_NAME_CHANGED   "DOMElementNameChanged"
+#define GOM_DOM_ATTRIBUTE_NAME_CHANGED "DOMAttributeNameChanged"
+
 struct _GomMutationNameEventInterface {
     GTypeInterface parent;
 

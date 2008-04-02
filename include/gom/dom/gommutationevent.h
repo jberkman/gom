@@ -56,6 +56,14 @@ G_BEGIN_DECLS
         _GOM_IMPLEMENT_MUTATION_EVENT (i, p, init_mutation_event_ns);   \
     } G_STMT_END
 
+#define GOM_DOM_SUBTREE_MODIFIED            "DOMSubtreeModified"
+#define GOM_DOM_NODE_INSERTED               "DOMNodeInserted"
+#define GOM_DOM_NODE_REMOVED                "DOMNodeRemoved"
+#define GOM_DOM_NODE_REMOVED_FROM_DOCUMENT  "DOMNodeRemovedFromDocument"
+#define GOM_DOM_NODE_INSERTED_INTO_DOCUMENT "DOMNodeInsertedIntoDocument"
+#define GOM_DOM_ATTR_MODIFIED               "DOMAttrModified"
+#define GOM_DOM_CHARACTER_DATA_MODIFIED     "DOMCharacterDataModified"
+
 struct _GomMutationEventInterface {
     GTypeInterface parent;
 

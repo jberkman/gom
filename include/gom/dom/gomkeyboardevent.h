@@ -58,6 +58,9 @@ G_BEGIN_DECLS
         _GOM_IMPLEMENT_KEYBOARD_EVENT (i, p, init_keyboard_event_ns);   \
     } G_STMT_END
 
+#define GOM_KEYDOWN "keydown"
+#define GOM_KEYUP   "keyup"
+
 struct _GomKeyboardEventInterface {
     GTypeInterface parent;
 

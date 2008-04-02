@@ -51,6 +51,13 @@ G_BEGIN_DECLS
         _GOM_IMPLEMENT_MOUSE_EVENT (i, p, init_mouse_event_ns); \
     } G_STMT_END
 
+#define GOM_CLICK     "click"
+#define GOM_MOUSEDOWN "mousedown"
+#define GOM_MOUSEMOVE "mousemove"
+#define GOM_MOUSEOUT  "mouseout"
+#define GOM_MOUSEOVER "mouseover"
+#define GOM_MOUSEUP   "mouseup"
+
 struct _GomMouseEventInterface {
     GTypeInterface parent;
 

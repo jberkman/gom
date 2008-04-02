@@ -50,6 +50,8 @@ G_BEGIN_DECLS
         _GOM_IMPLEMENT_TEXT_EVENT (i, p, init_text_event_ns);   \
     } G_STMT_END
 
+#define GOM_TEXT_INPUT "textInput"
+
 struct _GomTextEventInterface {
     GTypeInterface parent;
 

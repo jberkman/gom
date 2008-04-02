@@ -49,6 +49,21 @@ G_BEGIN_DECLS
         _GOM_IMPLEMENT_UI_EVENT (i, p, init_ui_event_ns);       \
     } G_STMT_END
 
+#define GOM_DOM_ACTIVATE  "DOMActivate"
+#define GOM_DOM_FOCUS_IN  "DOMFocusIn"
+#define GOM_DOM_FOCUS_OUT "DOMFocusOut"
+
+#define GOM_ABORT         "abort"
+#define GOM_CHANGE        "change"
+#define GOM_ERROR         "error"
+#define GOM_LOAD          "load"
+#define GOM_RESET         "reset"
+#define GOM_RESIZE        "resize"
+#define GOM_SCROLL        "scroll"
+#define GOM_SELECT        "select"
+#define GOM_SUBMIT        "submit"
+#define GOM_UNLOAD        "unload"
+
 struct _GomUIEventInterface {
     GTypeInterface parent;
 

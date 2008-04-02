@@ -1,3 +1,23 @@
+2008-04-02  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomwidget.c (INIT_MOUSE_EVENT, INIT_KEY_EVENT): use
+	the standard DOM interfaces for creating events
+	(widget_activate): dispatch the DOMActivate for button clicks and
+	entry activations
+	(gom_widget_constructed): connect to clicked and activate signals
+
+	* src/libgom/gomdoc.c (gom_doc_create_event)
+	(gom_doc_can_dispatch): implement DocumentEvent
+
+	* include/gom/dom/gomevent.h: 
+	* include/gom/dom/gomuievent.h: 
+	* include/gom/dom/gommutationevent.h: 
+	* include/gom/dom/gommouseevent.h: 
+	* include/gom/dom/gomtextevent.h: 
+	* include/gom/dom/gommutationnameevent.h: 
+	* include/gom/dom/gomkeyboardevent.h: add macros for the events we
+	support
+
 2008-04-01  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomjsnavigator.c: 

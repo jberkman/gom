@@ -25,9 +25,15 @@ THE SOFTWARE.
 
 #include "gom/gomdoc.h"
 
+#include "gom/dom/gomdocumentevent.h"
 #include "gom/dom/gomdocumenttype.h"
+#include "gom/dom/gomevent.h"
 #include "gom/dom/gomdomexception.h"
+#include "gom/dom/gomkeyboardevent.h"
+#include "gom/dom/gommouseevent.h"
 #include "gom/gomelem.h"
+#include "gom/gomkeyboardevt.h"
+#include "gom/gommouseevt.h"
 #include "gom/gomobject.h"
 
 #include "gommacros.h"
@@ -293,10 +299,75 @@ gom_doc_get_element_by_id (GomDocument *doc,
     return elem;
 }
 
-GOM_IMPLEMENT (DOCUMENT, document, gom_doc);
+static GomEvent *
+gom_doc_create_event (GomDocumentEvent *gom_document_event,
+                      const char       *event_type,
+                      GError          **error)
+{
+    GType type = 0;
+    switch (event_type[0]) {
+    case 'E':
+        if (!strcmp (event_type, "Event") ||
+            !strcmp (event_type, "Events")) {
+            type = GOM_TYPE_EVT;
+        }
+        break;
+    case 'M':
+        if (!strcmp (event_type, "MouseEvent") ||
+            !strcmp (event_type, "MouseEvents")) {
+            type = GOM_TYPE_MOUSE_EVT;
+#if 0
+        } else if (!strcmp (event_type, "MutationEvent") ||
+                   !strcmp (event_type, "MutationEvents")) {
+            type = GOM_TYPE_MUTATION_EVT;
+        } else if (!strcmp (event_type, "MutationNameEvent") ||
+                   !strcmp (event_type, "MutationNameEvents")) {
+            type = GOM_TYPE_MUTATION_NAME_EVT;
+#endif
+        }
+        break;
+    case 'K':
+        if (!strcmp (event_type, "KeyboardEvent") ||
+            !strcmp (event_type, "KeyboardEvents")) {
+            type = GOM_TYPE_KEYBOARD_EVT;
+        }
+        break;
+    case 'U':
+        if (!strcmp (event_type, "UIEvent") ||
+            !strcmp (event_type, "UIEvents")) {
+            type = GOM_TYPE_UI_EVT;
+        }
+        break;
+    }
+    if (!type) {
+        g_set_error (error,
+                     GOM_DOM_EXCEPTION_ERROR,
+                     GOM_NOT_SUPPORTED_ERR,
+                     "%s is not a supported event type",
+                     event_type);
+        return NULL;
+    } else {
+        return g_object_new (type, NULL);
+    }
+}
+
+static gboolean
+gom_doc_can_dispatch (GomDocumentEvent *gom_document_event,
+                      const char       *namespace_uri,
+                      const char       *type)
+{
+    GOM_NOT_IMPLEMENTED;
+    return FALSE;
+}
+
+GOM_IMPLEMENT (DOCUMENT,       document,       gom_doc);
+GOM_IMPLEMENT (DOCUMENT_EVENT, document_event, gom_doc);
 
 G_DEFINE_TYPE_WITH_CODE (GomDoc, gom_doc, GOM_TYPE_NOODLE,
-                         GOM_IMPLEMENT_INTERFACE (DOCUMENT, document, gom_doc));
+                         {
+                             GOM_IMPLEMENT_INTERFACE (DOCUMENT,       document,       gom_doc);
+                             GOM_IMPLEMENT_INTERFACE (DOCUMENT_EVENT, document_event, gom_doc);
+                         });
 
 static void gom_doc_init (GomDoc *doc) { }
 
