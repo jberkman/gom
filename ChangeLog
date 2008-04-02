@@ -1,5 +1,24 @@
 2008-04-02  jacob berkman  <jacob@ilovegom.org>
 
+	* src/libgom/gomjsnode.c (gom_js_node_init_class): add node type
+	enums to our ctor
+
+	* src/libgom/gomjsexception.c (gom_js_exception_get_error): get an
+	error for GomJSGErrorExceptions
+	(gom_js_exception_set_error): create a GomJSGErrorException for
+	all errors
+
+	* src/libgom/gomjseventexception.c
+	(gom_js_event_exception_init_class): use new api below
+
+	* src/libgom/gomjsdomexception.c
+	(gom_js_dom_exception_init_class): use new api below
+
+	* include/gom/gomjsobject.h: 
+	* src/libgom/gomjsobject.c (gom_js_object_define_static_enums):
+	add static properties to a prototype's constructor for a given
+	EnumClass
+
 	* examples/console.gom: use bind("DOMActivate") rather than
 	.onactivate
 

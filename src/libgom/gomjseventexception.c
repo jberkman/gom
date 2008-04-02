@@ -25,8 +25,9 @@ THE SOFTWARE.
 
 #include "gom/gomjseventexception.h"
 
-#include "gom/gomjsgerrorexception.h"
 #include "gom/dom/gomdombuiltins.h"
+#include "gom/gomjsgerrorexception.h"
+#include "gom/gomjsobject.h"
 
 #include "gommacros.h"
 
@@ -44,13 +45,6 @@ JSClass GomJSEventExceptionClass = {
     JS_FinalizeStub
 };
 
-static JSBool
-gom_js_event_exception_get_enum (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-    *vp = id;
-    return JS_TRUE;
-}
-
 static JSPropertySpec gom_js_event_exception_props[] = { { NULL } };
 static JSFunctionSpec gom_js_event_exception_funcs[] = { { NULL } };
 
@@ -63,28 +57,12 @@ gom_js_event_exception_construct (JSContext *cx, JSObject *obj, uintN argc, jsva
 JSObject *
 gom_js_event_exception_init_class (JSContext *cx, JSObject *obj)
 {
-    GEnumClass *enums;
-    JSObject *proto;
-    JSObject *ctor;
-    guint i;
-
-    proto = JS_InitClass (cx, obj,
-                          JS_ConstructObject (cx, &GomJSGErrorExceptionClass, NULL, NULL),
-                          &GomJSEventExceptionClass, gom_js_event_exception_construct, 0,
-                          gom_js_event_exception_props, gom_js_event_exception_funcs,
-                          NULL, NULL);
-
-    ctor = JS_GetConstructor (cx, proto);
-
-    enums = g_type_class_ref (GOM_TYPE_EVENT_EXCEPTION_CODE);
-    for (i = 0; i < enums->n_values; i++) {
-        JS_DefinePropertyWithTinyId (cx, ctor,
-                                     &enums->values[i].value_name[4],
-                                     enums->values[i].value,
-                                     enums->values[i].value,
-                                     gom_js_event_exception_get_enum, NULL,
-                                     JSPROP_READONLY | JSPROP_PERMANENT);
-    }
-
-    return proto;
+    return gom_js_object_define_static_enums (
+        cx,
+        JS_InitClass (cx, obj,
+                      JS_ConstructObject (cx, &GomJSGErrorExceptionClass, NULL, NULL),
+                      &GomJSEventExceptionClass, gom_js_event_exception_construct, 0,
+                      gom_js_event_exception_props, gom_js_event_exception_funcs,
+                      NULL, NULL),
+        GOM_TYPE_EVENT_EXCEPTION_CODE);
 }

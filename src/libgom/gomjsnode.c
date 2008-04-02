@@ -23,14 +23,15 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomjsnode.h>
+#include "gom/gomjsnode.h"
 
-#include <gommacros.h>
+#include "gom/dom/gomdombuiltins.h"
+#include "gom/dom/gomnode.h"
+#include "gom/gomjseventtarget.h"
+#include "gom/gomjsexception.h"
+#include "gom/gomjsobject.h"
 
-#include <gom/dom/gomnode.h>
-#include <gom/gomjsexception.h>
-#include <gom/gomjseventtarget.h>
-#include <gom/gomjsobject.h>
+#include "gommacros.h"
 
 JSClass GomJSNodeClass = {
     "Node", JSCLASS_NEW_ENUMERATE,
@@ -165,8 +166,11 @@ gom_js_node_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, js
 JSObject *
 gom_js_node_init_class (JSContext *cx, JSObject *obj)
 {
-    return JS_InitClass (cx, obj,
-                         JS_ConstructObject (cx, &GomJSEventTargetClass, NULL, NULL),
-                         &GomJSNodeClass, gom_js_node_construct, 0,
-                         gom_js_node_props, gom_js_node_funcs, NULL, NULL);
+    return gom_js_object_define_static_enums (
+        cx,
+        JS_InitClass (cx, obj,
+                      JS_ConstructObject (cx, &GomJSEventTargetClass, NULL, NULL),
+                      &GomJSNodeClass, gom_js_node_construct, 0,
+                      gom_js_node_props, gom_js_node_funcs, NULL, NULL),
+        GOM_TYPE_NODE_TYPE);
 }

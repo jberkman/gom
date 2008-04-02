@@ -618,3 +618,31 @@ gom_js_object_get_or_create_js_object (JSContext *cx, gpointer gobj)
 
     return jsobj;
 }
+
+static JSBool
+gom_js_object_get_enum (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+{
+    *vp = id;
+    return JS_TRUE;
+}
+
+JSObject *
+gom_js_object_define_static_enums (JSContext *cx, JSObject *proto, GType enum_type)
+{
+    GEnumClass *enums;
+    JSObject *ctor;
+    guint i;
+
+    ctor = JS_GetConstructor (cx, proto);
+
+    enums = g_type_class_ref (enum_type);
+    for (i = 0; i < enums->n_values; i++) {
+        JS_DefinePropertyWithTinyId (cx, ctor,
+                                     &enums->values[i].value_name[4],
+                                     enums->values[i].value,
+                                     enums->values[i].value,
+                                     gom_js_object_get_enum, NULL,
+                                     JSPROP_READONLY | JSPROP_PERMANENT);
+    }
+    return proto;
+}

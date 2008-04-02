@@ -48,7 +48,8 @@ gom_js_exception_get_error (JSContext *cx, GError **error)
     }
     if (JSVAL_IS_OBJECT (exc)) {
         if (JS_GET_CLASS (cx, JSVAL_TO_OBJECT (exc)) == &GomJSDOMExceptionClass ||
-            JS_GET_CLASS (cx, JSVAL_TO_OBJECT (exc)) == &GomJSEventExceptionClass) {
+            JS_GET_CLASS (cx, JSVAL_TO_OBJECT (exc)) == &GomJSEventExceptionClass ||
+            JS_GET_CLASS (cx, JSVAL_TO_OBJECT (exc)) == &GomJSGErrorExceptionClass) {
             err = JS_GetPrivate (cx, JSVAL_TO_OBJECT (exc));
         }
     }
@@ -76,7 +77,7 @@ gom_js_exception_set_error (JSContext *cx, GError *error)
         ? &GomJSDOMExceptionClass
         : (error->domain == GOM_EVENT_EXCEPTION_ERROR)
         ? &GomJSEventExceptionClass
-        : NULL;
+        : &GomJSGErrorExceptionClass;
     obj = klass ? JS_ConstructObject (cx, klass, NULL, NULL) : NULL;
     if (obj) {
         JS_SetPrivate (cx, obj, g_error_copy (error));

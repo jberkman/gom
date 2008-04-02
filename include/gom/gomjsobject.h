@@ -53,6 +53,8 @@ JSBool    gom_js_object_enumerate (JSContext   *cx,
                                    jsval       *statep,
                                    jsid        *idp);
 
+JSObject *gom_js_object_define_static_enums (JSContext *cx, JSObject *proto, GType enum_type);
+
 G_END_DECLS
 
 #endif /* GOM_JS_H */
