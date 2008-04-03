@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "gom/dom/gomeventexception.h"
 #include "gom/gomjsdomexception.h"
 #include "gom/gomjseventexception.h"
+#include "gom/gomjsgerrorexception.h"
 
 #include "gommacros.h"
 

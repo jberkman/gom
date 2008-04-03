@@ -25,22 +25,27 @@
     </GtkWindow>
     <script contentType="text/javascript"><![CDATA[
       (function(){
+          function append (text) {
+              $('#output').get (0).buffer.text += text + '\n';
+          }
           $('#entry').bind ("DOMActivate", function () {
               if (this.text) {
-                  var res;
 	          try {
-                      res = eval (this.text);
+                      append (eval (this.text));
                   } catch (e) {
-                      res = 'Exception: ' + e;
+                      append ('Exception: ' + e);
                   }
-   	          $('#output').get (0).buffer.text += res + '\n';
 	          this.text = '';
               }
           });
 	  $('#win').bind ("mousemove", function (evt) {
               $('#x').get (0).label = evt.clientX;
               $('#y').get (0).label = evt.clientY;
-          });
+          /*
+          }).bind ("DOMFocusIn DOMFocusOut", function (evt) {
+              append (evt.type + ': ' + evt.target.tagName);
+          */
+	  });
       })();
     ]]></script>
   </app>

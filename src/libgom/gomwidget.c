@@ -69,6 +69,17 @@ enum {
     PROP_TAG_NAME
 };
 
+static void (*_gtk_widget_set_property) (GObject        *object,
+                                         guint           property_id,
+                                         const GValue   *value,
+                                         GParamSpec     *pspec);
+static void (*_gtk_widget_get_property) (GObject        *object,
+                                         guint           property_id,
+                                         GValue         *value,
+                                         GParamSpec     *pspec);
+
+static void     (*_gtk_widget_constructed) (GObject *object);
+
 GQuark gom_widget_private_quark (void);
 GOM_DEFINE_QUARK (widget_private);
 
@@ -117,20 +128,6 @@ get_priv (gpointer obj)
     return priv;
 }
 #define PRIV(i) get_priv (i)
-
-static void (*_gtk_widget_set_property) (GObject        *object,
-                                         guint           property_id,
-                                         const GValue   *value,
-                                         GParamSpec     *pspec);
-static void (*_gtk_widget_get_property) (GObject        *object,
-                                         guint           property_id,
-                                         GValue         *value,
-                                         GParamSpec     *pspec);
-
-static gboolean (*_gtk_widget_event)    (GtkWidget      *widget,
-                                         GdkEvent       *event);
-
-static void     (*_gtk_widget_constructed) (GObject *object);
 
 static GomNode *
 widget_insert_before (GomNode *node,
@@ -438,6 +435,7 @@ gom_widget_get_property (GObject    *object,
 
     switch (property_id) {
     case PROP_NODE_NAME:
+    case PROP_TAG_NAME:
         g_value_set_string (value, priv->node_name);
         break;
     case PROP_NODE_VALUE:
@@ -634,9 +632,7 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
     static GdkEvent     *last_event = NULL;
 
     if (event == last_event && event->type == last_type) {
-        return _gtk_widget_event 
-            ? _gtk_widget_event (widget, event)
-            : FALSE;
+        return FALSE;
     }
 
     switch (event->type) {
@@ -675,9 +671,7 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
     }
 
     if (!evt) {
-        return _gtk_widget_event 
-            ? _gtk_widget_event (widget, event)
-            : FALSE;
+        return FALSE;
     }
 
     g_assert (GOM_IS_EVENT (evt));
@@ -696,9 +690,6 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         return TRUE;
     }
     g_object_unref (evt);
-    if (_gtk_widget_event && _gtk_widget_event (widget, event)) {
-        return TRUE;
-    }
     if (event->type == GDK_BUTTON_RELEASE && priv->click_state) {
         INIT_MOUSE_EVENT (GOM_CLICK, button);
         gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
@@ -715,6 +706,55 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
     }
 
     return FALSE;
+}
+
+static void
+gom_widget_event_after (GtkWidget *widget, GdkEvent *event)
+{
+    GomEvent *evt = NULL;
+    GomWidgetPrivate *priv;
+    GError *error = NULL;
+
+    static GdkEventType  last_type  = 0;
+    static GdkEvent     *last_event = NULL;
+
+    if (event == last_event && event->type == last_type) {
+        return;
+    }
+
+    switch (event->type) {
+    case GDK_FOCUS_CHANGE:
+        priv = PRIV (widget);
+        evt = gom_document_event_create_event (GOM_DOCUMENT_EVENT (priv->owner_document),
+                                               "UIEvent", &error);
+        if (GOM_IS_UI_EVENT (evt)) {
+            gom_ui_event_init_ui_event_ns (GOM_UI_EVENT (evt),
+                                           GOM_EVENTS_NAMESPACE_URI,
+                                           event->focus_change.in ? GOM_DOM_FOCUS_IN : GOM_DOM_FOCUS_OUT,
+                                           TRUE, FALSE,
+                                           NULL, 0);
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (!evt) {
+        return;
+    }
+
+    g_assert (GOM_IS_EVENT (evt));
+
+    last_type  = event->type;
+    last_event = event;
+
+    gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
+    if (error) {
+        g_print ("%s:%d:%s(): Error dispatching event: %s\n",
+                 __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_clear_error (&error);
+    }
+    g_object_unref (evt);
 }
 
 static void
@@ -980,10 +1020,11 @@ gom_widget_constructed (GObject *object)
 #endif
 
     gtk_widget_add_events (GTK_WIDGET (object), 
-                           GDK_BUTTON_PRESS  | GDK_BUTTON_RELEASE |
-                           GDK_ENTER_NOTIFY  | GDK_LEAVE_NOTIFY   |
-                           GDK_KEY_PRESS     | GDK_KEY_RELEASE    |
-                           GDK_MOTION_NOTIFY | GDK_SCROLL);
+                           GDK_BUTTON_PRESS_MASK  | GDK_BUTTON_RELEASE_MASK |
+                           GDK_ENTER_NOTIFY_MASK  | GDK_LEAVE_NOTIFY_MASK   |
+                           GDK_KEY_PRESS_MASK     | GDK_KEY_RELEASE_MASK    |
+                           GDK_FOCUS_CHANGE_MASK  | GDK_SCROLL_MASK         |
+                           GDK_POINTER_MOTION_HINT_MASK);
 
     if (GTK_IS_CONTAINER (object)) {
         g_signal_connect (object, "add",    G_CALLBACK (widget_dirty_children), NULL);
@@ -995,13 +1036,14 @@ gom_widget_constructed (GObject *object)
     if (GTK_IS_ENTRY (object)) {
         g_signal_connect (object, "activate", G_CALLBACK (widget_activate), NULL);
     }
+    g_signal_connect (object, "event",       G_CALLBACK (gom_widget_event),       NULL);
+    g_signal_connect (object, "event-after", G_CALLBACK (gom_widget_event_after), NULL);
 }
 
 static gpointer
 gom_widget_init_once (gpointer data)
 {
-    GObjectClass *oclass;
-    GtkWidgetClass *wclass;
+    GObjectClass      *oclass;
     GType type = 0;
 
     static const GInterfaceInfo node_info = {
@@ -1036,7 +1078,6 @@ gom_widget_init_once (gpointer data)
     };
 
     oclass = g_type_class_ref (GTK_TYPE_WIDGET);
-    wclass = GTK_WIDGET_CLASS (oclass);
 
     _gtk_widget_get_property = oclass->get_property;
     oclass->get_property = gom_widget_get_property;
@@ -1046,9 +1087,6 @@ gom_widget_init_once (gpointer data)
 
     _gtk_widget_constructed = oclass->constructed;
     oclass->constructed = gom_widget_constructed;
-
-    _gtk_widget_event = wclass->event;
-    wclass->event = gom_widget_event;
 
     g_object_class_install_property (
         oclass, PROP_NODE_NAME,
@@ -1162,7 +1200,7 @@ gom_widget_init_once (gpointer data)
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_CHILD,        &child_info);
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_PARENT,       &parent_info);
 
-#define WIDGET(w) type ^= (w);
+#define WIDGET(w) type ^= w;
 #include "gomwidgets.c"
 #undef WIDGET
 

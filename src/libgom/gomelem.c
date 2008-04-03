@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "gom/gomelem.h"
 
 #include "gom/dom/gomelement.h"
+#include "gom/gomobject.h"
 
 #include "gommacros.h"
 
@@ -52,8 +53,15 @@ gom_elem_get_property (GObject    *object,
 static char *
 gom_elem_get_attribute_ns (GomElement *elem, const char *namespace_uri, const char *name)
 {
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
+    GValue *gvalp;
+    char *ret;
+    gvalp = gom_object_get_attribute (G_OBJECT (elem), name);
+    if (gvalp && G_VALUE_HOLDS_STRING (gvalp)) {
+        ret = g_value_dup_string (gvalp);
+    }
+    g_value_unset (gvalp);
+    return ret;
+
 }
 
 static char *
@@ -64,12 +72,16 @@ gom_elem_get_attribute (GomElement *elem, const char *name)
 
 static void
 gom_elem_set_attribute_ns (GomElement *elem,
-                         const char *namespace_uri,
-                         const char *qualified_name,
-                         const char *value,
-                         GError **error)
+                           const char *namespace_uri,
+                           const char *qualified_name,
+                           const char *value,
+                           GError **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GValue gval = { 0 };
+    g_value_init (&gval, G_TYPE_STRING);
+    g_value_set_string (&gval, value);
+    gom_object_set_attribute (G_OBJECT (elem), qualified_name, &gval);
+    g_value_unset (&gval);
 }
 
 static void

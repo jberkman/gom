@@ -1,3 +1,23 @@
+2008-04-03  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomwidget.c (gom_widget_get_property): add
+	Element.tagName
+	(gom_widget_event): this is now a signal handler, so don't try to
+	chain up to the default class closure
+	(gom_widget_event_after): copy too much code from above to handle
+	focus in/out events
+	(gom_widget_constructed): gtk_widget_add_events() takes event
+	MASKs
+	(gom_widget_constructed): connect to event and event-after signals
+	(gom_widget_init_once): don't override GtkWidgetClass's event
+	closure, as it's unreliable.  use signals instead.
+
+	* src/libgom/gomdom.c (gom_dom_has_feature): disable some features
+	we don't currently support
+
+	* src/libgom/gomelem.c (gom_elem_get_attribute_ns)
+	(gom_elem_set_attribute_ns): implement
+
 2008-04-02  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomjsnode.c (gom_js_node_init_class): add node type

@@ -46,14 +46,18 @@ gom_dom_has_feature (GomDOMImplementation *dom, const char *feature, const char 
         return !version || !g_ascii_strcasecmp (version, "3.0");
     } else if (!g_ascii_strcasecmp (feature, "MouseEvents")) {
         return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
+#if 0
     } else if (!g_ascii_strcasecmp (feature, "MutationEvents")) {
         return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
     } else if (!g_ascii_strcasecmp (feature, "MutationNameEvents")) {
         return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
+#endif
     } else if (!g_ascii_strcasecmp (feature, "UIEvents")) {
         return !version || !g_ascii_strcasecmp (version, "3.0") || !g_ascii_strcasecmp (version, "2.0");
+#if 0
     } else if (!g_ascii_strcasecmp (feature, "Views")) {
         return !version || !g_ascii_strcasecmp (version, "2.0");
+#endif
     }
     return FALSE;
 }
