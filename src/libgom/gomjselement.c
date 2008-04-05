@@ -27,6 +27,7 @@ THE SOFTWARE.
 
 #include "gom/dom/gomdomexception.h"
 #include "gom/dom/gomelement.h"
+#include "gom/gomelem.h"
 #include "gom/gomjsexception.h"
 #include "gom/gomjsnode.h"
 #include "gom/gomjsobject.h"
@@ -382,7 +383,7 @@ gom_js_element_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
 JSObject *
 gom_js_element_init_class (JSContext *cx, JSObject *obj)
 {
-    gom_js_object_register_js_class (cx, GTK_TYPE_WIDGET, &GomJSElementClass);
+    gom_js_object_register_js_class (cx, GOM_TYPE_ELEMENT, &GomJSElementClass);
     return JS_InitClass (cx, obj,
                          JS_ConstructObject (cx, &GomJSNodeClass, NULL, NULL),
                          &GomJSElementClass, gom_js_element_construct, 0,

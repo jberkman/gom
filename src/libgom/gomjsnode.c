@@ -164,6 +164,7 @@ gom_js_node_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, js
 JSObject *
 gom_js_node_init_class (JSContext *cx, JSObject *obj)
 {
+    gom_js_object_register_js_class (cx, GOM_TYPE_NODE, &GomJSNodeClass);
     return gom_js_object_define_static_enums (
         cx,
         JS_InitClass (cx, obj,

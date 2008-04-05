@@ -1,5 +1,23 @@
 2008-04-05  jacob berkman  <jacob@ilovegom.org>
 
+	* src/libgom/gomjsnode.c (gom_js_node_init_class): register
+	ourselves so that non-elements at least get a Node object
+
+	* src/libgom/gomjselement.c (gom_js_element_init_class): register
+	ourselves as handling the GomElement interface, so that GomElems
+	work, too
+
+	* src/libgom/gomjseventtarget.c (gom_js_event_target_init_class):
+	register ourselves for GomEventTarget
+
+	* src/libgom/gomjsobject.c (GT2JSC): this is now a GSList ** and
+	not a hashtable
+	(gom_js_object_register_js_class): prepend a ClassMap to the list
+	of registered classes
+	(gom_js_object_get_js_class): search the list from most recently
+	added for a type which this object isa
+	(gom_js_object_init_class): initialize the g2jsc data as a GSList **
+
 	* src/libgom/gomdominterfaces.c: node-name, node-type -> read
 	only; tag-name -> writable
 

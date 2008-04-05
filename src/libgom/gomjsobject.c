@@ -23,13 +23,13 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomjsobject.h>
+#include "gom/gomjsobject.h"
 
-#include <gom/gomjscontext.h>
-#include <gom/gomobject.h>
-#include <gom/gomvalue.h>
+#include "gom/gomjscontext.h"
+#include "gom/gomobject.h"
+#include "gom/gomvalue.h"
 
-#include <gommacros.h>
+#include "gommacros.h"
 
 #include <string.h>
 
@@ -52,7 +52,7 @@ GOM_DEFINE_QUARK (js_object_js2g);
 
 GOM_DEFINE_QUARK (js_object_gt2jsc);
 #define GT2JSC_QUARK (gom_js_object_gt2jsc_quark ())
-#define GT2JSC(cx) ((GHashTable *)GOM_JS_CONTEXT_GET_QDATA (cx, GT2JSC_QUARK))
+#define GT2JSC(cx) (*(GSList **)GOM_JS_CONTEXT_GET_QDATA (cx, GT2JSC_QUARK))
 
 static char *
 camel_case (const char *s)
@@ -83,66 +83,48 @@ camel_case (const char *s)
     return r;
 }
 
+typedef struct {
+    JSClass *jsclass;
+    GType    type;
+} ClassMap;
+
 void
 gom_js_object_register_js_class (JSContext *cx, GType objtype, JSClass *jsclass)
 {
-    g_hash_table_insert (GT2JSC (cx), GSIZE_TO_POINTER (objtype), jsclass);
-}
+    ClassMap *map = g_new (ClassMap, 1);
 
-static JSClass *
-get_js_class (GHashTable *table, GType type)
-{
-    JSClass *klass;
-
-    if (!type) {
-        return NULL;
-    }
-#if 0
-    g_print ("type: %s\n", g_type_name (type));
-#endif
-    klass = g_hash_table_lookup (table, GSIZE_TO_POINTER (type));
-    if (klass) {
-#if 0
-        g_print ("%s:%d:%s(): GType %s -> JSClass %s\n",
-                 __FILE__, __LINE__, __FUNCTION__,
-                 g_type_name (type), klass->name);
-#endif
-        return klass;
+    if (objtype != G_TYPE_OBJECT && !G_TYPE_IS_INTERFACE (objtype)) {
+        g_warning (G_STRLOC": registering non-interface %s", g_type_name (objtype));
     }
 
+    map->type    = objtype;
+    map->jsclass = jsclass;
 
-    return get_js_class (table, g_type_parent (type));
+    GT2JSC (cx) = g_slist_prepend (GT2JSC (cx), map);
 }
 
 JSClass *
 gom_js_object_get_js_class (JSContext *cx, gpointer gobj)
 {
-    GHashTable *table;
     GType type;
-    GType *types;
-    JSClass *klass;
-    guint n_interfaces;
-    guint i;
-    
-    type = G_TYPE_FROM_INSTANCE (gobj);
-    table = GT2JSC (cx);
+    GSList *li;
+    ClassMap *map;
 
-    klass = get_js_class (table, type);
-    if (!klass) {
-        types = g_type_interfaces (type, &n_interfaces);
-        for (i = 0; i < n_interfaces; i++) {
+    type = G_TYPE_FROM_INSTANCE (gobj);
+    for (li = GT2JSC (cx); li; li = li->next) {
+        map = li->data;
+        if (g_type_is_a (type, map->type)) {
 #if 0
-            g_print ("iface: %s\n", g_type_name (types[i]));
+            g_print (G_STRLOC": %s -> %s\n", g_type_name (type), map->jsclass->name);
 #endif
-            klass = get_js_class (table, types[i]);
-            if (klass) {
-                return klass;
-            }
+            return map->jsclass;
         }
-        g_free (types);
+#if 0
+        g_print (G_STRLOC": %s !> %s\n", g_type_name (type), map->jsclass->name);
+#endif
     }
 
-    return klass ? klass : &GomJSObjectClass;
+    return NULL;
 }
 
 typedef struct {
@@ -565,13 +547,23 @@ gom_js_object_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
     return JS_TRUE;
 }
 
+static void
+g2jsc_free (gpointer data)
+{
+    GSList *slist = *(GSList **)data;
+    g_slist_foreach (slist, (GFunc)g_free, NULL);
+    g_slist_free (slist);
+    g_free (data);
+}
+
 JSObject *
 gom_js_object_init_class (JSContext *cx, JSObject *obj)
 {
     GOM_JS_CONTEXT_SET_QDATA_FULL (cx, G2JS_QUARK,   g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
     GOM_JS_CONTEXT_SET_QDATA_FULL (cx, JS2G_QUARK,   g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
-    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, GT2JSC_QUARK, g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
+    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, GT2JSC_QUARK, g_new0 (GSList *, 1), g2jsc_free);
 
+    gom_js_object_register_js_class (cx, G_TYPE_OBJECT, &GomJSObjectClass);
     return JS_InitClass (cx, obj,
                          JS_ConstructObject (cx, NULL, NULL, NULL),
                          &GomJSObjectClass, gom_js_object_construct, 0,

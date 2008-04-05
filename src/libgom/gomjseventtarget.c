@@ -144,6 +144,7 @@ gom_js_event_target_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *
 JSObject *
 gom_js_event_target_init_class (JSContext *cx, JSObject *obj)
 {
+    gom_js_object_register_js_class (cx, GOM_TYPE_EVENT_TARGET, &GomJSEventTargetClass);
     return JS_InitClass (cx, obj,
                          JS_ConstructObject (cx, &GomJSObjectClass, NULL, NULL),
                          &GomJSEventTargetClass, gom_js_event_target_construct, 0,
