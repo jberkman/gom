@@ -24,9 +24,11 @@ THE SOFTWARE.
 
 #include "config.h"
 
-#include <gom/gomobject.h>
+#include "gom/gomobject.h"
 
-#include <gommacros.h>
+#include "gom/gomcamel.h"
+
+#include "gommacros.h"
 
 #include <string.h>
 
@@ -36,59 +38,31 @@ GOM_DEFINE_QUARK (object_attrs);
 #define ATTRS_QUARK (gom_object_attrs_quark ())
 #define ATTRS(o) ((GHashTable *)g_object_get_qdata (G_OBJECT (o), ATTRS_QUARK));
 
-static char *
-camel_uncase (const char *s)
-{
-    int si, ri;
-    char *r = g_malloc (2 * strlen (s) + 1);
-    for (ri = si = 0; s[si]; si++) {
-        if (g_ascii_isupper (s[si])) {
-            r[ri++] = '_';
-            r[ri++] = g_ascii_tolower (s[si]);
-        } else {
-            r[ri++] = s[si];
-        }
-    }
-    r[ri] = s[si];
-#if 0
-    g_print ("%s:%d:%s: %s -> %s\n", __FILE__, __LINE__, __FUNCTION__, s, r);
-#endif
-    return r;
-}
-
 gboolean
 gom_object_resolve (GObject *gobj, const char *name, GParamSpec **spec, guint *signal_id)
 {
-    char *n;
-    n = (char *)name;
+    const char *n;
 
-resolve_again:
+    n = gom_camel_uncase (name);
+
     if (n[0] == 'o' && n[1] == 'n' &&
         (*signal_id = g_signal_lookup (&n[2], G_TYPE_FROM_INSTANCE (gobj)))) {
 #if 0
         g_print ("resolve %s.%s -> signal %u\n", g_type_name (G_TYPE_FROM_INSTANCE (gobj)), n, *signal_id);
 #endif
         *spec = NULL;
-        if (n != name) {
-            g_free (n);
-        }
+        GOM_CAMEL_FREE (n, name);
         return TRUE;
     }
 
     *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (gobj), n);
-    if (!*spec && n == name) {
-        n = camel_uncase (name);
-        goto resolve_again;
-    }
     *signal_id = 0;
 #if 0
-    g_print ("resolve %s.%s -> %s\n", 
-             g_type_name (G_TYPE_FROM_INSTANCE (gobj)), n,
+    g_print ("resolve %s.%s -> %s: %s\n", 
+             g_type_name (G_TYPE_FROM_INSTANCE (gobj)), name, n,
              *spec ? g_type_name (G_PARAM_SPEC_VALUE_TYPE (*spec)) : "FAIL");
 #endif
-    if (n != name) {
-        g_free (n);
-    }
+    GOM_CAMEL_FREE (n, name);
 
     return *spec != NULL;
 }

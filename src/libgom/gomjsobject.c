@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 #include "gom/gomjsobject.h"
 
+#include "gom/gomcamel.h"
 #include "gom/gomjscontext.h"
 #include "gom/gomobject.h"
 #include "gom/gomvalue.h"
@@ -53,35 +54,6 @@ GOM_DEFINE_QUARK (js_object_js2g);
 GOM_DEFINE_QUARK (js_object_gt2jsc);
 #define GT2JSC_QUARK (gom_js_object_gt2jsc_quark ())
 #define GT2JSC(cx) (*(GSList **)GOM_JS_CONTEXT_GET_QDATA (cx, GT2JSC_QUARK))
-
-static char *
-camel_case (const char *s)
-{
-    int si, ri;
-    char *r = g_malloc (strlen (s) + 1);
-    gboolean upper = FALSE;
-    for (ri = si = 0; s[si]; si++) {
-        switch (s[si]) {
-        case '-':
-        case '_':
-            upper = TRUE;
-            break;
-        default:
-            if (upper) {
-                r[ri++] = g_ascii_toupper (s[si]);
-                upper = FALSE;
-            } else {
-                r[ri++] = s[si];
-            }
-            break;
-        }
-    }
-    r[ri] = s[si];
-#if 0
-    g_print ("\n%s:%d:%s: %s -> %s\n", __FILE__, __LINE__, __FUNCTION__, s, r);
-#endif
-    return r;
-}
 
 typedef struct {
     JSClass *jsclass;
@@ -450,7 +422,7 @@ gom_js_object_enumerate (JSContext *cx, JSObject *obj, JSIterateOp enum_op, jsva
     GObject *gobj;
     EnumerateData *data;
     GParamSpec *spec;
-    char *name;
+    const char *name;
     JSString *jsname;
     
     gobj = gom_js_object_get_g_object (cx, obj);
@@ -479,12 +451,12 @@ gom_js_object_enumerate (JSContext *cx, JSObject *obj, JSIterateOp enum_op, jsva
 
         if (data->i < data->n_items) {
             spec = data->specs[data->i++];
-            name = camel_case (spec->name);
+            name = gom_camel_case (spec->name);
 #if 0
             g_print ("enumerating %s.%s\n", g_type_name (G_TYPE_FROM_INSTANCE (gobj)), name);
 #endif
             jsname = JS_NewStringCopyZ (cx, name);
-            g_free (name);
+            GOM_CAMEL_FREE (name, spec->name);
             if (!JS_ValueToId (cx, STRING_TO_JSVAL (jsname), idp)) {
                 return JS_FALSE;
             }

@@ -1,5 +1,20 @@
 2008-04-05  jacob berkman  <jacob@ilovegom.org>
 
+	* src/libgom/gomobject.c (gom_object_resolve): don't bother doing
+	a non-camel uncased pass
+
+	* src/libgom/gomjswindow.c (gom_js_window_parser_start_element):
+	put the non-signal cases together
+
+	* src/libgom/gomjselement.c (gom_js_element_get_attribute):
+	resolve attribute names on this object, in case we are trying to
+	resolve a property
+	(gom_js_element_set_attribute): roll the non-signal cases together
+
+	* include/gom/gomcamel.h: 
+	* src/libgom/gomcamel.c: slightly better - if not more complicated
+	- versions of the camel case functions
+
 	* src/libgom/gomjsnode.c (gom_js_node_init_class): register
 	ourselves so that non-elements at least get a Node object
 

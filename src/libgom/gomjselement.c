@@ -191,6 +191,8 @@ gom_js_element_get_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
 {
     GomElement *elem;
     char *attr, *name;
+    GParamSpec *spec;
+    guint signal_id;
 
     elem = gom_js_object_get_g_object (cx, obj);
     if (!GOM_IS_ELEMENT (elem)) {
@@ -211,7 +213,12 @@ gom_js_element_get_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
         return JS_FALSE;
     }
 
-    attr = gom_element_get_attribute (elem, name);
+    gom_object_resolve (G_OBJECT (elem), name, &spec, &signal_id);
+    if (signal_id) {
+        attr = g_strdup ("<signal handler>");
+    } else {
+        attr = gom_element_get_attribute (elem, spec ? spec->name : name);
+    }
     *rval = STRING_TO_JSVAL (JS_NewStringCopyZ (cx, attr));
     g_free (attr);
 
@@ -238,9 +245,8 @@ gom_js_element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
         return JS_FALSE;
     }
 
-    if (!gom_object_resolve (G_OBJECT (elem), name, &spec, &signal_id)) {
-        gom_element_set_attribute (elem, name, value, &error);
-    } else if (signal_id) {
+    gom_object_resolve (G_OBJECT (elem), name, &spec, &signal_id);
+    if (signal_id) {
         fun = JS_CompileFunction (cx, obj, NULL, 0, NULL,
                                   value, strlen (value), NULL, 0);
         if (!fun) {
@@ -257,7 +263,7 @@ gom_js_element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
             return JS_FALSE;
         }
     } else {
-        gom_element_set_attribute (elem, spec->name, value, &error);
+        gom_element_set_attribute (elem, spec ? spec->name : name, value, &error);
     }
     return error ? gom_js_exception_set_error (cx, &error) : JS_TRUE;
 }

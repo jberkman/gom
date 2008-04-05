@@ -2,6 +2,7 @@
 
 gomincludedir := $(includedir)/gom-0/gom
 gominclude_HEADERS :=				\
+	include/gom/gomcamel.h			\
 	include/gom/gomchardata.h		\
 	include/gom/gomchild.h			\
 	include/gom/gomdoc.h			\

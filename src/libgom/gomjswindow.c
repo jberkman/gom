@@ -424,12 +424,8 @@ gom_js_window_parser_start_element (GMarkupParseContext *context,
     for (name = attribute_names, value = attribute_values; 
          !*error && *name;
          name++, value++) {
-        if (!gom_object_resolve (G_OBJECT (data->scope->elem), *name, &spec, &signal_id)) {
-            gom_element_set_attribute_ns (data->scope->elem, 
-                                          lookup_namespace_qualified (data, *name),
-                                          *name, *value,
-                                          error);
-        } else if (signal_id) {
+        gom_object_resolve (G_OBJECT (data->scope->elem), *name, &spec, &signal_id);
+        if (signal_id) {
             if (!jsobj) {
                 jsobj = gom_js_object_get_or_create_js_object (data->cx, data->scope->elem);
                 if (!jsobj) {
@@ -466,7 +462,12 @@ gom_js_window_parser_start_element (GMarkupParseContext *context,
                 break;
             }
         } else {
-            gom_element_set_attribute (data->scope->elem, spec->name, *value, error);
+            /* in the spec case, this drops the prefix that *name
+             * might have */
+            gom_element_set_attribute_ns (data->scope->elem, 
+                                          lookup_namespace_qualified (data, *name),
+                                          spec ? spec->name : *name, *value,
+                                          error);
         }
     }
     if (!*error && data->scope->parent) {

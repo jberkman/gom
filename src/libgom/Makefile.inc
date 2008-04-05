@@ -4,6 +4,7 @@ lib_LTLIBRARIES += libgom.la
 
 libgom_la_SOURCES :=				\
 	include/gommacros.h			\
+	src/libgom/gomcamel.c			\
 	src/libgom/gomchardata.c		\
 	src/libgom/gomdoc.c			\
 	src/libgom/gomdom.c			\

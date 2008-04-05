@@ -128,6 +128,7 @@ G_BEGIN_DECLS
     i_n##_##func args_in                                                \
     {                                                                   \
         g_return_if_fail (I_N##_GET_INTERFACE (i_n)->func != NULL);     \
+        /* g_print (G_STRLOC":"#i_n"_"#func"()\n"); */                  \
         I_N##_GET_INTERFACE (i_n)->func args_passed;                    \
     }
 
@@ -136,6 +137,7 @@ G_BEGIN_DECLS
     i_n##_##func args_in                                                \
     {                                                                   \
         g_return_val_if_fail (I_N##_GET_INTERFACE (i_n)->func != NULL, (ret)0); \
+        /* g_print (G_STRLOC":"#i_n"_"#func"()\n"); */                  \
         return I_N##_GET_INTERFACE (i_n)->func args_passed;             \
     }
 
