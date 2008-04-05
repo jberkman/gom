@@ -32,12 +32,16 @@ G_BEGIN_DECLS
 
 #define GOM_NOT_IMPLEMENTED (g_warning ("%s:%d:%s(): Not implemented yet.", __FILE__, __LINE__, __FUNCTION__))
 
+#define GOM_NOT_IMPLEMENTED_ERROR(error)                                \
+    (g_set_error (error, GOM_DOM_EXCEPTION_ERROR, GOM_NOT_IMPLEMENTED_ERR, \
+                  G_STRLOC": Not implemented yet"))
+
 #define GOM_JS_NOT_IMPLEMENTED(cx)                                      \
     G_STMT_START {                                                      \
         if (!JS_IsExceptionPending (cx)) {                              \
-            char *s = g_strdup_printf ("%s:%d:%s(): Not implemented yet.", __FILE__, __LINE__, __FUNCTION__); \
-            JS_SetPendingException (cx, STRING_TO_JSVAL (JS_NewStringCopyZ (cx, s))); \
-            g_free (s);                                                 \
+            GError *error = NULL;                                       \
+            GOM_NOT_IMPLEMENTED_ERROR (&error);                         \
+            gom_js_exception_set_error (cx, &error);                    \
         }                                                               \
     } G_STMT_END
 

@@ -23,20 +23,21 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomjselement.h>
+#include "gom/gomjselement.h"
 
-#include <gom/dom/gomelement.h>
-#include <gom/gomjsexception.h>
-#include <gom/gomjsnode.h>
-#include <gom/gomjsobject.h>
-#include <gom/gomobject.h>
-#include <gom/gomvalue.h>
+#include "gom/dom/gomdomexception.h"
+#include "gom/dom/gomelement.h"
+#include "gom/gomjsexception.h"
+#include "gom/gomjsnode.h"
+#include "gom/gomjsobject.h"
+#include "gom/gomobject.h"
+#include "gom/gomvalue.h"
+
+#include "gommacros.h"
 
 #include <gtk/gtkwidget.h>
 
 #include <string.h>
-
-#include <gommacros.h>
 
 static JSBool
 gom_js_element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
@@ -69,9 +70,7 @@ gom_js_element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
         return JS_TRUE;
     }
     if (!gom_jsval (cx, vp, gval, &error)) {
-        gom_js_exception_set_error (cx, error);
-        g_error_free (error);
-        return JS_FALSE;
+        return gom_js_exception_set_error (cx, &error);
     }
     return JS_TRUE;
 }
@@ -102,9 +101,7 @@ gom_js_element_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     }
 
     if (!gom_g_value (cx, &gval, *vp, &error)) {
-        gom_js_exception_set_error (cx, error);
-        g_error_free (error);
-        return JS_FALSE;
+        return gom_js_exception_set_error (cx, &error);
     }
 
     gom_object_set_attribute (gobj, name, &gval);
@@ -261,12 +258,7 @@ gom_js_element_set_attribute (JSContext *cx, JSObject *obj, uintN argc, jsval *a
     } else {
         gom_element_set_attribute (elem, spec->name, value, &error);
     }
-    if (error) {
-        gom_js_exception_set_error (cx, error);
-        return JS_FALSE;
-    }
-
-    return JS_TRUE;
+    return error ? gom_js_exception_set_error (cx, &error) : JS_TRUE;
 }
 
 static JSBool

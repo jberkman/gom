@@ -27,6 +27,7 @@ THE SOFTWARE.
 
 #include "gom/dom/gomdocument.h"
 #include "gom/dom/gomdomimplementation.h"
+#include "gom/dom/gomeventtarget.h"
 #include "gom/gomdom.h"
 #include "gom/gomjscontext.h"
 #include "gom/gomjsexception.h"
@@ -245,12 +246,12 @@ gom_js_window_quit (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval
 }
 
 static JSFunctionSpec gom_js_window_funcs[] = {
-    { "alert",         gom_js_window_alert, 1 },
-    { "quit",          gom_js_window_quit,  0 },
-    { "setInterval",   gom_js_window_set_interval, 2 },
+    { "alert",         gom_js_window_alert,          1 },
+    { "quit",          gom_js_window_quit,           0 },
+    { "setInterval",   gom_js_window_set_interval,   2 },
     { "clearInterval", gom_js_window_clear_interval, 1 },
-    { "setTimeout",    gom_js_window_set_timeout, 2 },
-    { "lcearTimeout",  gom_js_window_clear_timeout, 1 },
+    { "setTimeout",    gom_js_window_set_timeout,    2 },
+    { "clearTimeout",  gom_js_window_clear_timeout,  1 },
     { NULL }
 };
 
@@ -285,74 +286,98 @@ gom_js_window_init_object (JSContext *cx, JSObject *window)
     return window;
 }
 
+typedef struct _ParserScope ParserScope;
+struct _ParserScope {
+    ParserScope *parent;
+    GHashTable  *namespaces;
+    GomElement  *elem;
+    int          lineno;
+};
+
 typedef struct {
     const char  *filename;
     JSContext   *cx;
     JSObject    *window;
     GomDocument *doc;
     JSObject    *jsdoc;
-    GSList      *elems;
-    GString     *script;
+    ParserScope *scope;
 } ParserData;
 
-static void
-gom_js_window_parser_start_script (GMarkupParseContext *context,
-                                   const gchar         *element_name,
-                                   const gchar        **attribute_names,
-                                   const gchar        **attribute_values,
-                                   gpointer             user_data,
-                                   GError             **error)
-{
-    ParserData *data = user_data;
-    char *script;
-    gsize script_len;
-    jsval rval; 
-    JSString *str; 
-    const char **name, **value;
-    char *file;
+#define XMLNS_LEN 5
 
-    for (name = attribute_names, value = attribute_values; *name; ++name, ++value) {
-        if (strcmp (*name, "src")) {
-            continue;
+static void
+push_scope (ParserData   *data,
+            const gchar **attribute_names,
+            const gchar **attribute_values)
+{
+    ParserScope *scope;
+    const char **name, **value;
+
+    scope = g_new0 (ParserScope, 1);
+
+    scope->parent = data->scope;
+    data->scope = scope;
+
+    scope->namespaces = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                               g_free, g_free);
+    for (name = attribute_names, value = attribute_values; *name; name++, value++) {
+        if (!strcmp (*name, "xmlns")) {
+            g_print (G_STRLOC": default namespace: %s\n", *value);
+            g_hash_table_replace (scope->namespaces, 
+                                  g_strdup (""),
+                                  g_strdup (*value));
+        } else if (!strncmp (*name, "xmlns:", XMLNS_LEN+1)) {
+            g_print (G_STRLOC": found prefix: %s -> %s\n",
+                     *name+XMLNS_LEN+1,
+                     *value);
+            g_hash_table_replace (scope->namespaces,
+                                  g_strdup (*name + XMLNS_LEN + 1),
+                                  g_strdup (*value));
         }
-        if (g_path_is_absolute (*value)) {
-            file = (char *)*value;
-        } else {
-            char *dir = g_path_get_dirname (data->filename);
-            file = g_build_filename (dir, *value, NULL);
-            g_free (dir);
-        }
-        if (!g_file_get_contents (file, &script, &script_len, error)) {
-            if (*value == file) {
-                g_free (file);
-            }
-            return;
-        }
-        
-        if (!JS_EvaluateScript(data->cx, data->window,
-                               script, script_len,
-                               *value, 0, &rval)) {
-            if (*value == file) {
-                g_free (file);
-            }
-            g_free (script);
-            return;
-        }
-        if (*value == file) {
-            g_free (file);
-        }
-        g_free (script);
-        str = JS_ValueToString(data->cx, rval); 
-        g_print ("%s:%d:%s(): script result: %s\n",
-                 __FILE__, __LINE__, __FUNCTION__,
-                 JS_GetStringBytes(str));
-        /* Rhino 4th Ed. p. 189: "Any code that does appear between
-         * these tags is ignored by browsers that support the src
-         * attribute..."
-         */
+    }
+}
+
+static void
+pop_scope (ParserData *data)
+{
+    ParserScope *scope;
+
+    scope = data->scope;
+    if (!scope) {
         return;
     }
-    data->script = g_string_sized_new (1024);
+    data->scope = scope->parent;
+
+    g_hash_table_destroy (scope->namespaces);
+    if (scope->elem) {
+        g_object_unref (scope->elem);
+    }
+    g_free (scope);
+}
+
+static const char *
+lookup_namespace_prefix (ParserScope *scope, const char *prefix)
+{
+    const char *ns;
+    ns = g_hash_table_lookup (scope->namespaces, prefix);
+    if (!ns && scope->parent) {
+        ns = lookup_namespace_prefix (scope->parent, prefix);
+    }
+    return ns;
+}
+
+static const char *
+lookup_namespace_qualified (ParserData *data, const char *qualified_name)
+{
+    const char *namespace;
+    const char *colon;
+    char *prefix = NULL;
+
+    colon = strchr (qualified_name, ':');
+    prefix = colon ? g_strndup (qualified_name, colon - qualified_name) : NULL;
+    namespace = lookup_namespace_prefix (data->scope, prefix ? prefix : "");
+    g_free (prefix);
+    return namespace;
 }
 
 /* Called for open tags <foo bar="baz"> */
@@ -365,54 +390,55 @@ gom_js_window_parser_start_element (GMarkupParseContext *context,
                                     GError             **error)
 {
     JSObject *jsobj = NULL;
-    GomElement *elem;
     ParserData *data = user_data;
     GParamSpec *spec;
     const char **name, **value;
+    const char *namespace;
     guint signal_id;
     JSFunction *fun;
     int lineno;
 
+    push_scope (data, attribute_names, attribute_values);
+    g_markup_parse_context_get_position (context, &data->scope->lineno, NULL);
+    namespace = lookup_namespace_qualified (data, element_name);
+
     if (!data->doc) {
         GomDOMImplementation *dom;
         dom = g_object_new (GOM_TYPE_DOM, NULL);
-        data->doc = gom_dom_implementation_create_document (dom, NULL, element_name, NULL, error);
-        if (!data->doc) {
-            return;
+        data->doc = gom_dom_implementation_create_document (dom, namespace, element_name, NULL, error);
+        if (data->doc) {
+            data->jsdoc = gom_js_object_get_or_create_js_object (data->cx, data->doc);
+            JS_DefineProperty (data->cx, data->window, "document",
+                               OBJECT_TO_JSVAL (data->jsdoc), NULL, NULL,
+                               JSPROP_PERMANENT | JSPROP_READONLY);
+            g_object_get (data->doc, "document-element", &data->scope->elem, NULL);
         }
-        data->jsdoc = gom_js_object_get_or_create_js_object (data->cx, data->doc);
-        JS_DefineProperty (data->cx, data->window, "document",
-                           OBJECT_TO_JSVAL (data->jsdoc), NULL, NULL,
-                           JSPROP_PERMANENT | JSPROP_READONLY);
-        g_object_get (data->doc, "document-element", &elem, NULL);
     } else {
-        if (!strcmp (element_name, "script")) {
-            gom_js_window_parser_start_script (context, element_name, attribute_names, attribute_values, user_data, error);
-            return;
-        }
-
-        elem = gom_document_create_element (data->doc, element_name, error);
+        data->scope->elem = gom_document_create_element_ns (data->doc, namespace, element_name, error);
     }
+
 #if 0
-    g_print ("start_element: %s -> %p\n", element_name, elem);
+    g_print ("start_element: %s -> %p\n", element_name, data->scope->elem);
 #endif
-    if (!elem) {
-        return;
-    }
 
-    for (name = attribute_names, value = attribute_values; *name; name++, value++) {
-        if (!gom_object_resolve (G_OBJECT (elem), *name, &spec, &signal_id)) {
-            gom_element_set_attribute (elem, *name, *value, error);
+    for (name = attribute_names, value = attribute_values; 
+         !*error && *name;
+         name++, value++) {
+        if (!gom_object_resolve (G_OBJECT (data->scope->elem), *name, &spec, &signal_id)) {
+            gom_element_set_attribute_ns (data->scope->elem, 
+                                          lookup_namespace_qualified (data, *name),
+                                          *name, *value,
+                                          error);
         } else if (signal_id) {
             if (!jsobj) {
-                jsobj = gom_js_object_get_or_create_js_object (data->cx, elem);
+                jsobj = gom_js_object_get_or_create_js_object (data->cx, data->scope->elem);
                 if (!jsobj) {
                     if (!gom_js_exception_get_error (data->cx, error)) {
                         g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
                                      "Could not get JSObject for elem %s",
                                      element_name);
                     }
-                    return;
+                    break;
                 }
             }
             
@@ -426,7 +452,7 @@ gom_js_window_parser_start_element (GMarkupParseContext *context,
                     g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
                                  "Could not compile function at %s:%d", data->filename, lineno);
                 }
-                return;
+                break;
             }
             
             if (!gom_js_object_connect (data->cx, jsobj,
@@ -435,21 +461,22 @@ gom_js_window_parser_start_element (GMarkupParseContext *context,
                 if (!gom_js_exception_get_error (data->cx, error)) {
                     g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
                                  "Could not connect signal '%s' to a %s\n",
-                                 &(*name)[2], g_type_name (G_TYPE_FROM_INSTANCE (elem)));
+                                 &(*name)[2], g_type_name (G_TYPE_FROM_INSTANCE (data->scope->elem)));
                 }
-                return;
+                break;
             }
         } else {
-            gom_element_set_attribute (elem, spec->name, *value, error);
-        }
-        if (*error) {
-            return;
+            gom_element_set_attribute (data->scope->elem, spec->name, *value, error);
         }
     }
-    if (data->elems) {
-        gom_node_append_child (data->elems->data, GOM_NODE (elem), error);
+    if (!*error && data->scope->parent) {
+        gom_node_append_child (GOM_NODE (data->scope->parent->elem),
+                               GOM_NODE (data->scope->elem),
+                               error);
     }
-    data->elems = g_slist_prepend (data->elems, elem);
+    if (*error) {
+        pop_scope (data);
+    }
 }
 
 /* Called for close tags </foo> */
@@ -460,35 +487,92 @@ gom_js_window_parser_end_element (GMarkupParseContext *context,
                                   GError             **error)
 {
     ParserData *data = user_data;
+    char       *local_name = NULL;
+
+    g_object_get (data->scope->elem, "local-name", &local_name, NULL);
+    element_name = local_name;
 
     if (!strcmp (element_name, "script")) {
-        jsval rval; 
-        JSString *str; 
+        char *file = NULL;
+
+        char *script = NULL;
+        gsize script_len;
+
+        GError *err = NULL;
+
+        const char *filename;
         int lineno;
-        /* src tag */
-        if (!data->script) {
-            return;
-        }
-        g_markup_parse_context_get_position (context, &lineno, NULL);
-        if (!JS_EvaluateScript(data->cx, data->window,
-                               data->script->str, data->script->len,
-                               data->filename, lineno, &rval)) {
-            if (!gom_js_exception_get_error (data->cx, error)) {
-                g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
-                             "Unknown error encountered while running script at %s:%d\n",
-                             data->filename, lineno);
+        
+        /* Rhino 4th Ed. p. 189: "Any code that does appear between
+         * these tags is ignored by browsers that support the src
+         * attribute..."
+         */
+        file = gom_element_get_attribute (data->scope->elem, "src");
+        if (file) {
+            if (!g_path_is_absolute (file)) {
+                char *dir = g_path_get_dirname (data->filename);
+                char *f2  = g_build_filename (dir, file, NULL);
+                g_free (file);
+                g_free (dir);
+                file = f2;
             }
-            return;
+            if (!g_file_get_contents (file, &script, &script_len, &err)) {
+                g_printerr (G_STRLOC": could not load %s: %s\n",
+                            file, err->message);
+                g_error_free (err);
+            }
+            filename = file;
+            lineno   = 0;
+        } else {
+            GomNodeList *children;
+            gom_node_normalize (GOM_NODE (data->scope->elem));
+            g_object_get (data->scope->elem, "child-nodes", &children, NULL);
+            if (children) {
+                gulong length, i;
+                GomNode *child;
+                GString *str = g_string_sized_new (1024);
+                g_object_get (children, "length", &length, NULL);
+                for (i = 0; i < length; i++) {
+                    child = gom_node_list_item (children, i);
+                    if (GOM_IS_TEXT (child)) {
+                        script = NULL;
+                        g_object_get (child, "data", &script, NULL);
+                        g_string_append (str, script);
+                        g_free (script);
+                    }
+                }
+                g_object_unref (children);
+                script_len = str->len;
+                script = g_string_free (str, FALSE);
+            }
+            filename = data->filename;
+            lineno   = data->scope->lineno;
         }
-        str = JS_ValueToString(data->cx, rval); 
-        g_print ("%s:%d:%s(): script result: %s\n", 
-                 __FILE__, __LINE__, __FUNCTION__,
-                 JS_GetStringBytes(str));
-        g_string_free (data->script, TRUE);
-        data->script = NULL;
-    } else {
-        data->elems = g_slist_delete_link (data->elems, data->elems);
+        if (script) {
+            jsval rval; 
+            JSString *str; 
+            if (!JS_EvaluateScript(data->cx, data->window,
+                                    script, script_len,
+                                    filename, lineno,&rval)) {
+                if (!gom_js_exception_get_error (data->cx, &err)) {
+                    g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
+                                 "Unknown error encountered while running script at %s:%d\n",
+                                 data->filename, lineno);
+                }
+                g_printerr (G_STRLOC": error running script: %s\n", err->message);
+                g_error_free (err);
+            } else {
+                str = JS_ValueToString(data->cx, rval); 
+                g_print ("%s:%d:%s(): script result: %s\n", 
+                         __FILE__, __LINE__, __FUNCTION__,
+                         JS_GetStringBytes(str));
+            }
+        }
+        g_free (script);
+        g_free (file);
     }
+    g_free (local_name);
+    pop_scope (data);
 }
 
 /* Called for character data */
@@ -501,10 +585,23 @@ gom_js_window_parser_text (GMarkupParseContext *context,
                            GError             **error)
 {
     ParserData *data = user_data;
+    GomText *text_node;
+    char *txt;
 
-    if (data->script) {
-        g_string_append_len (data->script, text, text_len);
+    if (!data->doc || !data->scope) {
+        g_print (G_STRLOC": dropping some text...\n");
+        return;
     }
+
+    /* sigh, c strings... */
+    txt = g_strndup (text, text_len);
+    text_node = gom_document_create_text_node (data->doc, txt);
+    gom_node_append_child (
+        GOM_NODE (data->scope->elem),
+        GOM_NODE (text_node),
+        error);
+    g_object_unref (text_node);
+    g_free (txt);
 }
 
 static GMarkupParser gom_js_window_parser = {
@@ -543,9 +640,8 @@ gom_js_window_parse_file (JSContext  *cx,
     g_free (xml);
 
 out:
-    if (error) {
-        gom_js_exception_set_error (cx, error);
-        g_clear_error (&error);
+    if (error) {        
+        gom_js_exception_set_error (cx, &error);
     }
 
     return data.jsdoc;

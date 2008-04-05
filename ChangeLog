@@ -1,3 +1,70 @@
+2008-04-05  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomdominterfaces.c: node-name, node-type -> read
+	only; tag-name -> writable
+
+	* src/libgom/gomwidget.c (widget_append_child): silently discard
+	Text nodes
+	(widget_append_child): ref our child, as gtk_container_add()
+	doesn't, but this api implies that it does
+	(widget_get_attribute_ns): handle get_attribute returning NULL
+	(update_tag_name): update tagName based on our prefix
+	(gom_widget_set_property): remove nodeName and localName
+	(widget_size_allocate): emit resize event
+	(widget_scroll): emit scroll events
+	(gom_widget_constructed): connect to resize and scroll events
+	(gom_widget_init_once): adjust param specs as above
+
+	* src/libgom/gomdoc.c (gom_doc_get_property)
+	(gom_doc_set_property): handle nodeName and nodeType properties
+	(gom_doc_create_element_ns): better support for namespaces
+	(gom_doc_create_element): don't just call create_element_ns(), as
+	they are a little different
+	(gom_doc_create_text_node): implement
+	(gom_doc_constructor): don't set nodeName and nodeType here
+	(gom_doc_class_init): override node-name and node-type
+
+	* src/libgom/gomjswindow.c (push_scope): keep track of the default
+	namespaces, as well as named namespaces, and the current Element
+	(pop_scope): free a scope
+	(lookup_namespace_prefix): look up a namespace in a given scope by
+	prefix
+	(lookup_namespace_qualified): lookup a namespace in the toplevel
+	scop by qualified name
+	(gom_js_window_parser_start_element): handle namespaces on tags
+	and attributes using scopes; create Elements for scripts
+	(gom_js_window_parser_end_element): evaluate a script based on its
+	src attribute, or its Text children
+	(gom_js_window_parser_text): create a Text node for text
+
+2008-04-04  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomelem.c (gom_elem_get_property)
+	(gom_elem_set_property, gom_elem_finalize, gom_elem_class_init):
+	handle the properties mentioned below
+
+	* src/libgom/gomnoodle.c (gom_noodle_get_property)
+	(gom_noodle_set_property, gom_noodle_finalize)
+	(gom_noodle_constructed): don't hndle namespaceURI, prefix,
+	localName, nodeValue, nodeName, or nodeType in this object;
+	subclasses should do that
+
+	* include/gommacros.h (GOM_NOT_IMPLEMENTED_ERROR): set error for
+	non-implemented functions
+	(GOM_JS_NOT_IMPLEMENTED): use the above macro to make a
+	DOMException object
+
+	* src/libgom/gomtxt.c: 
+	* include/gom/gomtxt.h: implementaton of Text
+
+	* src/libgom/gomchardata.c: 
+	* include/gom/gomchardata.h: implementation of CharacterData
+
+	* include/gom/gomjsexception.h: 
+
+	* include/gom/dom/gomdomexception.h: add an error for
+	unimplemented functions
+
 2008-04-03  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomwidget.c (gom_widget_get_property): add

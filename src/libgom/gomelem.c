@@ -25,14 +25,31 @@ THE SOFTWARE.
 
 #include "gom/gomelem.h"
 
+#include "gom/dom/gomdomexception.h"
 #include "gom/dom/gomelement.h"
 #include "gom/gomobject.h"
 
 #include "gommacros.h"
 
+#include <string.h>
+
 enum {
-    PROP_TAG_NAME = 1
+    PROP_TAG_NAME = 1,
+    PROP_NODE_TYPE,
+    PROP_PREFIX,
+    PROP_NAMESPACE_URI,
+    PROP_LOCAL_NAME
 };
+
+typedef struct {
+    char *tag_name;
+    char *prefix;
+    char *local_name;
+    char *namespace_uri;
+    guint constructed : 1;
+} GomElemPrivate;
+
+#define PRIV(i) G_TYPE_INSTANCE_GET_PRIVATE ((i), GOM_TYPE_ELEM, GomElemPrivate)
 
 static void
 gom_elem_get_property (GObject    *object,
@@ -40,9 +57,82 @@ gom_elem_get_property (GObject    *object,
                        GValue     *value,
                        GParamSpec *pspec)
 {
+    GomElemPrivate *priv = PRIV (object);
     switch (property_id) {
     case PROP_TAG_NAME:
-        g_object_get_property (object, "node-name", value);
+        g_value_set_string (value, priv->tag_name);
+        break;
+    case PROP_NODE_TYPE:
+        g_value_set_enum (value, GOM_ELEMENT_NODE);
+        break;
+    case PROP_PREFIX:
+        g_value_set_string (value, priv->prefix);
+        break;
+    case PROP_NAMESPACE_URI:
+        g_value_set_string (value, priv->namespace_uri);
+        break;
+    case PROP_LOCAL_NAME:
+        g_value_set_string (value, priv->local_name);
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+        break;
+    }
+}
+
+static void
+update_tag_name (GObject *object)
+{
+    GomElemPrivate *priv = PRIV (object);
+    if (priv->namespace_uri) {
+        if (priv->prefix && !strcmp (priv->prefix, "xml") &&
+            strcmp (priv->namespace_uri, "http://www.w3.org/XML/1998/namespace")) {
+            g_warning (G_STRLOC": invalid prefix '%s' for namespace '%s' on %p",
+                       priv->prefix, priv->namespace_uri, object);
+            g_free (priv->prefix);
+            priv->prefix = NULL;
+            return;
+        }
+        if (!priv->local_name) {
+            g_warning (G_STRLOC": no local name set on %p", object);
+            return;
+        }
+    } else if (priv->prefix) {
+        g_warning (G_STRLOC": prefix set without namespace on %p", object);
+        return;
+    } else if (priv->local_name) {
+        g_warning (G_STRLOC": localName set without namespace on %p", object);
+        return;
+    } else {
+        return;
+    }
+    g_free (priv->tag_name);
+    priv->tag_name = priv->prefix ? g_strconcat (priv->prefix, ":", priv->local_name, NULL) : g_strdup (priv->local_name);
+}
+
+static void
+gom_elem_set_property (GObject      *object,
+                       guint         property_id,
+                       const GValue *value,
+                       GParamSpec   *pspec)
+{
+    GomElemPrivate *priv = PRIV (object);
+    switch (property_id) {
+    case PROP_TAG_NAME:
+        priv->tag_name = g_value_dup_string (value);
+        break;
+    case PROP_PREFIX:
+        g_free (priv->prefix);
+        priv->prefix = g_value_dup_string (value);
+        if (priv->constructed) {
+            update_tag_name (object);
+        }
+        break;
+    case PROP_NAMESPACE_URI:
+        priv->namespace_uri = g_value_dup_string (value);
+        break;
+    case PROP_LOCAL_NAME:
+        priv->local_name = g_value_dup_string (value);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -54,12 +144,14 @@ static char *
 gom_elem_get_attribute_ns (GomElement *elem, const char *namespace_uri, const char *name)
 {
     GValue *gvalp;
-    char *ret;
+    char *ret = NULL;
     gvalp = gom_object_get_attribute (G_OBJECT (elem), name);
-    if (gvalp && G_VALUE_HOLDS_STRING (gvalp)) {
-        ret = g_value_dup_string (gvalp);
+    if (gvalp) {
+        if (G_VALUE_HOLDS_STRING (gvalp)) {
+            ret = g_value_dup_string (gvalp);
+        }
+        g_value_unset (gvalp);
     }
-    g_value_unset (gvalp);
     return ret;
 
 }
@@ -96,7 +188,7 @@ gom_elem_remove_attribute_ns (GomElement *elem,
                                 const char *local_name,
                                 GError    **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
 }
 
 static void
@@ -123,7 +215,7 @@ gom_elem_get_attribute_node (GomElement *elem, const char *name)
 static GomAttr *
 gom_elem_set_attribute_node_ns (GomElement *elem, GomAttr *new_atr, GError **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return new_atr;
 }
 
@@ -136,8 +228,8 @@ gom_elem_set_attribute_node (GomElement *elem, GomAttr *new_atr, GError **error)
 static GomAttr *
 gom_elem_remove_attribute_node (GomElement *elem, GomAttr *old_attr, GError **error)
 {
-    GOM_NOT_IMPLEMENTED;
-    return old_attr;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
+    return NULL;
 }
 
 static GomNodeList *
@@ -174,11 +266,53 @@ G_DEFINE_TYPE_WITH_CODE (GomElem, gom_elem, GOM_TYPE_NOODLE,
 static void gom_elem_init (GomElem *elem) { }
 
 static void
+gom_elem_finalize (GObject *object)
+{
+    GomElemPrivate *priv = PRIV (object);
+
+    g_free (priv->namespace_uri);
+    priv->namespace_uri = NULL;
+
+    g_free (priv->prefix);
+    priv->prefix = NULL;
+
+    g_free (priv->local_name);
+    priv->local_name = NULL;
+
+    g_free (priv->tag_name);
+    priv->tag_name = NULL;
+
+    G_OBJECT_CLASS (gom_elem_parent_class)->finalize (object);
+}
+
+static void
+gom_elem_constructed (GObject *object)
+{
+    GomElemPrivate *priv = PRIV (object);
+
+    G_OBJECT_CLASS (gom_elem_parent_class)->constructed (object);
+
+    update_tag_name (object);
+
+    priv->constructed = 1;
+}
+
+static void
 gom_elem_class_init (GomElemClass *klass)
 {
     GObjectClass *oclass = G_OBJECT_CLASS (klass);
 
-    oclass->get_property = gom_elem_get_property;
+    g_type_class_add_private (klass, sizeof (GomElemPrivate));
 
-    g_object_class_override_property (oclass, PROP_TAG_NAME, "tag-name");
+    oclass->get_property = gom_elem_get_property;
+    oclass->set_property = gom_elem_set_property;
+    oclass->constructed  = gom_elem_constructed;
+    oclass->finalize     = gom_elem_finalize;
+
+    g_object_class_override_property (oclass, PROP_TAG_NAME,      "tag-name");
+    g_object_class_override_property (oclass, PROP_TAG_NAME,      "node-name");
+    g_object_class_override_property (oclass, PROP_NODE_TYPE,     "node-type");
+    g_object_class_override_property (oclass, PROP_PREFIX,        "prefix");
+    g_object_class_override_property (oclass, PROP_NAMESPACE_URI, "namespace-u-r-i");
+    g_object_class_override_property (oclass, PROP_LOCAL_NAME,    "local-name");
 }

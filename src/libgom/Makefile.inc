@@ -4,6 +4,7 @@ lib_LTLIBRARIES += libgom.la
 
 libgom_la_SOURCES :=				\
 	include/gommacros.h			\
+	src/libgom/gomchardata.c		\
 	src/libgom/gomdoc.c			\
 	src/libgom/gomdom.c			\
 	src/libgom/gomdombuiltins.c		\
@@ -33,6 +34,7 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomnoodle.c			\
 	src/libgom/gomobject.c			\
 	src/libgom/gomtarget.c			\
+	src/libgom/gomtxt.c			\
 	src/libgom/gomuievt.c			\
 	src/libgom/gomvalue.c			\
 	src/libgom/gomwidget.c

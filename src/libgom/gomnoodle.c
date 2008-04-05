@@ -55,16 +55,11 @@ enum {
 };
 
 typedef struct {
-    char           *namespace_uri;
-    char           *prefix;
-    char           *local_name;
-    char           *node_name;
     GList          *children;
     GomDocument    *owner_document;
     GomNode        *parent_node;
     GomNode        *prev_sibling;
     GomNode        *next_sibling;
-    GomNodeType     node_type;
     guint           constructed    : 1;
     guint           dirty_children : 1;
 } GomNoodlePrivate;
@@ -80,15 +75,6 @@ gom_noodle_get_property (GObject    *object,
     GomNoodlePrivate *priv = PRIV (object);
 
     switch (property_id) {
-    case PROP_NODE_NAME:
-        g_value_set_string (value, priv->node_name);
-        break;
-    case PROP_NODE_VALUE:
-        g_value_set_string (value, NULL);
-        break;
-    case PROP_NODE_TYPE:
-        g_value_set_enum (value, priv->node_type);
-        break;
     case PROP_OWNER_DOCUMENT:
         g_value_set_object (value, priv->owner_document);
         break;
@@ -120,16 +106,13 @@ gom_noodle_get_property (GObject    *object,
         break;
     }
     case PROP_NAMESPACE_URI:
-        g_value_set_string (value, priv->namespace_uri);
-        break;
     case PROP_PREFIX:
-        g_value_set_string (value, priv->prefix);
-        break;
     case PROP_LOCAL_NAME:
-        g_value_set_string (value, priv->local_name);
+    case PROP_NODE_VALUE:
+        g_value_set_string (value, NULL);
         break;
     case PROP_ATTRIBUTES:
-        g_value_set_string (value, NULL);
+        g_value_set_object (value, NULL);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -146,34 +129,15 @@ gom_noodle_set_property (GObject *object,
     GomNoodlePrivate *priv = PRIV (object);
 
     switch (property_id) {
-    case PROP_NODE_NAME:
-        priv->node_name = g_value_dup_string (value);
-        break;
-    case PROP_NODE_TYPE:
-        priv->node_type = g_value_get_enum (value);
-        break;
     case PROP_OWNER_DOCUMENT:
         priv->owner_document = g_value_dup_object (value);
         break;
     case PROP_NAMESPACE_URI:
-        priv->namespace_uri = g_value_dup_string (value);
-        break;
-    case PROP_LOCAL_NAME:
-        priv->local_name = g_value_dup_string (value);
-        break;
     case PROP_PREFIX:
-        g_free (priv->prefix);
-        priv->prefix = g_value_dup_string (value);
-        if (priv->local_name) {
-            g_free (priv->node_name);
-            priv->node_name = priv->prefix 
-                ? g_strconcat (priv->prefix, ":", priv->local_name, NULL)
-                : g_strdup (priv->local_name);
+    case PROP_LOCAL_NAME:
+        if (!g_value_get_string (value)) {
+            break;
         }
-        break;
-    case PROP_NODE_VALUE:
-        GOM_NOT_IMPLEMENTED;
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
         break;
@@ -186,7 +150,7 @@ find_node (GomNode *node, GomNode *child, GError **error)
     GomNoodlePrivate *priv = PRIV (node);
     GomNode *parent;
     GList *li = NULL;
-    char *child_name;
+
     g_object_get (child, "parent-node", &parent, NULL);
     if (parent == node) {
         li = g_list_find (priv->children, child);
@@ -195,14 +159,18 @@ find_node (GomNode *node, GomNode *child, GError **error)
         g_object_unref (parent);
     }
     if (!li) {
+        char *child_name = NULL;
+        char *node_name  = NULL;
         g_object_get (child, "node-name", &child_name, NULL);
+        g_object_get (node,  "node-name", &node_name,  NULL);
         g_set_error (error,
                      GOM_DOM_EXCEPTION_ERROR,
                      GOM_NOT_FOUND_ERR,
                      "child <%s %p> is not a child of <%s %p>",
                      child_name, child,
-                     priv->node_name, node);
+                     node_name, node);
         g_free (child_name);
+        g_free (node_name);
     }
     return li;
 }
@@ -424,22 +392,11 @@ static void
 gom_noodle_finalize (GObject *object)
 {
     GomNoodlePrivate *priv = PRIV (object);
+#if 0
     g_print ("%s:%d:%s (%s %p)\n",
              __FILE__, __LINE__, __FUNCTION__,
              g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
-
-    g_free (priv->namespace_uri);
-    priv->namespace_uri = NULL;
-
-    g_free (priv->prefix);
-    priv->prefix = NULL;
-
-    g_free (priv->local_name);
-    priv->local_name = NULL;
-
-    g_free (priv->node_name);
-    priv->node_name = NULL;
-
+#endif
     g_list_foreach (priv->children, (GFunc)g_object_unref, NULL);
     g_free (priv->children);
     priv->children = NULL;
@@ -461,8 +418,6 @@ gom_noodle_constructed (GObject *object)
         G_OBJECT_CLASS (gom_noodle_parent_class)->constructed (object);
     }
 
-    priv->constructed = 1;
-
     if (!priv->owner_document) {
         g_warning ("%s:%d:%s(%s %p): No document set",
                    __FILE__, __LINE__, __FUNCTION__,
@@ -470,48 +425,8 @@ gom_noodle_constructed (GObject *object)
                    object);
     }
 
-    if (!priv->local_name && !priv->node_name) {
-        g_warning ("%s:%d:%s(%s %p): No localName or nodeName set",
-                   __FILE__, __LINE__, __FUNCTION__,
-                   g_type_name (G_TYPE_FROM_INSTANCE (object)),
-                   object);
-        return;
-    }
+    priv->constructed = 1;
 
-    if (priv->local_name) {
-        if (!priv->node_name) {
-            priv->node_name = priv->prefix 
-                ? g_strconcat (priv->prefix, ":", priv->local_name, NULL)
-                : g_strdup (priv->local_name);
-        }
-    } else {
-        const char *colon = strchr (priv->node_name, ':');
-        priv->local_name = g_strdup (colon ? colon + 1 : priv->node_name);
-        if (colon) {
-            if (priv->prefix) {
-                if (colon - priv->node_name != strlen (priv->prefix) ||
-                    strncmp (priv->prefix, priv->node_name, colon - priv->node_name)) {
-                    g_warning ("%s:%d:%s(%s %p): Prefix %s doesn't agree with nodeName %s",
-                               __FILE__, __LINE__, __FUNCTION__,
-                               g_type_name (G_TYPE_FROM_INSTANCE (object)), object,
-                               priv->prefix, priv->node_name);
-                }
-            } else {
-                priv->prefix = g_strndup (priv->node_name, colon - priv->node_name);
-            }
-        }
-    }
-
-#if 0
-    g_print ("%s:%d:%s(%s %p): namespaceURI: %s prefix: %s localName: %s nodeName: %s\n",
-             __FILE__, __LINE__, __FUNCTION__,
-             g_type_name (G_TYPE_FROM_INSTANCE (object)),
-             object,
-             priv->namespace_uri,
-             priv->prefix,
-             priv->local_name,
-             priv->node_name);
-#endif
 }
 
 static void

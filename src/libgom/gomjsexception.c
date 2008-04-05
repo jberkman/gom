@@ -69,21 +69,28 @@ gom_js_exception_get_error (JSContext *cx, GError **error)
     return TRUE;
 }
 
-void
-gom_js_exception_set_error (JSContext *cx, GError *error)
+JSBool
+gom_js_exception_set_error (JSContext *cx, GError **error)
 {
     JSObject *obj;
     JSClass  *klass;
-    klass = (error->domain == GOM_DOM_EXCEPTION_ERROR)
+    if (!error || !*error) {
+        return JS_TRUE;
+    }
+    klass = ((*error)->domain == GOM_DOM_EXCEPTION_ERROR)
         ? &GomJSDOMExceptionClass
-        : (error->domain == GOM_EVENT_EXCEPTION_ERROR)
+        : ((*error)->domain == GOM_EVENT_EXCEPTION_ERROR)
         ? &GomJSEventExceptionClass
         : &GomJSGErrorExceptionClass;
     obj = klass ? JS_ConstructObject (cx, klass, NULL, NULL) : NULL;
-    if (obj) {
-        JS_SetPrivate (cx, obj, g_error_copy (error));
-    }
     JS_SetPendingException (cx, obj 
                             ? OBJECT_TO_JSVAL (obj)
-                            : STRING_TO_JSVAL (JS_NewStringCopyZ (cx, error->message)));
+                            : STRING_TO_JSVAL (JS_NewStringCopyZ (cx, (*error)->message)));
+    if (obj) {
+        JS_SetPrivate (cx, obj, *error);
+        *error = NULL;
+    } else {
+        g_clear_error (error);
+    }
+    return JS_FALSE;
 }

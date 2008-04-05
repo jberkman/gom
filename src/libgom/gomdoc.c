@@ -35,6 +35,7 @@ THE SOFTWARE.
 #include "gom/gomkeyboardevt.h"
 #include "gom/gommouseevt.h"
 #include "gom/gomobject.h"
+#include "gom/gomtxt.h"
 
 #include "gommacros.h"
 
@@ -45,7 +46,9 @@ THE SOFTWARE.
 enum {
     PROP_DOCTYPE = 1,
     PROP_IMPLEMENTATION,
-    PROP_DOCUMENT_ELEMENT
+    PROP_DOCUMENT_ELEMENT,
+    PROP_NODE_NAME,
+    PROP_NODE_TYPE
 };
 
 typedef struct {
@@ -76,6 +79,12 @@ gom_doc_get_property (GObject    *object,
         if (GOM_IS_ELEMENT (elem)) {
             g_value_set_object (value, elem);
         }
+        break;
+    case PROP_NODE_NAME:
+        g_value_set_static_string (value, "#document");
+        break;
+    case PROP_NODE_TYPE:
+        g_value_set_enum (value, GOM_DOCUMENT_NODE);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -111,29 +120,53 @@ gom_doc_create_element_ns (GomDocument *doc,
 {
     GType type;
     GObject *obj = NULL;
+    char *prefix = NULL;
+    const char *local_name;
+    char *colon;
 
-    type = g_type_from_name (qualified_name);
-    if (!type || !g_type_is_a (type, GOM_TYPE_ELEMENT)) {
-        if (!strcmp (qualified_name, "gom") ||
-            !strcmp (qualified_name, "config") ||
-            !strcmp (qualified_name, "module") ||
-            !strcmp (qualified_name, "app")) {
-            type = GOM_TYPE_ELEM;
-        } else {
-            type = 0;
+    colon = strchr (qualified_name, ':');
+    if (colon) {
+        prefix = g_strdup (qualified_name);
+        colon = strchr (prefix, ':');
+        *colon = '\0';
+        if (!namespace_uri) {
+            g_free (prefix);
+            g_set_error (error,
+                         GOM_DOM_EXCEPTION_ERROR,
+                         GOM_NAMESPACE_ERR,
+                         "%s has a prefix, but no namespace is set",
+                         qualified_name);
+            return NULL;
+        } else if (!strcmp (prefix, "xml") &&
+                   strcmp (namespace_uri, "http://www.w3.org/XML/1998/namespace")) {
+            g_free (prefix);
+            g_set_error (error,
+                         GOM_DOM_EXCEPTION_ERROR,
+                         GOM_NAMESPACE_ERR,
+                         "%s has a prefix of xml, but the namespace is not \"http://www.w3.org/XML/1998/namespace\"",
+                         qualified_name);
+            return NULL;
         }
+        local_name = colon + 1;
+    } else {
+        local_name = qualified_name;
     }
-    if (type) {
-        obj = g_object_new (type, 
-                            "owner-document",  doc,
-                            "namespace-u-r-i", namespace_uri,
-                            "node-name",       qualified_name,
-                            NULL);
+
+    type = g_type_from_name (local_name);
+    if (!type || !g_type_is_a (type, GOM_TYPE_ELEMENT)) {
+        type = GOM_TYPE_ELEM;
     }
+    obj = g_object_new (type, 
+                        "owner-document",  doc,
+                        "namespace-u-r-i", namespace_uri,
+                        "prefix",          prefix,
+                        "local-name",      local_name,
+                        NULL);
+    g_free (prefix);
     if (!obj) {
         g_set_error (error,
                      GOM_DOM_EXCEPTION_ERROR,
-                     GOM_UNKNOWN_TAG_NAME,
+                     GOM_UNKNOWN_TAG_NAME_ERR,
                      "%s is not a valid tag or registered GType",
                      qualified_name);
         return NULL;
@@ -146,12 +179,38 @@ gom_doc_create_element_ns (GomDocument *doc,
     return GOM_ELEMENT (obj);
 }
 
+/* it would be great if we could just call the above with a namespace
+ * of NULL but the semantics are just a bit different */
 static GomElement *
 gom_doc_create_element (GomDocument *doc,
                         const char  *tag_name,
                         GError     **error)
 {
-    return gom_doc_create_element_ns (doc, NULL, tag_name, error);
+    GType type;
+    GObject *obj = NULL;
+
+    type = g_type_from_name (tag_name);
+    if (!type || !g_type_is_a (type, GOM_TYPE_ELEMENT)) {
+        type = GOM_TYPE_ELEM;
+    }
+    obj = g_object_new (type, 
+                        "owner-document",  doc,
+                        "tag-name",        tag_name,
+                        NULL);
+    if (!obj) {
+        g_set_error (error,
+                     GOM_DOM_EXCEPTION_ERROR,
+                     GOM_UNKNOWN_TAG_NAME_ERR,
+                     "%s is not a valid tag or registered GType",
+                     tag_name);
+        return NULL;
+    }
+
+    if (GTK_IS_WIDGET (obj)) {
+        gtk_widget_show (GTK_WIDGET (obj));
+    }
+
+    return GOM_ELEMENT (obj);
 }
 
 static GomDocumentFragment *
@@ -165,8 +224,10 @@ static GomText *
 gom_doc_create_text_node (GomDocument *doc,
                           const char  *data)
 {
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
+    return g_object_new (GOM_TYPE_TXT, 
+                         "owner-document", doc,
+                         "data",           data,
+                         NULL);
 }
 
 static GomComment *
@@ -182,7 +243,7 @@ gom_doc_create_cdata_section (GomDocument *doc,
                               const char  *data,
                               GError     **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return NULL;
 }
 
@@ -192,7 +253,7 @@ gom_doc_create_processing_instruction (GomDocument *doc,
                                        const char  *data,
                                        GError     **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return NULL;
 }
 
@@ -202,7 +263,7 @@ gom_doc_create_attribute_ns (GomDocument *doc,
                              const char  *qualified_name,
                              GError     **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return NULL;
 }
 
@@ -219,7 +280,7 @@ gom_doc_create_entity_reference (GomDocument *doc,
                                  const char  *name,
                                  GError     **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return NULL;
 }
 
@@ -245,7 +306,7 @@ gom_doc_import_node (GomDocument *doc,
                      gboolean     deep,
                      GError     **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return NULL;
 }
 
@@ -381,11 +442,7 @@ gom_doc_constructor (GType                  type,
     object = G_OBJECT_CLASS (gom_doc_parent_class)->constructor (
         type, n_construct_properties, construct_properties);
 
-    g_object_set (object,
-                  "owner-document",  object,
-                  "node-name",       "document",
-                  "node-type",       GOM_DOCUMENT_NODE,
-                  NULL);
+    g_object_set (object, "owner-document", object, NULL);
 
     return object;
 }
@@ -435,4 +492,6 @@ gom_doc_class_init (GomDocClass *klass)
     g_object_class_override_property (oclass, PROP_DOCTYPE,          "doctype");
     g_object_class_override_property (oclass, PROP_IMPLEMENTATION,   "implementation");
     g_object_class_override_property (oclass, PROP_DOCUMENT_ELEMENT, "document-element");
+    g_object_class_override_property (oclass, PROP_NODE_NAME,        "node-name");
+    g_object_class_override_property (oclass, PROP_NODE_TYPE,        "node-type");
 }

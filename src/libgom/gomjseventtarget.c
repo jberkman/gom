@@ -25,11 +25,13 @@ THE SOFTWARE.
 
 #include "gom/gomjseventtarget.h"
 
-#include "gommacros.h"
-
-#include "gom/gomjsobject.h"
-#include "gom/gomjseventlistener.h"
+#include "gom/dom/gomdomexception.h"
 #include "gom/dom/gomeventtarget.h"
+#include "gom/gomjseventlistener.h"
+#include "gom/gomjsexception.h"
+#include "gom/gomjsobject.h"
+
+#include "gommacros.h"
 
 #include <glib.h>
 

@@ -23,13 +23,13 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomkeyboardevt.h>
+#include "gom/gomkeyboardevt.h"
+
+#include "gom/dom/gomkeyboardevent.h"
+#include "gom/dom/gomuievent.h"
+#include "gom/gomkeyidentifiers.h"
 
 #include "gommacros.h"
-
-#include <gom/dom/gomkeyboardevent.h>
-#include <gom/dom/gomuievent.h>
-#include <gom/gomkeyidentifiers.h>
 
 #include <gdk/gdktypes.h>
 #include <gdk/gdkkeysyms.h>

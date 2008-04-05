@@ -2,22 +2,23 @@
 
 gomincludedir := $(includedir)/gom-0/gom
 gominclude_HEADERS :=				\
+	include/gom/gomchardata.h		\
 	include/gom/gomchild.h			\
 	include/gom/gomdoc.h			\
 	include/gom/gomdom.h			\
-	include/gom/gomevt.h			\
 	include/gom/gomelem.h			\
+	include/gom/gomevt.h			\
 	include/gom/gomglist.h			\
 	include/gom/gomjscontext.h		\
 	include/gom/gomjsdocument.h		\
 	include/gom/gomjsdomexception.h		\
 	include/gom/gomjselement.h		\
-	include/gom/gomjsgerrorexception.h	\
 	include/gom/gomjsevent.h		\
 	include/gom/gomjseventexception.h	\
 	include/gom/gomjseventlistener.h	\
 	include/gom/gomjseventtarget.h		\
 	include/gom/gomjsexception.h		\
+	include/gom/gomjsgerrorexception.h	\
 	include/gom/gomjskeyboardevent.h	\
 	include/gom/gomjsmouseevent.h		\
 	include/gom/gomjsnavigator.h		\
@@ -32,6 +33,7 @@ gominclude_HEADERS :=				\
 	include/gom/gomobject.h			\
 	include/gom/gomparent.h			\
 	include/gom/gomtarget.h			\
+	include/gom/gomtxt.h			\
 	include/gom/gomuievt.h			\
 	include/gom/gomvalue.h			\
 	include/gom/gomwidget.h

@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "gommacros.h"
 
 #include "gom/dom/gomdocument.h"
+#include "gom/dom/gomdomexception.h"
 #include "gom/gomdoc.h"
 #include "gom/gomjsexception.h"
 #include "gom/gomjsnode.h"
@@ -77,9 +78,7 @@ gom_js_document_create_element(JSContext *cx, JSObject *obj, uintN argc, jsval *
 
     elem = gom_document_create_element (doc, tag_name, &error);
     if (!elem) {
-        gom_js_exception_set_error (cx, error);
-        g_error_free (error);
-        return JS_FALSE;
+        return gom_js_exception_set_error (cx, &error);
     }
     *rval = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, elem));
 

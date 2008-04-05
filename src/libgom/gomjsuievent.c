@@ -25,8 +25,10 @@ THE SOFTWARE.
 
 #include "gom/gomjsuievent.h"
 
+#include "gom/dom/gomdomexception.h"
 #include "gom/dom/gomuievent.h"
 #include "gom/gomjsevent.h"
+#include "gom/gomjsexception.h"
 #include "gom/gomjsobject.h"
 
 #include "gommacros.h"

@@ -41,10 +41,10 @@
 	  $('#win').bind ("mousemove", function (evt) {
               $('#x').get (0).label = evt.clientX;
               $('#y').get (0).label = evt.clientY;
-          /*
-          }).bind ("DOMFocusIn DOMFocusOut", function (evt) {
+/*
+          }).bind ("resize", function (evt) {
               append (evt.type + ': ' + evt.target.tagName);
-          */
+*/
 	  });
       })();
     ]]></script>

@@ -51,7 +51,7 @@ THE SOFTWARE.
 #include <limits.h>
 
 enum {
-    PROP_NODE_NAME = 1078,
+    PROP_TAG_NAME = 1078,
     PROP_NODE_VALUE,
     PROP_NODE_TYPE,
     PROP_PARENT_NODE,
@@ -65,8 +65,6 @@ enum {
     PROP_NAMESPACE_URI,
     PROP_PREFIX,
     PROP_LOCAL_NAME,
-
-    PROP_TAG_NAME
 };
 
 static void (*_gtk_widget_set_property) (GObject        *object,
@@ -87,13 +85,12 @@ typedef struct {
     GomEventTarget *delegate;
     char           *namespace_uri;
     char           *prefix;
-    char           *local_name;
-    char           *node_name;
+    char           *tag_name;
     GomDocument    *owner_document;
     GomNode        *parent_node;
     GomNode        *next_sibling;
     GomNode        *prev_sibling;
-    GomNodeType     node_type;
+    GdkRectangle    allocation;
     guint           click_state;
     guint           constructed    : 1;
     guint           dirty_children : 1;
@@ -106,8 +103,7 @@ free_priv (gpointer data)
     g_object_unref (priv->delegate);
     g_free (priv->namespace_uri);
     g_free (priv->prefix);
-    g_free (priv->local_name);
-    g_free (priv->node_name);
+    g_free (priv->tag_name);
     g_free (priv);
 }
 
@@ -135,7 +131,7 @@ widget_insert_before (GomNode *node,
                       GomNode *ref_child,
                       GError  **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return NULL;
 }
 
@@ -145,7 +141,7 @@ widget_replace_child (GomNode *node,
                       GomNode *ref_child,
                       GError  **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return NULL;
 }
 
@@ -154,7 +150,7 @@ widget_remove_child (GomNode *node,
                      GomNode *old_child,
                      GError  **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return NULL;
 }
 
@@ -214,12 +210,13 @@ widget_append_child (GomNode *node,
                      "Cannot append to a parent that is not a GtkContainer");
         return new_child;
     }
-
     if (!GTK_IS_WIDGET (new_child)) {
-        g_set_error (error,
-                     GOM_DOM_EXCEPTION_ERROR,
-                     GOM_HIERCHY_REQUEST_ERR,
-                     "Cannot append a child that is not a GtkWidget");
+        if (!GOM_IS_TEXT (new_child)) {
+            g_set_error (error,
+                         GOM_DOM_EXCEPTION_ERROR,
+                         GOM_HIERCHY_REQUEST_ERR,
+                         "Cannot append a child that is not a GtkWidget");
+        }
         return new_child;
     }
 
@@ -235,7 +232,9 @@ widget_append_child (GomNode *node,
         gom_child_set_parent (GOM_CHILD (new_child), node);
     }
 
-    return new_child;
+    /* gtk_container_add() doesn't ref, but append_child() should, so
+     * ref our child */
+    return g_object_ref (new_child);
 }
 
 static gboolean
@@ -297,10 +296,12 @@ widget_get_attribute_ns (GomElement *elem, const char *namespace_uri, const char
         g_value_unset (&gval);
     } else {
         gvalp = gom_object_get_attribute (G_OBJECT (elem), name);
-        if (gvalp && G_VALUE_HOLDS_STRING (gvalp)) {
-            ret = g_value_dup_string (gvalp);
+        if (gvalp) {
+            if (G_VALUE_HOLDS_STRING (gvalp)) {
+                ret = g_value_dup_string (gvalp);
+            }
+            g_value_unset (gvalp);
         }
-        g_value_unset (gvalp);
     }
 
     return ret;
@@ -326,7 +327,7 @@ widget_set_attribute_ns (GomElement *elem,
     if (spec) {
         if (G_TYPE_FUNDAMENTAL (G_PARAM_SPEC_VALUE_TYPE (spec)) == G_TYPE_OBJECT) {
             g_set_error (error, GOM_DOM_EXCEPTION_ERROR,
-                         GOM_INVALID_ATTRIBUTE_TYPE,
+                         GOM_INVALID_ATTRIBUTE_TYPE_ERR,
                          "Attribute %s.%s is a %s, which a string cannot be converted to",
                          g_type_name (spec->owner_type), qualified_name,
                          g_type_name (G_PARAM_SPEC_VALUE_TYPE (spec)));
@@ -353,7 +354,7 @@ widget_remove_attribute_ns (GomElement *elem,
                                 const char *local_name,
                                 GError    **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
 }
 
 static void
@@ -380,7 +381,7 @@ widget_get_attribute_node (GomElement *elem, const char *name)
 static GomAttr *
 widget_set_attribute_node_ns (GomElement *elem, GomAttr *new_atr, GError **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return new_atr;
 }
 
@@ -393,7 +394,7 @@ widget_set_attribute_node (GomElement *elem, GomAttr *new_atr, GError **error)
 static GomAttr *
 widget_remove_attribute_node (GomElement *elem, GomAttr *old_attr, GError **error)
 {
-    GOM_NOT_IMPLEMENTED;
+    GOM_NOT_IMPLEMENTED_ERROR (error);
     return old_attr;
 }
 
@@ -434,9 +435,8 @@ gom_widget_get_property (GObject    *object,
     GList *li = NULL;
 
     switch (property_id) {
-    case PROP_NODE_NAME:
     case PROP_TAG_NAME:
-        g_value_set_string (value, priv->node_name);
+        g_value_set_string (value, priv->tag_name);
         break;
     case PROP_NODE_VALUE:
         g_value_set_string (value, NULL);
@@ -454,7 +454,7 @@ gom_widget_get_property (GObject    *object,
         g_value_set_string (value, priv->prefix);
         break;
     case PROP_LOCAL_NAME:
-        g_value_set_string (value, priv->local_name);
+        g_value_set_static_string (value, g_type_name (G_TYPE_FROM_INSTANCE (object)));
         break;
     case PROP_PARENT_NODE:
         g_value_set_object (value, priv->parent_node);
@@ -504,6 +504,31 @@ gom_widget_get_property (GObject    *object,
 }
 
 static void
+update_tag_name (GObject *object)
+{
+    GomWidgetPrivate *priv = PRIV (object);
+    if (priv->namespace_uri) {
+        if (priv->prefix && !strcmp (priv->prefix, "xml") &&
+            strcmp (priv->namespace_uri, "http://www.w3.org/XML/1998/namespace")) {
+            g_warning (G_STRLOC": invalid prefix '%s' for namespace '%s' on %p",
+                       priv->prefix, priv->namespace_uri, object);
+            g_free (priv->prefix);
+            priv->prefix = NULL;
+            return;
+        }
+    } else if (priv->prefix) {
+        g_warning (G_STRLOC": prefix set without namespace on %p", object);
+        return;
+    } else {
+        return;
+    }
+    g_free (priv->tag_name);
+    priv->tag_name = priv->prefix 
+        ? g_strconcat (priv->prefix, ":", g_type_name (G_TYPE_FROM_INSTANCE (object)), NULL)
+        : g_strdup (g_type_name (G_TYPE_FROM_INSTANCE (object)));
+}
+
+static void
 gom_widget_set_property (GObject      *object,
                          guint         property_id,
                          const GValue *value,
@@ -512,31 +537,18 @@ gom_widget_set_property (GObject      *object,
     GomWidgetPrivate *priv = PRIV (object);
 
     switch (property_id) {
-    case PROP_NODE_NAME:
-        priv->node_name = g_value_dup_string (value);
-        break;
     case PROP_OWNER_DOCUMENT:
         priv->owner_document = g_value_dup_object (value);
         break;
     case PROP_NAMESPACE_URI:
         priv->namespace_uri = g_value_dup_string (value);
         break;
-    case PROP_LOCAL_NAME:
-        priv->local_name = g_value_dup_string (value);
-        break;
     case PROP_PREFIX:
         g_free (priv->prefix);
         priv->prefix = g_value_dup_string (value);
-        if (priv->local_name) {
-            g_free (priv->node_name);
-            priv->node_name = priv->prefix 
-                ? g_strconcat (priv->prefix, ":", priv->local_name, NULL)
-                : g_strdup (priv->local_name);
+        if (priv->constructed) {
+            update_tag_name (object);
         }
-        break;
-    case PROP_NODE_VALUE:
-        GOM_NOT_IMPLEMENTED;
-        break;
     default:
         if (_gtk_widget_set_property) {
             _gtk_widget_set_property (object, property_id, value, pspec);
@@ -725,8 +737,10 @@ gom_widget_event_after (GtkWidget *widget, GdkEvent *event)
     switch (event->type) {
     case GDK_FOCUS_CHANGE:
         priv = PRIV (widget);
-        evt = gom_document_event_create_event (GOM_DOCUMENT_EVENT (priv->owner_document),
-                                               "UIEvent", &error);
+        if (GOM_IS_DOCUMENT_EVENT (priv->owner_document)) {
+            evt = gom_document_event_create_event (GOM_DOCUMENT_EVENT (priv->owner_document),
+                                                   "UIEvent", &error);
+        }
         if (GOM_IS_UI_EVENT (evt)) {
             gom_ui_event_init_ui_event_ns (GOM_UI_EVENT (evt),
                                            GOM_EVENTS_NAMESPACE_URI,
@@ -951,6 +965,110 @@ widget_activate (GtkWidget *w, gpointer data)
     }
 }
 
+static void
+widget_size_allocate (GtkWidget *widget, GdkRectangle *rect, gpointer data)
+{
+    GomWidgetPrivate *priv = PRIV (widget);
+    GomEvent *event;
+    GError *error = NULL;
+
+    if (rect->width  == priv->allocation.width &&
+        rect->height == priv->allocation.height) {
+        return;
+    }
+    if (!GOM_IS_DOCUMENT_EVENT (priv->owner_document)) {
+        return;
+    }
+    priv->allocation = *rect;
+    event = gom_document_event_create_event (GOM_DOCUMENT_EVENT (priv->owner_document),
+                                             "UIEvent", &error);
+    if (!event) {
+        g_printerr ("%s:%d:%s(): could not create activate events: %s\n",
+                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_clear_error (&error);
+        return;
+    }
+    if (!GOM_IS_UI_EVENT (event)) {
+        g_printerr ("%s:%d:%s(): event is a %s, but not a UIEvent\n",
+                    __FILE__, __LINE__, __FUNCTION__,
+                    g_type_name (G_TYPE_FROM_INSTANCE (event)));
+        g_object_unref (event);
+        return;
+    }
+    gom_ui_event_init_ui_event_ns (GOM_UI_EVENT (event),
+                                   GOM_EVENTS_NAMESPACE_URI,
+                                   GOM_RESIZE,
+                                   TRUE, FALSE, NULL, 0);
+    gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), event, &error);
+    g_object_unref (event);
+    if (error) {
+        g_printerr ("%s:%d:%s(): Error dispatching event: %s\n",
+                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_clear_error (&error);
+    }
+}
+
+static void
+widget_scroll (GtkWidget *widget, GtkAdjustment *adjust)
+{
+    GomWidgetPrivate *priv;
+    GomEvent *event;
+    GError *error = NULL;
+    GtkWidget *child;
+
+    if (GTK_IS_BIN (widget)) {
+        child = gtk_bin_get_child (GTK_BIN (widget));
+    } else {
+        child = widget;
+    }
+    if (!child) {
+        g_print (G_STRLOC" returning\n");
+        return;
+    }
+
+    priv = PRIV (child);
+    if (!GOM_IS_DOCUMENT_EVENT (priv->owner_document)) {
+        g_print (G_STRLOC" returning\n");
+        return;
+    }
+    event = gom_document_event_create_event (GOM_DOCUMENT_EVENT (priv->owner_document),
+                                             "UIEvent", &error);
+    if (!event) {
+        g_printerr ("%s:%d:%s(): could not create activate events: %s\n",
+                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_clear_error (&error);
+        return;
+    }
+    if (!GOM_IS_UI_EVENT (event)) {
+        g_printerr ("%s:%d:%s(): event is a %s, but not a UIEvent\n",
+                    __FILE__, __LINE__, __FUNCTION__,
+                    g_type_name (G_TYPE_FROM_INSTANCE (event)));
+        g_object_unref (event);
+        return;
+    }
+    gom_ui_event_init_ui_event_ns (GOM_UI_EVENT (event),
+                                   GOM_EVENTS_NAMESPACE_URI,
+                                   GOM_SCROLL,
+                                   TRUE, FALSE, NULL, 0);
+    gom_event_target_dispatch_event (GOM_EVENT_TARGET (child), event, &error);
+    g_object_unref (event);
+    if (error) {
+        g_printerr ("%s:%d:%s(): Error dispatching event: %s\n",
+                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_clear_error (&error);
+    }
+}
+
+static void
+widget_scroll_adjustment_notify (GObject *obj, GParamSpec *arg1, gpointer data)
+{
+    GtkAdjustment *adjust = NULL;
+    g_object_get (obj, arg1->name, &adjust, NULL);
+    if (adjust) {
+        g_signal_connect_swapped (adjust, "value-changed", G_CALLBACK (widget_scroll), obj);
+    }
+}
+
 GOM_IMPLEMENT (NODE,         node,         widget);
 GOM_IMPLEMENT (ELEMENT,      element,      widget);
 GOM_IMPLEMENT (EVENT_TARGET, event_target, widget);
@@ -967,64 +1085,22 @@ gom_widget_constructed (GObject *object)
         _gtk_widget_constructed (object);
     }
 
-    priv->constructed = TRUE;
-    
+#if 0
     if (!priv->owner_document) {
         g_warning ("%s:%d:%s(%s %p): No document set",
                    __FILE__, __LINE__, __FUNCTION__,
                    g_type_name (G_TYPE_FROM_INSTANCE (object)),
                    object);
     }
-
-    if (!priv->local_name && !priv->node_name) {
-        g_warning ("%s:%d:%s(%s %p): No localName or nodeName set",
-                   __FILE__, __LINE__, __FUNCTION__,
-                   g_type_name (G_TYPE_FROM_INSTANCE (object)),
-                   object);
-        return;
-    }
-
-    if (priv->local_name) {
-        if (!priv->node_name) {
-            priv->node_name = priv->prefix 
-                ? g_strconcat (priv->prefix, ":", priv->local_name, NULL)
-                : g_strdup (priv->local_name);
-        }
-    } else {
-        const char *colon = strchr (priv->node_name, ':');
-        priv->local_name = g_strdup (colon ? colon + 1 : priv->node_name);
-        if (colon) {
-            if (priv->prefix) {
-                if (colon - priv->node_name != strlen (priv->prefix) ||
-                    strncmp (priv->prefix, priv->node_name, colon - priv->node_name)) {
-                    g_warning ("%s:%d:%s(%s %p): Prefix %s doesn't agree with nodeName %s",
-                               __FILE__, __LINE__, __FUNCTION__,
-                               g_type_name (G_TYPE_FROM_INSTANCE (object)), object,
-                               priv->prefix, priv->node_name);
-                }
-            } else {
-                priv->prefix = g_strndup (priv->node_name, colon - priv->node_name);
-            }
-        }
-    }
-
-#if 0
-    g_print ("%s:%d:%s(%s %p): namespaceURI: %s prefix: %s localName: %s nodeName: %s\n",
-             __FILE__, __LINE__, __FUNCTION__,
-             g_type_name (G_TYPE_FROM_INSTANCE (object)),
-             object,
-             priv->namespace_uri,
-             priv->prefix,
-             priv->local_name,
-             priv->node_name);
 #endif
+
+    update_tag_name (object);
 
     gtk_widget_add_events (GTK_WIDGET (object), 
                            GDK_BUTTON_PRESS_MASK  | GDK_BUTTON_RELEASE_MASK |
                            GDK_ENTER_NOTIFY_MASK  | GDK_LEAVE_NOTIFY_MASK   |
                            GDK_KEY_PRESS_MASK     | GDK_KEY_RELEASE_MASK    |
-                           GDK_FOCUS_CHANGE_MASK  | GDK_SCROLL_MASK         |
-                           GDK_POINTER_MOTION_HINT_MASK);
+                           GDK_FOCUS_CHANGE_MASK  | GDK_POINTER_MOTION_HINT_MASK);
 
     if (GTK_IS_CONTAINER (object)) {
         g_signal_connect (object, "add",    G_CALLBACK (widget_dirty_children), NULL);
@@ -1036,8 +1112,18 @@ gom_widget_constructed (GObject *object)
     if (GTK_IS_ENTRY (object)) {
         g_signal_connect (object, "activate", G_CALLBACK (widget_activate), NULL);
     }
+    if (GTK_IS_WINDOW (object)) {
+        g_signal_connect (object, "size-allocate", G_CALLBACK (widget_size_allocate), NULL);
+    }
+    if (g_object_class_find_property (G_OBJECT_GET_CLASS (object), "hadjustment") &&
+        g_object_class_find_property (G_OBJECT_GET_CLASS (object), "vadjustment")) {
+        g_signal_connect (object, "notify::hadjustment", G_CALLBACK (widget_scroll_adjustment_notify), NULL);
+        g_signal_connect (object, "notify::vadjustment", G_CALLBACK (widget_scroll_adjustment_notify), NULL);
+    }
     g_signal_connect (object, "event",       G_CALLBACK (gom_widget_event),       NULL);
     g_signal_connect (object, "event-after", G_CALLBACK (gom_widget_event_after), NULL);
+
+    priv->constructed = 1;
 }
 
 static gpointer
@@ -1089,11 +1175,11 @@ gom_widget_init_once (gpointer data)
     oclass->constructed = gom_widget_constructed;
 
     g_object_class_install_property (
-        oclass, PROP_NODE_NAME,
+        oclass, PROP_TAG_NAME,
         g_param_spec_string ("node-name", NULL,
                              "The name of this node, depending on its type",
                              NULL,
-                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_class_install_property (
         oclass, PROP_NODE_VALUE,
@@ -1107,7 +1193,7 @@ gom_widget_init_once (gpointer data)
         g_param_spec_enum ("node-type", NULL,
                            "A code representing the type of the underlying object",
                            GOM_TYPE_NODE_TYPE, GOM_ELEMENT_NODE,
-                           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_class_install_property (
         oclass, PROP_PARENT_NODE,
@@ -1191,7 +1277,7 @@ gom_widget_init_once (gpointer data)
         g_param_spec_string ("tag-name", NULL,
                              "The name of the element.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE,         &node_info);
     g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT,      &element_info);

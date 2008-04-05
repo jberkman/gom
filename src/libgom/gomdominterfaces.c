@@ -332,7 +332,7 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomElement, gom_element,
         g_param_spec_string ("tag-name", NULL,
                              "The name of the element.",
                              NULL,
-                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }, GOM_TYPE_NODE);
 
 GOM_STUB_FUNC (GOM_ELEMENT, gom_element, get_attribute,
@@ -915,7 +915,7 @@ GOM_DEFINE_INTERFACE (GomNode, gom_node,
         g_param_spec_string ("node-name", NULL,
                              "The name of this node, depending on its type",
                              NULL,
-                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,
@@ -929,7 +929,7 @@ GOM_DEFINE_INTERFACE (GomNode, gom_node,
         g_param_spec_enum ("node-type", NULL,
                            "A code representing the type of the underlying object",
                            GOM_TYPE_NODE_TYPE, GOM_ELEMENT_NODE,
-                           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_interface_install_property (
         g_iface,

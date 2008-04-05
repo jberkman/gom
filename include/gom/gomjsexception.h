@@ -37,7 +37,7 @@ typedef enum {
 } GomJSExceptionError;
 
 gboolean gom_js_exception_get_error (JSContext *cx, GError **error);
-void     gom_js_exception_set_error (JSContext *cx, GError  *error);
+JSBool   gom_js_exception_set_error (JSContext *cx, GError **error);
 
 G_END_DECLS
 

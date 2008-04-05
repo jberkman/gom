@@ -25,9 +25,11 @@ THE SOFTWARE.
 
 #include "gom/gomjskeyboardevent.h"
 
+#include "gom/dom/gomdomexception.h"
 #include "gom/dom/gomkeyboardevent.h"
-#include "gom/gomjsuievent.h"
+#include "gom/gomjsexception.h"
 #include "gom/gomjsobject.h"
+#include "gom/gomjsuievent.h"
 
 #include "gommacros.h"
 

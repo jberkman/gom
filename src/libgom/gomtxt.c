@@ -21,40 +21,30 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef GOM_DOM_EXCEPTION_H
-#define GOM_DOM_EXCEPTION_H
+#include "config.h"
 
-#include <glib/gquark.h>
+#include "gom/gomtxt.h"
 
-G_BEGIN_DECLS
+#include "gom/dom/gomtext.h"
+#include "gom/dom/gomdomexception.h"
 
-#define GOM_DOM_EXCEPTION_ERROR (gom_dom_exception_error_quark ())
+#include "gommacros.h"
 
-typedef enum {
-    GOM_INDEX_SIZE_ERR = 1,
-    GOM_DOMSTRING_SIZE_ERR,
-    GOM_HIERCHY_REQUEST_ERR,
-    GOM_WRONG_DOCUMENT_ERR,
-    GOM_INVALID_CHARACTER_ERR,
-    GOM_NO_DATA_ALLOWED_ERR,
-    GOM_NO_MODIFICATION_ALLOWED_ERR,
-    GOM_NOT_FOUND_ERR,
-    GOM_NOT_SUPPORTED_ERR,
-    GOM_INUSE_ATTRIBUTE_ERR,
-    GOM_INVALID_STATE_ERR,
-    GOM_SYNTAX_ERR,
-    GOM_INVALID_MODIFICATION_ERR,
-    GOM_NAMESPACE_ERR,
-    GOM_INVALID_ACCESS_ERR,
+#include <string.h>
 
-    /* Gom-specific exceptions */
-    GOM_UNKNOWN_TAG_NAME_ERR = 101,
-    GOM_INVALID_ATTRIBUTE_TYPE_ERR,
-    GOM_NOT_IMPLEMENTED_ERR
-} GomExceptionCode;
+static GomText *
+gom_txt_split_text (GomText *text,
+                    gulong   offset,
+                    GError **error)
+{
+    GOM_NOT_IMPLEMENTED_ERROR (error);
+    return NULL;
+}
 
-GQuark gom_dom_exception_error_quark (void);
+GOM_IMPLEMENT (TEXT, text, gom_txt);
 
-G_END_DECLS
+G_DEFINE_TYPE_WITH_CODE (GomTxt, gom_txt, GOM_TYPE_CHAR_DATA,
+                         GOM_IMPLEMENT_INTERFACE (TEXT, text, gom_txt));
 
-#endif /* GOM_DOM_EXCEPTION_H */
+static void gom_txt_init       (GomTxt      *txt)   { }
+static void gom_txt_class_init (GomTxtClass *klass) { }

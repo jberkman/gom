@@ -21,40 +21,39 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef GOM_DOM_EXCEPTION_H
-#define GOM_DOM_EXCEPTION_H
+#ifndef GOM_CHAR_DATA_H
+#define GOM_CHAR_DATA_H
 
-#include <glib/gquark.h>
+#include <glib/gmacros.h>
 
 G_BEGIN_DECLS
 
-#define GOM_DOM_EXCEPTION_ERROR (gom_dom_exception_error_quark ())
-
-typedef enum {
-    GOM_INDEX_SIZE_ERR = 1,
-    GOM_DOMSTRING_SIZE_ERR,
-    GOM_HIERCHY_REQUEST_ERR,
-    GOM_WRONG_DOCUMENT_ERR,
-    GOM_INVALID_CHARACTER_ERR,
-    GOM_NO_DATA_ALLOWED_ERR,
-    GOM_NO_MODIFICATION_ALLOWED_ERR,
-    GOM_NOT_FOUND_ERR,
-    GOM_NOT_SUPPORTED_ERR,
-    GOM_INUSE_ATTRIBUTE_ERR,
-    GOM_INVALID_STATE_ERR,
-    GOM_SYNTAX_ERR,
-    GOM_INVALID_MODIFICATION_ERR,
-    GOM_NAMESPACE_ERR,
-    GOM_INVALID_ACCESS_ERR,
-
-    /* Gom-specific exceptions */
-    GOM_UNKNOWN_TAG_NAME_ERR = 101,
-    GOM_INVALID_ATTRIBUTE_TYPE_ERR,
-    GOM_NOT_IMPLEMENTED_ERR
-} GomExceptionCode;
-
-GQuark gom_dom_exception_error_quark (void);
+typedef struct _GomCharData      GomCharData;
+typedef struct _GomCharDataClass GomCharDataClass;
 
 G_END_DECLS
 
-#endif /* GOM_DOM_EXCEPTION_H */
+#include <gom/gomnoodle.h>
+
+G_BEGIN_DECLS
+
+#define GOM_TYPE_CHAR_DATA         (gom_char_data_get_type ())
+#define GOM_CHAR_DATA(i)           (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_CHAR_DATA, GomCharData))
+#define GOM_CHAR_DATA_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST    ((k), GOM_TYPE_CHAR_DATA, GomCharDataClass))
+#define GOM_IS_CHAR_DATA(i)        (G_TYPE_CHECK_INSTANCE_TYPE ((i), GOM_TYPE_CHAR_DATA))
+#define GOM_IS_CHAR_DATA_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_CHAR_DATA))
+#define GOM_CHAR_DATA_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_CHAR_DATA, GomCharDataClass))
+
+struct _GomCharData {
+    GomNoodle parent;
+};
+
+struct _GomCharDataClass {
+    GomNoodleClass parent_class;
+};
+
+GType gom_char_data_get_type (void);
+
+G_END_DECLS
+
+#endif /* GOM_CHAR_DATA_H */
