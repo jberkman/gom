@@ -644,6 +644,9 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
     static GdkEvent     *last_event = NULL;
 
     if (event == last_event && event->type == last_type) {
+        if (last_type == GDK_KEY_PRESS) {
+            g_print (G_STRLOC": %s\n", g_type_name (G_TYPE_FROM_INSTANCE (widget)));
+        }
         return FALSE;
     }
 
@@ -671,10 +674,16 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         INIT_MOUSE_EVENT (GOM_MOUSEOUT, crossing);
         break;
     case GDK_KEY_PRESS:
+        if (GTK_IS_WINDOW (widget) && GTK_WINDOW (widget)->focus_widget) {
+            return FALSE;
+        }
         priv = PRIV (widget);
         INIT_KEY_EVENT (GOM_KEYDOWN);
         break;
     case GDK_KEY_RELEASE:
+        if (GTK_IS_WINDOW (widget) && GTK_WINDOW (widget)->focus_widget) {
+            return FALSE;
+        }
         priv = PRIV (widget);
         INIT_KEY_EVENT (GOM_KEYUP);
         break;
