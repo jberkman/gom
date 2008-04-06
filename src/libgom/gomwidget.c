@@ -33,14 +33,13 @@ THE SOFTWARE.
 #include "gom/dom/gomkeyboardevent.h"
 #include "gom/dom/gommouseevent.h"
 #include "gom/dom/gomuievent.h"
-#include "gom/gomchild.h"
 #include "gom/gomglist.h"
 #include "gom/gomjselement.h"
 #include "gom/gomjsobject.h"
 #include "gom/gomkeyboardevt.h"
+#include "gom/gomlistenerlist.h"
+#include "gom/gomnodeinternal.h"
 #include "gom/gomobject.h"
-#include "gom/gomparent.h"
-#include "gom/gomtarget.h"
 
 #include "gommacros.h"
 
@@ -82,25 +81,25 @@ GQuark gom_widget_private_quark (void);
 GOM_DEFINE_QUARK (widget_private);
 
 typedef struct {
-    GomEventTarget *delegate;
-    char           *namespace_uri;
-    char           *prefix;
-    char           *tag_name;
-    GomDocument    *owner_document;
-    GomNode        *parent_node;
-    GomNode        *next_sibling;
-    GomNode        *prev_sibling;
-    GdkRectangle    allocation;
-    guint           click_state;
-    guint           constructed    : 1;
-    guint           dirty_children : 1;
+    GomDocument     *owner_document;
+    GomListenerList *listeners;
+    GomNode         *next_sibling;
+    GomNode         *parent_node;
+    GomNode         *prev_sibling;
+    char            *namespace_uri;
+    char            *prefix;
+    char            *tag_name;
+    GdkRectangle     allocation;
+    guint            click_state;
+    guint            constructed    : 1;
+    guint            dirty_children : 1;
 } GomWidgetPrivate;
 
 static void
 free_priv (gpointer data)
 {
     GomWidgetPrivate *priv = data;
-    g_object_unref (priv->delegate);
+    gom_listener_list_free (priv->listeners);
     g_free (priv->namespace_uri);
     g_free (priv->prefix);
     g_free (priv->tag_name);
@@ -114,11 +113,7 @@ get_priv (gpointer obj)
     priv = g_object_get_qdata (obj, gom_widget_private_quark ());
     if (!priv) {
         priv = g_new0 (GomWidgetPrivate, 1);
-
-        priv->delegate = g_object_new (GOM_TYPE_TARGET,
-                                       "target", obj,
-                                       NULL);
-
+        priv->listeners = gom_listener_list_new ();
         g_object_set_qdata_full (obj, gom_widget_private_quark (), priv, free_priv);
     }
     return priv;
@@ -228,8 +223,8 @@ widget_append_child (GomNode *node,
 
     gom_object_attributes_foreach (G_OBJECT (new_child), append_child_attrs_foreach, &data);
 
-    if (GOM_IS_CHILD (new_child)) {
-        gom_child_set_parent (GOM_CHILD (new_child), node);
+    if (GOM_IS_NODE_INTERNAL (new_child)) {
+        gom_node_internal_set_parent (GOM_NODE_INTERNAL (new_child), node);
     }
 
     /* gtk_container_add() doesn't ref, but append_child() should, so
@@ -481,14 +476,14 @@ gom_widget_get_property (GObject    *object,
         g_list_free (children);
         break;
     case PROP_PREVIOUS_SIBLING:
-        if (GOM_IS_PARENT (priv->parent_node)) {
-            gom_parent_sibling_requested (GOM_PARENT (priv->parent_node), GOM_NODE (object));
+        if (GOM_IS_NODE_INTERNAL (priv->parent_node)) {
+            gom_node_internal_sibling_requested (GOM_NODE_INTERNAL (priv->parent_node), GOM_NODE (object));
         }
         g_value_set_object (value, priv->prev_sibling);
         break;
     case PROP_NEXT_SIBLING:
-        if (GOM_IS_PARENT (priv->parent_node)) {
-            gom_parent_sibling_requested (GOM_PARENT (priv->parent_node), GOM_NODE (object));
+        if (GOM_IS_NODE_INTERNAL (priv->parent_node)) {
+            gom_node_internal_sibling_requested (GOM_NODE_INTERNAL (priv->parent_node), GOM_NODE (object));
         }
         g_value_set_object (value, priv->next_sibling);
         break;
@@ -786,40 +781,27 @@ gom_widget_event_after (GtkWidget *widget, GdkEvent *event)
 }
 
 static void
+widget_add_event_listener_ns (GomEventTarget   *event_target,
+                              const char       *namespace_uri,
+                              const char       *type,
+                              GomEventListener *listener,
+                              gboolean          use_capture,
+                              GObject          *evt_group)
+{
+    gom_listener_list_add_event_listener (
+        PRIV (event_target)->listeners, namespace_uri,
+        type, listener, use_capture, evt_group);
+}
+
+static void
 widget_add_event_listener (GomEventTarget   *target,
                            const char       *type,
                            GomEventListener *listener,
                            gboolean          use_capture)
 {
-    gom_event_target_add_event_listener (PRIV (target)->delegate, type, listener, use_capture);
-}
-
-static void
-widget_remove_event_listener (GomEventTarget   *target,
-                              const char       *type,
-                              GomEventListener *listener,
-                              gboolean          use_capture)
-{
-    gom_event_target_remove_event_listener (PRIV (target)->delegate, type, listener, use_capture);
-}
-
-static gboolean
-widget_dispatch_event (GomEventTarget   *target,
-                       GomEvent         *evt,
-                       GError          **error)
-{
-    return gom_event_target_dispatch_event (PRIV (target)->delegate, evt, error);
-}
-
-static void
-widget_add_event_listener_ns (GomEventTarget   *target,
-                              const char       *namespace_uri,
-                              const char       *type,
-                              GomEventListener *listener,
-                              gboolean          use_capture,
-                              GObject          *group)
-{
-    gom_event_target_add_event_listener_ns (PRIV (target)->delegate, namespace_uri, type, listener, use_capture, group);
+    gom_listener_list_add_event_listener (
+        PRIV (target)->listeners, NULL,
+        type, listener, use_capture, NULL);
 }
 
 static void
@@ -829,33 +811,42 @@ widget_remove_event_listener_ns (GomEventTarget   *target,
                                  GomEventListener *listener,
                                  gboolean          use_capture)
 {
-    gom_event_target_remove_event_listener_ns (PRIV (target)->delegate, namespace_uri, type, listener, use_capture);
-}
-
-static gboolean
-widget_will_trigger_ns (GomEventTarget *target,
-                        const char     *namespace_uri,
-                        const char     *type)
-{
-    return gom_event_target_will_trigger_ns (PRIV (target)->delegate, namespace_uri, type);
-}
-
-static gboolean
-widget_has_event_listener_ns (GomEventTarget *target,
-                              const char     *namespace_uri,
-                              const char     *type)
-{
-    return gom_event_target_has_event_listener_ns (PRIV (target)->delegate, namespace_uri, type);
-}
-
-static GomTarget *
-widget_get_target (GomTargetProxy *proxy)
-{
-    return GOM_TARGET (PRIV (proxy)->delegate);
+    gom_listener_list_remove_event_listener (
+        PRIV (target)->listeners, namespace_uri,
+        type, listener, use_capture);
 }
 
 static void
-widget_set_parent (GomChild *child, GomNode *parent)
+widget_remove_event_listener (GomEventTarget   *target,
+                              const char       *type,
+                              GomEventListener *listener,
+                              gboolean          use_capture)
+{
+    gom_listener_list_remove_event_listener (
+        PRIV (target)->listeners, NULL,
+        type, listener, use_capture);
+}
+
+static gboolean
+widget_has_event_listener_ns (GomEventTarget   *target,
+                              const char       *namespace_uri,
+                              const char       *type)
+{
+    return gom_listener_list_has_event_listener (PRIV (target)->listeners, namespace_uri, type);
+}
+
+static gboolean
+widget_will_trigger_ns (GomEventTarget   *target,
+                        const char       *namespace_uri,
+                        const char       *type)
+{
+    return gom_listener_list_will_trigger (PRIV (target)->listeners, target, namespace_uri, type);
+}
+
+#define widget_dispatch_event gom_listener_list_dispatch_event
+
+static void
+widget_set_parent (GomNodeInternal *child, GomNode *parent)
 {
     GomWidgetPrivate *priv = PRIV (child);
 #if 0
@@ -877,7 +868,7 @@ widget_set_parent (GomChild *child, GomNode *parent)
 }
 
 static void
-widget_set_next_sibling (GomChild *child, GomNode *sibling)
+widget_set_next_sibling (GomNodeInternal *child, GomNode *sibling)
 {
 #if 0
     char *child_name, *sibling_name = NULL;
@@ -896,7 +887,7 @@ widget_set_next_sibling (GomChild *child, GomNode *sibling)
 }
 
 static void
-widget_set_prev_sibling (GomChild *child, GomNode *sibling)
+widget_set_prev_sibling (GomNodeInternal *child, GomNode *sibling)
 {
 #if 0
     char *child_name, *sibling_name = NULL;
@@ -915,7 +906,7 @@ widget_set_prev_sibling (GomChild *child, GomNode *sibling)
 }
 
 static void
-widget_sibling_requested (GomParent *node, GomNode *child)
+widget_sibling_requested (GomNodeInternal *node, GomNode *child)
 {
     GomWidgetPrivate *priv = PRIV (node);
     GList *children;
@@ -926,13 +917,26 @@ widget_sibling_requested (GomParent *node, GomNode *child)
     }
     children = gtk_container_get_children (GTK_CONTAINER (node));
     for (li = children; li; li = li->next) {
-        if (GOM_IS_CHILD (li->data)) {
-            gom_child_set_prev_sibling (li->data, li->prev ? li->prev->data : NULL);
-            gom_child_set_next_sibling (li->data, li->next ? li->next->data : NULL);
+        if (GOM_IS_NODE_INTERNAL (li->data)) {
+            gom_node_internal_set_prev_sibling (li->data, li->prev ? li->prev->data : NULL);
+            gom_node_internal_set_next_sibling (li->data, li->next ? li->next->data : NULL);
         }
     }
     g_list_free (children);
     priv->dirty_children = 0;
+}
+
+static void
+widget_dispatch_listeners (GomNodeInternal *current_target,
+                           GomEvent        *evt,
+                           const char      *namespace_uri,
+                           const char      *type_name,
+                           GomPhaseType     phase)
+{
+    gom_listener_list_dispatch_listeners (
+        PRIV (current_target)->listeners,
+        GOM_EVENT_TARGET (current_target),
+        evt, namespace_uri, type_name, phase);
 }
 
 static void
@@ -1083,12 +1087,10 @@ widget_scroll_adjustment_notify (GObject *obj, GParamSpec *arg1, gpointer data)
     }
 }
 
-GOM_IMPLEMENT (NODE,         node,         widget);
-GOM_IMPLEMENT (ELEMENT,      element,      widget);
-GOM_IMPLEMENT (EVENT_TARGET, event_target, widget);
-GOM_IMPLEMENT (TARGET_PROXY, target_proxy, widget);
-GOM_IMPLEMENT (CHILD,        child,        widget);
-GOM_IMPLEMENT (PARENT,       parent,       widget);
+GOM_IMPLEMENT (NODE,          node,          widget);
+GOM_IMPLEMENT (ELEMENT,       element,       widget);
+GOM_IMPLEMENT (EVENT_TARGET,  event_target,  widget);
+GOM_IMPLEMENT (NODE_INTERNAL, node_internal, widget);
 
 static void
 gom_widget_constructed (GObject *object)
@@ -1161,18 +1163,8 @@ gom_widget_init_once (gpointer data)
         NULL,
         NULL,
     };
-    static const GInterfaceInfo proxy_info = {
-        widget_implement_target_proxy,
-        NULL,
-        NULL
-    };
-    static const GInterfaceInfo child_info = {
-        widget_implement_child,
-        NULL,
-        NULL
-    };
-    static const GInterfaceInfo parent_info = {
-        widget_implement_parent,
+    static const GInterfaceInfo node_internal_info = {
+        widget_implement_node_internal,
         NULL,
         NULL
     };
@@ -1293,12 +1285,10 @@ gom_widget_init_once (gpointer data)
                              NULL,
                              G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE,         &node_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT,      &element_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET, &target_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_TARGET_PROXY, &proxy_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_CHILD,        &child_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_PARENT,       &parent_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET,  &target_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE,          &node_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT,       &element_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE_INTERNAL, &node_internal_info);
 
 #define WIDGET(w) type ^= w;
 #include "gomwidgets.c"

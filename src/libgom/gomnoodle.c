@@ -25,13 +25,13 @@ THE SOFTWARE.
 
 #include "gom/gomnoodle.h"
 
-#include "gom/dom/gomdombuiltins.h"
 #include "gom/dom/gomdocumenttype.h"
+#include "gom/dom/gomdombuiltins.h"
 #include "gom/dom/gomeventtarget.h"
 #include "gom/dom/gomnode.h"
-#include "gom/gomchild.h"
 #include "gom/gomglist.h"
-#include "gom/gomparent.h"
+#include "gom/gomlistenerlist.h"
+#include "gom/gomnodeinternal.h"
 
 #include "gommacros.h"
 
@@ -55,13 +55,14 @@ enum {
 };
 
 typedef struct {
-    GList          *children;
-    GomDocument    *owner_document;
-    GomNode        *parent_node;
-    GomNode        *prev_sibling;
-    GomNode        *next_sibling;
-    guint           constructed    : 1;
-    guint           dirty_children : 1;
+    GList           *children;
+    GomDocument     *owner_document;
+    GomNode         *parent_node;
+    GomNode         *prev_sibling;
+    GomNode         *next_sibling;
+    GomListenerList *listeners;
+    guint            constructed    : 1;
+    guint            dirty_children : 1;
 } GomNoodlePrivate;
 
 #define PRIV(i) G_TYPE_INSTANCE_GET_PRIVATE ((i), GOM_TYPE_NOODLE, GomNoodlePrivate)
@@ -79,14 +80,14 @@ gom_noodle_get_property (GObject    *object,
         g_value_set_object (value, priv->owner_document);
         break;
     case PROP_PREVIOUS_SIBLING:
-        if (GOM_IS_PARENT (priv->parent_node)) {
-            gom_parent_sibling_requested (GOM_PARENT (priv->parent_node), GOM_NODE (object));
+        if (GOM_IS_NODE_INTERNAL (priv->parent_node)) {
+            gom_node_internal_sibling_requested (GOM_NODE_INTERNAL (priv->parent_node), GOM_NODE (object));
         }
         g_value_set_object (value, priv->prev_sibling);
         break;
     case PROP_NEXT_SIBLING:
-        if (GOM_IS_PARENT (priv->parent_node)) {
-            gom_parent_sibling_requested (GOM_PARENT (priv->parent_node), GOM_NODE (object));
+        if (GOM_IS_NODE_INTERNAL (priv->parent_node)) {
+            gom_node_internal_sibling_requested (GOM_NODE_INTERNAL (priv->parent_node), GOM_NODE (object));
         }
         g_value_set_object (value, priv->next_sibling);
         break;
@@ -187,8 +188,8 @@ gom_noodle_insert_before (GomNode *node,
     if (li) {
         priv->children = g_list_insert_before (priv->children, li, g_object_ref (new_child));
         priv->dirty_children = 1;
-        if (GOM_IS_CHILD (new_child)) {
-            gom_child_set_parent (GOM_CHILD (new_child), node);
+        if (GOM_IS_NODE_INTERNAL (new_child)) {
+            gom_node_internal_set_parent (GOM_NODE_INTERNAL (new_child), node);
         }
     }
     return ref_child;
@@ -206,12 +207,12 @@ gom_noodle_replace_child (GomNode *node,
     if (li) {
         li->data = g_object_ref (new_child);
         priv->dirty_children = 1;
-        if (GOM_IS_CHILD (ref_child)) {
-            gom_child_set_parent (GOM_CHILD (ref_child), NULL);
+        if (GOM_IS_NODE_INTERNAL (ref_child)) {
+            gom_node_internal_set_parent (GOM_NODE_INTERNAL (ref_child), NULL);
         }
         g_object_unref (ref_child);
-        if (GOM_IS_CHILD (new_child)) {
-            gom_child_set_parent (GOM_CHILD (new_child), node);
+        if (GOM_IS_NODE_INTERNAL (new_child)) {
+            gom_node_internal_set_parent (GOM_NODE_INTERNAL (new_child), node);
         }
     }
     return ref_child;
@@ -226,8 +227,8 @@ gom_noodle_remove_child (GomNode *node,
     GList *li;
     li = find_node (node, old_child, error);
     if (li) {
-        if (GOM_IS_CHILD (old_child)) {
-            gom_child_set_parent (GOM_CHILD (old_child), NULL);
+        if (GOM_IS_NODE_INTERNAL (old_child)) {
+            gom_node_internal_set_parent (GOM_NODE_INTERNAL (old_child), NULL);
         }
         g_object_unref (old_child);
         priv->children = g_list_delete_link (priv->children, li);
@@ -255,8 +256,8 @@ gom_noodle_append_child (GomNode *node,
     }
     priv->children = g_list_append (priv->children, g_object_ref (new_child));
     priv->dirty_children = 1;
-    if (GOM_IS_CHILD (new_child)) {
-        gom_child_set_parent (GOM_CHILD (new_child), node);
+    if (GOM_IS_NODE_INTERNAL (new_child)) {
+        gom_node_internal_set_parent (GOM_NODE_INTERNAL (new_child), node);
     }
     return new_child;
 }
@@ -287,8 +288,11 @@ gom_noodle_is_supported (GomNode    *node,
                          const char *version)
 {
     GomDOMImplementation *dom;
+    gboolean ret;
     g_object_get (PRIV (node)->owner_document, "implementation", &dom, NULL);
-    return gom_dom_implementation_has_feature (dom, feature, version);
+    ret = gom_dom_implementation_has_feature (dom, feature, version);
+    g_object_unref (dom);
+    return ret;
 }
 
 static gboolean
@@ -299,7 +303,72 @@ gom_noodle_has_attributes (GomNode *node)
 }                         
 
 static void
-gom_noodle_set_parent (GomChild *child, GomNode *parent)
+gom_noodle_add_event_listener_ns (GomEventTarget   *event_target,
+                                  const char       *namespace_uri,
+                                  const char       *type,
+                                  GomEventListener *listener,
+                                  gboolean          use_capture,
+                                  GObject          *evt_group)
+{
+    gom_listener_list_add_event_listener (
+        PRIV (event_target)->listeners, namespace_uri,
+        type, listener, use_capture, evt_group);
+}
+
+static void
+gom_noodle_add_event_listener (GomEventTarget   *event_target,
+                               const char       *type,
+                               GomEventListener *listener,
+                               gboolean          use_capture)
+{
+    gom_listener_list_add_event_listener (
+        PRIV (event_target)->listeners, NULL,
+        type, listener, use_capture, NULL);
+}
+
+static void
+gom_noodle_remove_event_listener_ns (GomEventTarget   *target,
+                                     const char       *namespace_uri,
+                                     const char       *type,
+                                     GomEventListener *listener,
+                                     gboolean          use_capture)
+{
+    gom_listener_list_remove_event_listener (
+        PRIV (target)->listeners, namespace_uri,
+        type, listener, use_capture);
+}
+
+static void
+gom_noodle_remove_event_listener (GomEventTarget   *target,
+                                  const char       *type,
+                                  GomEventListener *listener,
+                                  gboolean          use_capture)
+{
+    gom_listener_list_remove_event_listener (
+        PRIV (target)->listeners, NULL,
+        type, listener, use_capture);
+}
+
+static gboolean
+gom_noodle_has_event_listener_ns (GomEventTarget   *target,
+                                  const char       *namespace_uri,
+                                  const char       *type)
+{
+    return gom_listener_list_has_event_listener (PRIV (target)->listeners, namespace_uri, type);
+}
+
+static gboolean
+gom_noodle_will_trigger_ns (GomEventTarget   *target,
+                            const char       *namespace_uri,
+                            const char       *type)
+{
+    return gom_listener_list_will_trigger (PRIV (target)->listeners, target, namespace_uri, type);
+}
+
+#define gom_noodle_dispatch_event gom_listener_list_dispatch_event
+
+static void
+gom_noodle_set_parent (GomNodeInternal *child, GomNode *parent)
 {
     GomNoodlePrivate *priv = PRIV (child);
 #if 0
@@ -321,7 +390,7 @@ gom_noodle_set_parent (GomChild *child, GomNode *parent)
 }
 
 static void
-gom_noodle_set_prev_sibling (GomChild *child, GomNode *sibling)
+gom_noodle_set_prev_sibling (GomNodeInternal *child, GomNode *sibling)
 {
 #if 0
     char *child_name, *sibling_name = NULL;
@@ -340,7 +409,7 @@ gom_noodle_set_prev_sibling (GomChild *child, GomNode *sibling)
 }
 
 static void
-gom_noodle_set_next_sibling (GomChild *child, GomNode *sibling)
+gom_noodle_set_next_sibling (GomNodeInternal *child, GomNode *sibling)
 {
 #if 0
     char *child_name, *sibling_name = NULL;
@@ -359,7 +428,7 @@ gom_noodle_set_next_sibling (GomChild *child, GomNode *sibling)
 }
 
 static void
-gom_noodle_sibling_requested (GomParent *node, GomNode *child)
+gom_noodle_sibling_requested (GomNodeInternal *node, GomNode *child)
 {
     GomNoodlePrivate *priv = PRIV (node);
     GList *li;
@@ -367,23 +436,36 @@ gom_noodle_sibling_requested (GomParent *node, GomNode *child)
         return;
     }
     for (li = priv->children; li; li = li->next) {
-        if (GOM_IS_CHILD (li->data)) {
-            gom_child_set_prev_sibling (li->data, li->prev ? li->prev->data : NULL);
-            gom_child_set_next_sibling (li->data, li->next ? li->next->data : NULL);
+        if (GOM_IS_NODE_INTERNAL (li->data)) {
+            gom_node_internal_set_prev_sibling (li->data, li->prev ? li->prev->data : NULL);
+            gom_node_internal_set_next_sibling (li->data, li->next ? li->next->data : NULL);
         }
     }
     priv->dirty_children = 0;
 }
 
-GOM_IMPLEMENT (NODE,   node,   gom_noodle);
-GOM_IMPLEMENT (CHILD,  child,  gom_noodle);
-GOM_IMPLEMENT (PARENT, parent, gom_noodle);
+static void
+gom_noodle_dispatch_listeners (GomNodeInternal *current_target,
+                               GomEvent        *evt,
+                               const char      *namespace_uri,
+                               const char      *type_name,
+                               GomPhaseType     phase)
+{
+    gom_listener_list_dispatch_listeners (
+        PRIV (current_target)->listeners,
+        GOM_EVENT_TARGET (current_target),
+        evt, namespace_uri, type_name, phase);
+}
 
-G_DEFINE_TYPE_WITH_CODE (GomNoodle, gom_noodle, GOM_TYPE_TARGET,
+GOM_IMPLEMENT (EVENT_TARGET,  event_target,  gom_noodle);
+GOM_IMPLEMENT (NODE,          node,          gom_noodle);
+GOM_IMPLEMENT (NODE_INTERNAL, node_internal, gom_noodle);
+
+G_DEFINE_TYPE_WITH_CODE (GomNoodle, gom_noodle, G_TYPE_OBJECT,
                          {
-                             GOM_IMPLEMENT_INTERFACE (NODE,   node,   gom_noodle);
-                             GOM_IMPLEMENT_INTERFACE (CHILD,  child,  gom_noodle);
-                             GOM_IMPLEMENT_INTERFACE (PARENT, parent, gom_noodle);
+                             GOM_IMPLEMENT_INTERFACE (EVENT_TARGET,  event_target,  gom_noodle);
+                             GOM_IMPLEMENT_INTERFACE (NODE,          node,          gom_noodle);
+                             GOM_IMPLEMENT_INTERFACE (NODE_INTERNAL, node_internal, gom_noodle);
                          });
 
 static void gom_noodle_init (GomNoodle *noodle) { }
@@ -406,6 +488,9 @@ gom_noodle_finalize (GObject *object)
         priv->owner_document = NULL;
     }
 
+    gom_listener_list_free (priv->listeners);
+    priv->listeners = NULL;
+
     G_OBJECT_CLASS (gom_noodle_parent_class)->finalize (object);
 }
 
@@ -424,6 +509,8 @@ gom_noodle_constructed (GObject *object)
                    g_type_name (G_TYPE_FROM_INSTANCE (object)),
                    object);
     }
+
+    priv->listeners = gom_listener_list_new ();
 
     priv->constructed = 1;
 
@@ -457,18 +544,24 @@ gom_noodle_class_init (GomNoodleClass *klass)
     g_object_class_override_property (oclass, PROP_LOCAL_NAME,       "local-name");
 }
 
-GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomChild, gom_child, {}, GOM_TYPE_NODE);
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomNodeInternal, gom_node_internal, {}, GOM_TYPE_NODE);
 
-GOM_STUB_VOID (GOM_CHILD, gom_child, set_parent,
-               (GomChild *gom_child, GomNode *parent), (gom_child, parent));
+GOM_STUB_VOID (GOM_NODE_INTERNAL, gom_node_internal, set_parent,
+               (GomNodeInternal *gom_node_internal, GomNode *parent), (gom_node_internal, parent));
 
-GOM_STUB_VOID (GOM_CHILD, gom_child, set_next_sibling,
-               (GomChild *gom_child, GomNode *sibling), (gom_child, sibling));
+GOM_STUB_VOID (GOM_NODE_INTERNAL, gom_node_internal, set_next_sibling,
+               (GomNodeInternal *gom_node_internal, GomNode *sibling), (gom_node_internal, sibling));
 
-GOM_STUB_VOID (GOM_CHILD, gom_child, set_prev_sibling,
-               (GomChild *gom_child, GomNode *sibling), (gom_child, sibling));
+GOM_STUB_VOID (GOM_NODE_INTERNAL, gom_node_internal, set_prev_sibling,
+               (GomNodeInternal *gom_node_internal, GomNode *sibling), (gom_node_internal, sibling));
 
-GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomParent, gom_parent, {}, GOM_TYPE_NODE);
+GOM_STUB_VOID (GOM_NODE_INTERNAL, gom_node_internal, sibling_requested,
+               (GomNodeInternal *gom_node_internal, GomNode *child), (gom_node_internal, child));
 
-GOM_STUB_VOID (GOM_PARENT, gom_parent, sibling_requested,
-               (GomParent *gom_parent, GomNode *child), (gom_parent, child));
+GOM_STUB_VOID (GOM_NODE_INTERNAL, gom_node_internal, dispatch_listeners,
+               (GomNodeInternal *gom_node_internal,
+                GomEvent        *evt,
+                const char      *namespace_uri,
+                const char      *type_name,
+                GomPhaseType     phase),
+               (gom_node_internal, evt, namespace_uri, type_name, phase));

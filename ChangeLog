@@ -1,5 +1,21 @@
 2008-04-06  jacob berkman  <jacob@ilovegom.org>
 
+	* include/gom/gomnodeinternal.h: combine all the extra, internal
+	functions a Node implementation must support into one extra
+	interface
+
+	* include/gom/gomchild.h:
+	* include/gom/gomparent.h: remove in favor of the GomNodeInternal
+	interface
+
+	* include/gom/gomtarget.h:
+	* src/libgom/gomtarget.c: remove in favor of the simpler
+	GomListenerList
+
+	* src/libgom/gomnoodle.c:
+	* src/libgom/gomwidget.c: implement GomNodeInternal, and use
+	GomListenerList
+
 	* src/libgom/gomwidget.c (gom_widget_event): if we are a window,
 	and have a focus widget, emit the event on that widget instead
 

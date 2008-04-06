@@ -31,10 +31,10 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomjsuievent.c		\
 	src/libgom/gomjswindow.c		\
 	src/libgom/gomkeyboardevt.c		\
+	src/libgom/gomlistenerlist.c		\
 	src/libgom/gommouseevt.c		\
 	src/libgom/gomnoodle.c			\
 	src/libgom/gomobject.c			\
-	src/libgom/gomtarget.c			\
 	src/libgom/gomtxt.c			\
 	src/libgom/gomuievt.c			\
 	src/libgom/gomvalue.c			\

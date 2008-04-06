@@ -4,7 +4,6 @@ gomincludedir := $(includedir)/gom-0/gom
 gominclude_HEADERS :=				\
 	include/gom/gomcamel.h			\
 	include/gom/gomchardata.h		\
-	include/gom/gomchild.h			\
 	include/gom/gomdoc.h			\
 	include/gom/gomdom.h			\
 	include/gom/gomelem.h			\
@@ -29,11 +28,11 @@ gominclude_HEADERS :=				\
 	include/gom/gomjswindow.h		\
 	include/gom/gomkeyboardevt.h		\
 	include/gom/gomkeyidentifiers.h		\
+	include/gom/gomlistenerlist.h		\
 	include/gom/gommouseevt.h		\
+	include/gom/gomnodeinternal.h		\
 	include/gom/gomnoodle.h			\
 	include/gom/gomobject.h			\
-	include/gom/gomparent.h			\
-	include/gom/gomtarget.h			\
 	include/gom/gomtxt.h			\
 	include/gom/gomuievt.h			\
 	include/gom/gomvalue.h			\
