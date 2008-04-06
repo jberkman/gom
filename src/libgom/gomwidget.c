@@ -644,9 +644,6 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
     static GdkEvent     *last_event = NULL;
 
     if (event == last_event && event->type == last_type) {
-        if (last_type == GDK_KEY_PRESS) {
-            g_print (G_STRLOC": %s\n", g_type_name (G_TYPE_FROM_INSTANCE (widget)));
-        }
         return FALSE;
     }
 
@@ -675,14 +672,14 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         break;
     case GDK_KEY_PRESS:
         if (GTK_IS_WINDOW (widget) && GTK_WINDOW (widget)->focus_widget) {
-            return FALSE;
+            widget = GTK_WINDOW (widget)->focus_widget;
         }
         priv = PRIV (widget);
         INIT_KEY_EVENT (GOM_KEYDOWN);
         break;
     case GDK_KEY_RELEASE:
         if (GTK_IS_WINDOW (widget) && GTK_WINDOW (widget)->focus_widget) {
-            return FALSE;
+            widget = GTK_WINDOW (widget)->focus_widget;
         }
         priv = PRIV (widget);
         INIT_KEY_EVENT (GOM_KEYUP);
@@ -700,6 +697,7 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
     last_type  = event->type;
     last_event = event;
 
+    g_object_ref (widget);
     gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
     if (error) {
         g_print ("%s:%d:%s(): Error dispatching event: %s\n",
@@ -707,12 +705,18 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         g_clear_error (&error);
     }
     if (gom_event_is_default_prevented (evt)) {
+        g_object_unref (widget);
         g_object_unref (evt);
         return TRUE;
     }
     g_object_unref (evt);
     if (event->type == GDK_BUTTON_RELEASE && priv->click_state) {
+        evt = NULL;
         INIT_MOUSE_EVENT (GOM_CLICK, button);
+        if (!evt) {
+            g_object_unref (widget);
+            return FALSE;
+        }
         gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
         if (error) {
             g_print ("%s:%d:%s(): Error dispatching event: %s\n",
@@ -720,12 +724,13 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
             g_clear_error (&error);
         }
         if (gom_event_is_default_prevented (evt)) {
+            g_object_unref (widget);
             g_object_unref (evt);
             return TRUE;
         }
         g_object_unref (evt);
     }
-
+    g_object_unref (widget);
     return FALSE;
 }
 

@@ -1,8 +1,7 @@
 2008-04-06  jacob berkman  <jacob@ilovegom.org>
 
-	* src/libgom/gomwidget.c (gom_widget_event): skip the initial
-	signal for windows with a focus widget, so that the event starts
-	from that widget
+	* src/libgom/gomwidget.c (gom_widget_event): if we are a window,
+	and have a focus widget, emit the event on that widget instead
 
 2008-04-05  jacob berkman  <jacob@ilovegom.org>
 
