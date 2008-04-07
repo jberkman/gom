@@ -266,7 +266,7 @@ gom_js_object_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     }
 
 #if 0
-    g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+    g_print (G_STRLOC": ");
 #endif
     name = JSVAL_CHARS (id);
     if (!gom_js_object_resolve (cx, obj, name, &gobj, &spec, &signal_id)) {
@@ -312,7 +312,7 @@ gom_js_object_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     }
 
 #if 0
-    g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+    g_print (G_STRLOC": ");
 #endif
     name = JSVAL_CHARS (id);
     if (!gom_js_object_resolve (cx, obj, name, &gobj, &spec, &signal_id)) {
@@ -372,7 +372,7 @@ gom_js_object_resolve_priv (JSContext *cx, JSObject *obj, jsval id, uintN flags,
     name = JSVAL_CHARS (id);
 
 #if 0
-    g_print ("%s:%d:%s(): ", __FILE__, __LINE__, __FUNCTION__);
+    g_print (G_STRLOC": ");
 #endif
     if (!gom_js_object_resolve (cx, *objp, name, &gobj, &spec, &signal_id)) {
         *objp = NULL;
@@ -387,8 +387,7 @@ gom_js_object_resolve_priv (JSContext *cx, JSObject *obj, jsval id, uintN flags,
     }
 
 #if 0
-    g_print ("%s:%d:%s(): defined new property: %s.%s (%s)\n", 
-             __FILE__, __LINE__, __FUNCTION__,
+    g_print (G_STRLOC": defined new property: %s.%s (%s)\n", 
              JS_GET_CLASS (cx, *objp)->name, name, JS_GET_CLASS (cx, obj)->name);
 #endif
     
@@ -427,8 +426,7 @@ gom_js_object_enumerate (JSContext *cx, JSObject *obj, JSIterateOp enum_op, jsva
     
     gobj = gom_js_object_get_g_object (cx, obj);
 #if 0
-    g_print ("%s:%d:%s(%s, %d): -> %p\n",
-             __FILE__, __LINE__, __FUNCTION__,
+    g_print (G_STRLOC": %s %d -> %p\n",
              JS_GET_CLASS (cx, obj)->name, enum_op, gobj);
 #endif
     switch (enum_op) {

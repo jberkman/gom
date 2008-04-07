@@ -56,19 +56,16 @@ gom_js_event_listener_set_property (GObject      *object,
     switch (property_id) {
     case PROP_JS_CONTEXT:
         if (priv->cx) {
-            g_warning ("%s:%d:%s(): Context is already set on %p",
-                       __FILE__, __LINE__, __FUNCTION__, object);
+            g_warning (G_STRLOC": Context is already set on %p", object);
         } else {
             priv->cx = g_value_get_pointer (value);
         }
         break;
     case PROP_JS_OBJECT:
         if (priv->obj) {
-            g_warning ("%s:%d:%s(): Object is already set on %p",
-                       __FILE__, __LINE__, __FUNCTION__, object);
+            g_warning (G_STRLOC": Object is already set on %p", object);
         } else if (!priv->cx) {
-            g_warning ("%s:%d:%s(): Context needs to be set on %p before object",
-                       __FILE__, __LINE__, __FUNCTION__, object);
+            g_warning (G_STRLOC": Context needs to be set on %p before object", object);
         } else {
             priv->obj = g_value_get_pointer (value);
             JS_AddNamedRoot (priv->cx, &priv->obj, "EventListener.obj");
@@ -90,11 +87,11 @@ gom_js_event_listener_handle_event (GomEventListener *listener,
     jsval argv, rval, fval;
 
     if (!priv->cx) {
-        g_warning ("%s:%d:%s(): %p.cx is NULL\n", __FILE__, __LINE__, __FUNCTION__, listener);
+        g_warning (G_STRLOC": %p.cx is NULL\n", listener);
         return;
     }
     if (!priv->obj) {
-        g_warning ("%s:%d:%s(): %p.obj is NULL\n", __FILE__, __LINE__, __FUNCTION__, listener);
+        g_warning (G_STRLOC": %p.obj is NULL\n", listener);
         return;
     }
 
@@ -132,13 +129,10 @@ static void
 gom_js_event_listener_finalize (GObject *obj)
 {
     GomJSEventListenerPrivate *priv = PRIV (obj);
-    g_print ("%s:%d:%s (%s %p)\n",
-             __FILE__, __LINE__, __FUNCTION__,
-             g_type_name (G_TYPE_FROM_INSTANCE (obj)), obj);
+    g_print (G_STRLOC": %s %p\n", g_type_name (G_TYPE_FROM_INSTANCE (obj)), obj);
     if (priv->obj) {
         if (!priv->cx) {
-            g_warning ("%s:%d:%s(): %p has an Object but no Context",
-                       __FILE__, __LINE__, __FUNCTION__, obj);
+            g_warning (G_STRLOC": %p has an Object but no Context", obj);
         } else {
             JS_RemoveRoot (priv->cx, &priv->obj);
             priv->cx = NULL;

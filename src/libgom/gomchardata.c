@@ -143,8 +143,7 @@ gom_char_data_finalize (GObject *object)
 {
     GomCharDataPrivate *priv = PRIV (object);
 #if 0
-    g_print ("%s:%d:%s (%s %p)\n",
-             __FILE__, __LINE__, __FUNCTION__,
+    g_print (G_STRLOC": %s %p\n",
              g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
 #endif
     g_free (priv->data);

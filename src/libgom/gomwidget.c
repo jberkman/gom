@@ -695,8 +695,8 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
     g_object_ref (widget);
     gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
     if (error) {
-        g_print ("%s:%d:%s(): Error dispatching event: %s\n",
-                 __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_print (G_STRLOC": Error dispatching event: %s\n",
+                  error->message);
         g_clear_error (&error);
     }
     if (gom_event_is_default_prevented (evt)) {
@@ -714,8 +714,8 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         }
         gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
         if (error) {
-            g_print ("%s:%d:%s(): Error dispatching event: %s\n",
-                     __FILE__, __LINE__, __FUNCTION__, error->message);
+            g_print (G_STRLOC": Error dispatching event: %s\n",
+                      error->message);
             g_clear_error (&error);
         }
         if (gom_event_is_default_prevented (evt)) {
@@ -773,8 +773,8 @@ gom_widget_event_after (GtkWidget *widget, GdkEvent *event)
 
     gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
     if (error) {
-        g_print ("%s:%d:%s(): Error dispatching event: %s\n",
-                 __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_print (G_STRLOC": Error dispatching event: %s\n",
+                  error->message);
         g_clear_error (&error);
     }
     g_object_unref (evt);
@@ -855,8 +855,7 @@ widget_set_parent (GomNodeInternal *child, GomNode *parent)
     if (parent) {
         g_object_get (parent, "node-name", &parent_name, NULL);
     }
-    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
-             __FILE__, __LINE__, __FUNCTION__,
+    g_print (G_STRLOC": <%s %p> <%s %p>\n",
              child_name, child,
              parent_name ? parent_name : "(no parent)", parent);
     g_free (child_name);
@@ -876,8 +875,7 @@ widget_set_next_sibling (GomNodeInternal *child, GomNode *sibling)
     if (sibling) {
         g_object_get (sibling, "node-name", &sibling_name, NULL);
     }
-    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
-             __FILE__, __LINE__, __FUNCTION__,
+    g_print (G_STRLOC": <%s %p> <%s %p>\n",
              child_name, child,
              sibling_name ? sibling_name : "(no sibling)", sibling);
     g_free (child_name);
@@ -895,8 +893,7 @@ widget_set_prev_sibling (GomNodeInternal *child, GomNode *sibling)
     if (sibling) {
         g_object_get (sibling, "node-name", &sibling_name, NULL);
     }
-    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
-             __FILE__, __LINE__, __FUNCTION__,
+    g_print (G_STRLOC": <%s %p> <%s %p>\n",
              child_name, child,
              sibling_name ? sibling_name : "(no sibling)", sibling);
     g_free (child_name);
@@ -958,14 +955,14 @@ widget_activate (GtkWidget *w, gpointer data)
     event = gom_document_event_create_event (GOM_DOCUMENT_EVENT (priv->owner_document),
                                              "UIEvent", &error);
     if (!event) {
-        g_printerr ("%s:%d:%s(): could not create activate events: %s\n",
-                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_printerr (G_STRLOC": could not create activate events: %s\n",
+                     error->message);
         g_clear_error (&error);
         return;
     }
     if (!GOM_IS_UI_EVENT (event)) {
-        g_printerr ("%s:%d:%s(): event is a %s, but not a UIEvent\n",
-                    __FILE__, __LINE__, __FUNCTION__,
+        g_printerr (G_STRLOC": event is a %s, but not a UIEvent\n",
+                    
                     g_type_name (G_TYPE_FROM_INSTANCE (event)));
         g_object_unref (event);
         return;
@@ -977,8 +974,8 @@ widget_activate (GtkWidget *w, gpointer data)
     gom_event_target_dispatch_event (GOM_EVENT_TARGET (w), event, &error);
     g_object_unref (event);
     if (error) {
-        g_printerr ("%s:%d:%s(): Error dispatching event: %s\n",
-                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_printerr (G_STRLOC": Error dispatching event: %s\n",
+                     error->message);
         g_clear_error (&error);
     }
 }
@@ -1001,14 +998,14 @@ widget_size_allocate (GtkWidget *widget, GdkRectangle *rect, gpointer data)
     event = gom_document_event_create_event (GOM_DOCUMENT_EVENT (priv->owner_document),
                                              "UIEvent", &error);
     if (!event) {
-        g_printerr ("%s:%d:%s(): could not create activate events: %s\n",
-                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_printerr (G_STRLOC": could not create activate events: %s\n",
+                     error->message);
         g_clear_error (&error);
         return;
     }
     if (!GOM_IS_UI_EVENT (event)) {
-        g_printerr ("%s:%d:%s(): event is a %s, but not a UIEvent\n",
-                    __FILE__, __LINE__, __FUNCTION__,
+        g_printerr (G_STRLOC": event is a %s, but not a UIEvent\n",
+                    
                     g_type_name (G_TYPE_FROM_INSTANCE (event)));
         g_object_unref (event);
         return;
@@ -1020,8 +1017,8 @@ widget_size_allocate (GtkWidget *widget, GdkRectangle *rect, gpointer data)
     gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), event, &error);
     g_object_unref (event);
     if (error) {
-        g_printerr ("%s:%d:%s(): Error dispatching event: %s\n",
-                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_printerr (G_STRLOC": Error dispatching event: %s\n",
+                     error->message);
         g_clear_error (&error);
     }
 }
@@ -1052,14 +1049,13 @@ widget_scroll (GtkWidget *widget, GtkAdjustment *adjust)
     event = gom_document_event_create_event (GOM_DOCUMENT_EVENT (priv->owner_document),
                                              "UIEvent", &error);
     if (!event) {
-        g_printerr ("%s:%d:%s(): could not create activate events: %s\n",
-                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_printerr (G_STRLOC": could not create activate events: %s\n",
+                     error->message);
         g_clear_error (&error);
         return;
     }
     if (!GOM_IS_UI_EVENT (event)) {
-        g_printerr ("%s:%d:%s(): event is a %s, but not a UIEvent\n",
-                    __FILE__, __LINE__, __FUNCTION__,
+        g_printerr (G_STRLOC": event is a %s, but not a UIEvent\n",
                     g_type_name (G_TYPE_FROM_INSTANCE (event)));
         g_object_unref (event);
         return;
@@ -1071,8 +1067,8 @@ widget_scroll (GtkWidget *widget, GtkAdjustment *adjust)
     gom_event_target_dispatch_event (GOM_EVENT_TARGET (child), event, &error);
     g_object_unref (event);
     if (error) {
-        g_printerr ("%s:%d:%s(): Error dispatching event: %s\n",
-                    __FILE__, __LINE__, __FUNCTION__, error->message);
+        g_printerr (G_STRLOC": Error dispatching event: %s\n",
+                     error->message);
         g_clear_error (&error);
     }
 }
@@ -1103,8 +1099,7 @@ gom_widget_constructed (GObject *object)
 
 #if 0
     if (!priv->owner_document) {
-        g_warning ("%s:%d:%s(%s %p): No document set",
-                   __FILE__, __LINE__, __FUNCTION__,
+        g_warning (G_STRLOC": %s %p: No document set",
                    g_type_name (G_TYPE_FROM_INSTANCE (object)),
                    object);
     }

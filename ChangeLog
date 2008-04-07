@@ -1,3 +1,19 @@
+2008-04-07  jacob berkman  <jacob@ilovegom.org>
+
+	* include/gommacros.h: 
+	* src/libgom/gomcamel.c: 
+	* src/libgom/gomchardata.c: 
+	* src/libgom/gomdoc.c: 
+	* src/libgom/gomevt.c: 
+	* src/libgom/gomjselement.c: 
+	* src/libgom/gomjseventlistener.c: 
+	* src/libgom/gomjsgerrorexception.c: 
+	* src/libgom/gomjsnavigator.c: 
+	* src/libgom/gomjsobject.c: 
+	* src/libgom/gomjswindow.c: 
+	* src/libgom/gomnoodle.c: 
+	* src/libgom/gomwidget.c: use G_STRLOC everywhere
+
 2008-04-06  jacob berkman  <jacob@ilovegom.org>
 
 	* include/gom/gomnodeinternal.h: combine all the extra, internal

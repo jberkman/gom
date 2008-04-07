@@ -377,8 +377,7 @@ gom_noodle_set_parent (GomNodeInternal *child, GomNode *parent)
     if (parent) {
         g_object_get (parent, "node-name", &parent_name, NULL);
     }
-    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
-             __FILE__, __LINE__, __FUNCTION__,
+    g_print (G_STRLOC": <%s %p> <%s %p>\n",
              child_name, child, 
              parent_name ? parent_name : "(no parent)", parent);
     g_free (child_name);
@@ -398,8 +397,7 @@ gom_noodle_set_prev_sibling (GomNodeInternal *child, GomNode *sibling)
     if (sibling) {
         g_object_get (sibling, "node-name", &sibling_name, NULL);
     }
-    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
-             __FILE__, __LINE__, __FUNCTION__,
+    g_print (G_STRLOC": <%s %p> <%s %p>\n",
              child_name, child,
              sibling_name? sibling_name : "(no sibling)", sibling);
     g_free (child_name);
@@ -417,8 +415,7 @@ gom_noodle_set_next_sibling (GomNodeInternal *child, GomNode *sibling)
     if (sibling) {
         g_object_get (sibling, "node-name", &sibling_name, NULL);
     }
-    g_print ("%s:%d:%s(<%s %p>, <%s %p>)\n",
-             __FILE__, __LINE__, __FUNCTION__,
+    g_print (G_STRLOC": <%s %p> <%s %p>\n",
              child_name, child,
              sibling_name ? sibling_name : "(no sibling)", sibling);
     g_free (child_name);
@@ -475,8 +472,7 @@ gom_noodle_finalize (GObject *object)
 {
     GomNoodlePrivate *priv = PRIV (object);
 #if 0
-    g_print ("%s:%d:%s (%s %p)\n",
-             __FILE__, __LINE__, __FUNCTION__,
+    g_print (G_STRLOC": %s %p\n",
              g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
 #endif
     g_list_foreach (priv->children, (GFunc)g_object_unref, NULL);
@@ -504,8 +500,7 @@ gom_noodle_constructed (GObject *object)
     }
 
     if (!priv->owner_document) {
-        g_warning ("%s:%d:%s(%s %p): No document set",
-                   __FILE__, __LINE__, __FUNCTION__,
+        g_warning (G_STRLOC": %s %p: No document set",
                    g_type_name (G_TYPE_FROM_INSTANCE (object)),
                    object);
     }

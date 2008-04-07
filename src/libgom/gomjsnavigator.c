@@ -95,7 +95,7 @@ gom_js_navigator_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
         return JS_FALSE;
     }
 #if 0
-    g_print ("%s:%d:%s: %d = %s\n", __FILE__, __LINE__, __FUNCTION__, JSVAL_TO_INT (id), JSVAL_CHARS (*vp));
+    g_print (G_STRLOC": %d = %s\n", JSVAL_TO_INT (id), JSVAL_CHARS (*vp));
 #endif
     return JS_TRUE;
 }

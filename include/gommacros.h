@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
 
-#define GOM_NOT_IMPLEMENTED (g_warning ("%s:%d:%s(): Not implemented yet.", __FILE__, __LINE__, __FUNCTION__))
+#define GOM_NOT_IMPLEMENTED (g_warning (G_STRLOC": Not implemented yet."))
 
 #define GOM_NOT_IMPLEMENTED_ERROR(error)                                \
     (g_set_error (error, GOM_DOM_EXCEPTION_ERROR, GOM_NOT_IMPLEMENTED_ERR, \

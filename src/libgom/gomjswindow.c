@@ -213,7 +213,7 @@ _gom_js_window_clear_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *
     }
 
     if (jsid >= a->len) {
-        g_printerr ("%s:%d:%s(): invalid interval id: %u\n", __FILE__, __LINE__, __FUNCTION__, jsid);
+        g_printerr (G_STRLOC": invalid interval id: %u\n", jsid);
         return JS_FALSE;
     }
 
@@ -564,8 +564,7 @@ gom_js_window_parser_end_element (GMarkupParseContext *context,
                 g_error_free (err);
             } else {
                 str = JS_ValueToString(data->cx, rval); 
-                g_print ("%s:%d:%s(): script result: %s\n", 
-                         __FILE__, __LINE__, __FUNCTION__,
+                g_print (G_STRLOC": script result: %s\n", 
                          JS_GetStringBytes(str));
             }
         }
