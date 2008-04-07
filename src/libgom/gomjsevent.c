@@ -52,15 +52,23 @@ static JSPropertySpec gom_js_event_props[] = { { NULL } };
 static JSBool
 gom_js_event_stop_propagation (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomEvent *evt = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_EVENT (evt)) {
+        return JS_FALSE;
+    }
+    gom_event_stop_propagation (evt);
+    return JS_TRUE;
 }
 
 static JSBool
 gom_js_event_prevent_default (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomEvent *evt = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_EVENT (evt)) {
+        return JS_FALSE;
+    }
+    gom_event_prevent_default (evt);
+    return JS_TRUE;
 }
 
 static JSBool

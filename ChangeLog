@@ -1,5 +1,10 @@
 2008-04-07  jacob berkman  <jacob@ilovegom.org>
 
+	* examples/console.gom: add per-session history
+
+	* src/libgom/gomjsevent.c (gom_js_event_prevent_default)
+	(gom_js_event_stop_propagation): implement
+
 	* include/gommacros.h: 
 	* src/libgom/gomcamel.c: 
 	* src/libgom/gomchardata.c: 

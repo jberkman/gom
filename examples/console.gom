@@ -20,16 +20,23 @@
 	  <GtkEntry id="entry" expand="true" fill="true"/>
           <GtkLabel id="x" expand="false" fill="false"/>
           <GtkLabel id="y" expand="false" fill="false"/>
+<!--
+          <GtkButton id="go" label="Go" expand="false" fill="false"/>
+ -->
         </GtkHBox>
       </GtkVBox>
     </GtkWindow>
     <script contentType="text/javascript"><![CDATA[
       (function(){
+	  var history = [];
+          var histIdx = -1;
           function append (text) {
               $('#output').get (0).buffer.text += text + '\n';
           }
-          $('#entry').bind ("DOMActivate", function () {
+          $('#entry').bind ('DOMActivate', function (evt) {
               if (this.text) {
+                  history.unshift (this.text);
+                  histIdx = -1;
 	          try {
                       append (eval (this.text));
                   } catch (e) {
@@ -37,12 +44,38 @@
                   }
 	          this.text = '';
               }
+          }).bind ('keydown', function (evt) {
+              switch (evt.keyIdentifier) {
+                case "Up":
+                  if (evt.altKey || evt.metaKey || evt.ctrlKey || evt.shiftKey) {
+                      break;
+                  }
+                  ++histIdx;
+                  histIdx %= history.length;
+                  if (history.length) {
+                      this.text = history[histIdx];
+	              this.text.cursorPosition = history[histIdx].length - 1;
+                  }
+                  return false;
+                case "Down":
+                  if (evt.altKey || evt.metaKey || evt.ctrlKey || evt.shiftKey) {
+                      break;
+                  }
+                  if (--histIdx < 0) {
+                      histIdx = -1;
+                      this.text = '';
+                  } else {
+                      this.text = history[histIdx];
+	              this.text.cursorPosition = history[histIdx].length - 1;
+                  }
+                  return false;
+              }
           });
-	  $('#win').bind ("mousemove", function (evt) {
+	  $('#win').bind ('mousemove', function (evt) {
               $('#x').get (0).label = evt.clientX;
               $('#y').get (0).label = evt.clientY;
 /*
-          }).bind ("resize", function (evt) {
+          }).bind ('DOMFocusIn DOMFocusOut keydown', function (evt) {
               append (evt.type + ': ' + evt.target.tagName);
 */
 	  });
