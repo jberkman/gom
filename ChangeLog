@@ -1,3 +1,14 @@
+2008-04-08  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomkeyboardevt.c (keyval_to_key_identifier_once)
+	(gom_keyboard_evt_keyval_to_key_identifier): lookup keyvals in a
+	hash table, rather than a switch
+	(key_identifier_to_keyval_once)
+	(gom_keyboard_evt_key_identifier_to_keyval): convert from an
+	identifier and location to a gdk keyval
+
+	* src/libgom/gomwidget.c (INIT_KEY_EVENT): rename for new api
+
 2008-04-07  jacob berkman  <jacob@ilovegom.org>
 
 	* examples/console.gom: add per-session history

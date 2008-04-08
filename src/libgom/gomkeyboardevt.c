@@ -36,6 +36,8 @@ THE SOFTWARE.
 #include <gdk/gdkkeys.h>
 
 #include <string.h>
+#include <stdlib.h>
+#include <limits.h>
 
 enum {
     PROP_KEY_IDENTIFIER = 1,
@@ -54,170 +56,250 @@ typedef struct {
 
 #define PRIV(i) G_TYPE_INSTANCE_GET_PRIVATE ((i), GOM_TYPE_KEYBOARD_EVT, GomKeyboardEvtPrivate)
 
-static void
-gom_keyboard_evt_get_property (GObject    *object,
-                               guint       property_id,
-                               GValue     *value,
-                               GParamSpec *pspec)
-{
-    GomKeyboardEvtPrivate *priv = PRIV (object);
+typedef struct {
+    const char *id;
+    guint standard;
+    guint left;
+    guint right;
+    guint numpad;
+} KeyIdentifierCodes;
 
-    switch (property_id) {
-    case PROP_KEY_IDENTIFIER:
-        g_value_set_string (value, priv->key_identifier);
-        break;
-    case PROP_KEY_LOCATION:
-        g_value_set_enum (value, priv->key_location);
-        break;
-    case PROP_CTRL_KEY:
-        g_value_set_boolean (value, priv->state & GDK_CONTROL_MASK);
-        break;
-    case PROP_SHIFT_KEY:
-        g_value_set_boolean (value, priv->state & GDK_SHIFT_MASK);
-        break;
-    case PROP_ALT_KEY:
-        g_value_set_boolean (value, priv->state & GDK_MOD1_MASK);
-        break;
-    case PROP_META_KEY:
-        g_value_set_boolean (value, priv->state & GDK_META_MASK);
-        break;
-    default: 
-        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-        break;
+static KeyIdentifierCodes key_identifier_codes[] = {
+    { GOM_KEY_ATTN, GDK_3270_Attn },
+    { GOM_KEY_ALT, 0, GDK_Alt_L, GDK_Alt_R },
+    { GOM_KEY_CAPS_LOCK, GDK_Caps_Lock },
+    { GOM_KEY_CLEAR, GDK_Clear },
+    { GOM_KEY_CODE_INPUT, GDK_Codeinput },
+    { GOM_KEY_CONTROL, 0, GDK_Control_L, GDK_Control_R },
+    { GOM_KEY_CRSEL, GDK_3270_CursorSelect },
+    { GOM_KEY_COPY, GDK_3270_Copy },
+    { GOM_KEY_DOWN, GDK_Down, 0, 0, GDK_KP_Down },
+    { GOM_KEY_END, GDK_End, 0, 0,  GDK_KP_End },
+    { GOM_KEY_ENTER, GDK_Return, 0, 0, GDK_KP_Enter },
+    { GOM_KEY_EXECUTE, GDK_Execute },
+
+    { GOM_KEY_F1,  GDK_F1, 0, 0, GDK_KP_F1 },
+    { GOM_KEY_F2,  GDK_F2, 0, 0, GDK_KP_F2 },
+    { GOM_KEY_F3,  GDK_F3, 0, 0, GDK_KP_F3 },
+    { GOM_KEY_F4,  GDK_F4, 0, 0, GDK_KP_F4 },
+    { GOM_KEY_F5,  GDK_F5  },
+    { GOM_KEY_F6,  GDK_F6  },
+    { GOM_KEY_F7,  GDK_F7  },
+    { GOM_KEY_F8,  GDK_F8  },
+    { GOM_KEY_F9,  GDK_F9  },
+    { GOM_KEY_F10, GDK_F10 },
+    { GOM_KEY_F11, GDK_F11 },
+    { GOM_KEY_F12, GDK_F12 },
+    { GOM_KEY_F13, GDK_F13 },
+    { GOM_KEY_F14, GDK_F14 },
+    { GOM_KEY_F15, GDK_F15 },
+    { GOM_KEY_F16, GDK_F16 },
+    { GOM_KEY_F17, GDK_F17 },
+    { GOM_KEY_F18, GDK_F18 },
+    { GOM_KEY_F19, GDK_F19 },
+    { GOM_KEY_F20, GDK_F20 },
+    { GOM_KEY_F21, GDK_F21 },
+    { GOM_KEY_F22, GDK_F22 },
+    { GOM_KEY_F23, GDK_F23 },
+    { GOM_KEY_F24, GDK_F24 },
+    { GOM_KEY_F25, GDK_F25 },
+    { GOM_KEY_F26, GDK_F26 },
+    { GOM_KEY_F27, GDK_F27 },
+    { GOM_KEY_F28, GDK_F28 },
+    { GOM_KEY_F29, GDK_F29 },
+    { GOM_KEY_F30, GDK_F30 },
+    { GOM_KEY_F31, GDK_F31 },
+    { GOM_KEY_F32, GDK_F32 },
+    { GOM_KEY_F33, GDK_F33 },
+    { GOM_KEY_F34, GDK_F34 },
+    { GOM_KEY_F35, GDK_F35 },
+
+    { GOM_KEY_FIND, GDK_Find },
+    { GOM_KEY_HELP, GDK_Help },
+    { GOM_KEY_HOME, GDK_Home, 0, 0, GDK_KP_Home },
+    { GOM_KEY_INSERT, GDK_Insert },
+    { GOM_KEY_LEFT, GDK_Left, 0, 0,  GDK_KP_Left },
+    { GOM_KEY_LEFT, GDK_Left },
+    { GOM_KEY_META, 0, GDK_Meta_L, GDK_Meta_R },
+    { GOM_KEY_NUM_LOCK, GDK_Num_Lock },
+    { GOM_KEY_PAGE_DOWN, GDK_Page_Down, 0, 0, GDK_KP_Page_Down },
+    { GOM_KEY_PAGE_UP, GDK_Page_Up, 0, 0, GDK_KP_Page_Up },
+    { GOM_KEY_PAUSE, GDK_Pause },
+    { GOM_KEY_RIGHT, GDK_Right },
+    { GOM_KEY_SCROLL, GDK_Scroll_Lock },
+    { GOM_KEY_SELECT, GDK_Select },
+    { GOM_KEY_SHIFT, 0, GDK_Shift_L, GDK_Shift_R },
+    { GOM_KEY_UP, GDK_Up, 0, 0, GDK_KP_Up },
+    { GOM_KEY_UNDO, GDK_Undo },
+
+    { GOM_KEY_SPACE, 0, 0, 0, GDK_KP_Space },
+    { GOM_KEY_TAB, 0, 0, 0, GDK_KP_Tab },
+    { GOM_KEY_DELETE, 0, 0, 0, GDK_KP_Delete },
+    { GOM_KEY_EQUALS, 0, 0, 0, GDK_KP_Equal },
+    { GOM_KEY_ASTERIX, 0, 0, 0, GDK_KP_Multiply },
+    { GOM_KEY_PLUS, 0, 0, 0, GDK_KP_Add },
+    { GOM_KEY_COMMA, 0, 0, 0, GDK_KP_Separator },
+    { GOM_KEY_HYPHEN, 0, 0, 0, GDK_KP_Subtract },
+    { GOM_KEY_PERIOD, 0, 0, 0, GDK_KP_Decimal },
+    { GOM_KEY_BACKSLASH, 0, 0, 0, GDK_KP_Divide },
+    { GOM_KEY_0, 0, 0, 0, GDK_KP_0 },
+    { GOM_KEY_1, 0, 0, 0, GDK_KP_1 },
+    { GOM_KEY_2, 0, 0, 0, GDK_KP_2 },
+    { GOM_KEY_3, 0, 0, 0, GDK_KP_3 },
+    { GOM_KEY_4, 0, 0, 0, GDK_KP_4 },
+    { GOM_KEY_5, 0, 0, 0, GDK_KP_5 },
+    { GOM_KEY_6, 0, 0, 0, GDK_KP_6 },
+    { GOM_KEY_7, 0, 0, 0, GDK_KP_7 },
+    { GOM_KEY_8, 0, 0, 0, GDK_KP_8 },
+    { GOM_KEY_9, 0, 0, 0, GDK_KP_9 },
+
+    { NULL }
+};
+
+static gpointer
+keyval_to_key_identifier_once (gpointer data)
+{
+    KeyIdentifierCodes *codes;
+    GHashTable *ht;
+    guint i;
+
+    ht = g_hash_table_new (g_int_hash, g_int_equal);
+
+    for (i = 0; key_identifier_codes[i].id; i++) {
+        codes = &key_identifier_codes[i];
+        if (codes->standard) {
+            g_hash_table_insert (ht, &codes->standard, codes);
+        }
+        if (codes->left) {
+            g_hash_table_insert (ht, &codes->left, codes);
+        }
+        if (codes->right) {
+            g_hash_table_insert (ht, &codes->right, codes);
+        }
+        if (codes->numpad) {
+            g_hash_table_insert (ht, &codes->numpad, codes);
+        }
     }
+
+    return ht;
 }
 
 gboolean
-gom_keyboard_evt_lookup_keyval  (guint               keyval,
-                                 const char        **key_identifier, 
-                                 GomKeyLocationCode *key_location)
+gom_keyboard_evt_keyval_to_key_identifier (guint               keyval,
+                                           const char        **key_identifier, 
+                                           GomKeyLocationCode *key_location)
 {
-    *key_location = GOM_DOM_KEY_LOCATION_STANDARD;
+    static GOnce just_this = G_ONCE_INIT;
+    KeyIdentifierCodes *codes;
+    GHashTable *ht;
 
-#define ID(g) *key_identifier = GOM_KEY_##g; break
-#define ID_L(g) *key_location = GOM_DOM_KEY_LOCATION_LEFT; ID(g)
-#define ID_R(g) *key_location = GOM_DOM_KEY_LOCATION_RIGHT; ID(g)
-#define ID_N(g) *key_location = GOM_DOM_KEY_LOCATION_NUMPAD; ID(g)
+    ht = g_once (&just_this, keyval_to_key_identifier_once, NULL);
 
-    switch (keyval) {
-    case GDK_3270_Attn: ID (ATTN);
-    case GDK_Alt_L: ID_L (ALT);
-    case GDK_Alt_R: ID_R (ALT);
-    case GDK_Caps_Lock: ID (CAPS_LOCK);
-    case GDK_Clear: ID (CLEAR);
-    case GDK_Codeinput: ID (CODE_INPUT);
-    case GDK_Control_L: ID_L (CONTROL);
-    case GDK_Control_R: ID_R (CONTROL);
-    case GDK_3270_CursorSelect: ID (CRSEL);
-    case GDK_3270_Copy: ID (COPY);
-    case GDK_KP_Down: ID_N (DOWN);
-    case GDK_Down: ID (DOWN);
-    case GDK_KP_End: ID_N (END);
-    case GDK_End: ID (END);
-    case GDK_KP_Enter: ID_N (ENTER);
-    case GDK_ISO_Enter:
-    case GDK_3270_Enter:
-    case GDK_Return: ID (ENTER);
-    case GDK_Execute: ID (EXECUTE);
+    codes = g_hash_table_lookup (ht, &keyval);
 
-    case GDK_KP_F1: ID_N (F1);
-    case GDK_F1: ID (F1);
-
-    case GDK_KP_F2: ID_N (F2);
-    case GDK_F2: ID (F2);
-
-    case GDK_KP_F3: ID_N (F3);
-    case GDK_F3: ID (F3);
-
-    case GDK_KP_F4: ID_N (F4);
-    case GDK_F4: ID (F4);
-
-    case GDK_F5: ID (F5);
-    case GDK_F6: ID (F6);
-    case GDK_F7: ID (F7);
-    case GDK_F8: ID (F8);
-    case GDK_F9: ID (F9);
-    case GDK_F10: ID (F10);
-    case GDK_F11: ID (F11);
-    case GDK_F12: ID (F12);
-    case GDK_F13: ID (F13);
-    case GDK_F14: ID (F14);
-    case GDK_F15: ID (F15);
-    case GDK_F16: ID (F16);
-    case GDK_F17: ID (F17);
-    case GDK_F18: ID (F18);
-    case GDK_F19: ID (F19);
-    case GDK_F20: ID (F20);
-    case GDK_F21: ID (F21);
-    case GDK_F22: ID (F22);
-    case GDK_F23: ID (F23);
-    case GDK_F24: ID (F24);
-    case GDK_F25: ID (F25);
-    case GDK_F26: ID (F26);
-    case GDK_F27: ID (F27);
-    case GDK_F28: ID (F28);
-    case GDK_F29: ID (F29);
-    case GDK_F30: ID (F30);
-    case GDK_F31: ID (F31);
-    case GDK_F32: ID (F32);
-    case GDK_F33: ID (F33);
-    case GDK_F34: ID (F34);
-    case GDK_F35: ID (F35);
-
-    case GDK_Find: ID (FIND);
-    case GDK_Help: ID (HELP);
-    case GDK_KP_Home: ID_N (HOME);
-    case GDK_Home: ID (HOME);
-    case GDK_Insert: ID (INSERT);
-    case GDK_KP_Left: ID_N (LEFT);
-    case GDK_Left: ID (LEFT);
-    case GDK_Meta_L: ID_L (META);
-    case GDK_Meta_R: ID_R (META);
-    case GDK_Num_Lock: ID (NUM_LOCK);
-    case GDK_KP_Page_Down: ID_N (PAGE_DOWN);
-    case GDK_Page_Down: ID (PAGE_DOWN);
-    case GDK_KP_Page_Up: ID_N (PAGE_UP);
-    case GDK_Page_Up: ID (PAGE_UP);
-    case GDK_Pause: ID (PAUSE);
-    case GDK_Right: ID (RIGHT);
-    case GDK_Scroll_Lock: ID (SCROLL);
-    case GDK_Select: ID (SELECT);
-    case GDK_Shift_L: ID_L (SHIFT);
-    case GDK_Shift_R: ID_R (SHIFT);
-    case GDK_KP_Up: ID_N (UP);
-    case GDK_Up: ID (UP);
-    case GDK_Undo: ID (UNDO);
-
-    case GDK_KP_Space: ID_N (SPACE);
-    case GDK_KP_Tab: ID_N (TAB);
-    case GDK_KP_Delete: ID_N (DELETE);
-    case GDK_KP_Equal: ID_N (EQUALS);
-    case GDK_KP_Multiply: ID_N (ASTERIX);
-    case GDK_KP_Add: ID_N (PLUS);
-    case GDK_KP_Separator: ID_N (COMMA);
-    case GDK_KP_Subtract: ID_N (HYPHEN);
-    case GDK_KP_Decimal: ID_N (PERIOD);
-    case GDK_KP_Divide: ID_N (BACKSLASH);
-    case GDK_KP_0: ID_N (0);
-    case GDK_KP_1: ID_N (1);
-    case GDK_KP_2: ID_N (2);
-    case GDK_KP_3: ID_N (3);
-    case GDK_KP_4: ID_N (4);
-    case GDK_KP_5: ID_N (5);
-    case GDK_KP_6: ID_N (6);
-    case GDK_KP_7: ID_N (7);
-    case GDK_KP_8: ID_N (8);
-    case GDK_KP_9: ID_N (9);
-    default: {
-        char *str;
-        str = g_strdup_printf ("U+%04x", gdk_keyval_to_unicode (gdk_keyval_to_upper (keyval)));
-        *key_identifier = g_intern_string (str);
-        if (str != *key_identifier) {
-            g_free (str);
+    if (!codes) {
+        keyval = gdk_keyval_to_upper (keyval);
+        codes = g_hash_table_lookup (ht, &keyval);
+        if (!codes) {
+            codes = g_new0 (KeyIdentifierCodes, 1);
+            codes->standard = keyval;
+            codes->id = g_strdup_printf ("U+%04x", gdk_keyval_to_unicode (keyval));
+            g_hash_table_insert (ht, &codes->standard, codes);
         }
+    }
+    if (keyval == codes->left) {
+        *key_location = GOM_DOM_KEY_LOCATION_LEFT;
+    } else if (keyval == codes->right) {
+        *key_location = GOM_DOM_KEY_LOCATION_RIGHT;
+    } else if (keyval == codes->numpad) {
+        *key_location = GOM_DOM_KEY_LOCATION_NUMPAD;
+    } else {
+        *key_location = GOM_DOM_KEY_LOCATION_STANDARD;
+    }
+    *key_identifier = codes->id;
+
+    return TRUE;
+}
+
+static gpointer
+key_identifier_to_keyval_once (gpointer data)
+{
+    GHashTable *ht;
+    guint i;
+
+    ht = g_hash_table_new (g_str_hash, g_str_equal);
+
+    for (i = 0; key_identifier_codes[i].id; i++) {
+        g_hash_table_insert (ht, (gpointer)key_identifier_codes[i].id, &key_identifier_codes[i]);
+    }
+
+    return ht;
+}
+
+gboolean
+gom_keyboard_evt_key_identifier_to_keyval (const char        *key_identifier, 
+                                           GomKeyLocationCode key_location,
+                                           guint             *keyval)
+{
+    static GOnce in_a_lifetime = G_ONCE_INIT;
+    KeyIdentifierCodes *codes;
+    GHashTable *ht;
+
+    if (key_location < GOM_DOM_KEY_LOCATION_STANDARD || key_location > GOM_DOM_KEY_LOCATION_NUMPAD) {
+        return FALSE;
+    }
+    
+    ht = g_once (&in_a_lifetime, key_identifier_to_keyval_once, NULL);
+
+    codes = g_hash_table_lookup (ht, key_identifier);
+    if (codes) {
+        switch (key_location) {
+        case GOM_DOM_KEY_LOCATION_STANDARD:
+            *keyval = codes->standard;
+            break;
+        case GOM_DOM_KEY_LOCATION_LEFT:
+            *keyval = codes->left;
+            break;
+        case GOM_DOM_KEY_LOCATION_RIGHT:
+            *keyval = codes->right;
+            break;
+        case GOM_DOM_KEY_LOCATION_NUMPAD:
+            *keyval = codes->numpad;
+            break;
+        }
+        return TRUE;
+    }
+
+    if (key_identifier[0] != 'U' || key_identifier[1] != '+') {
+        return FALSE;
+    }
+
+    *keyval = strtol (&key_identifier[2], NULL, 10);
+    if (!*keyval) {
+        return FALSE;
+    }
+    *keyval = gdk_unicode_to_keyval (*keyval);
+        
+    codes = g_new0 (KeyIdentifierCodes, 1);
+    codes->id = g_strdup (key_identifier);
+    
+    switch (key_location) {
+    case GOM_DOM_KEY_LOCATION_STANDARD:
+        codes->standard = *keyval;
+        break;
+    case GOM_DOM_KEY_LOCATION_LEFT:
+        codes->left = *keyval;
+        break;
+    case GOM_DOM_KEY_LOCATION_RIGHT:
+        codes->right = *keyval;
+        break;
+    case GOM_DOM_KEY_LOCATION_NUMPAD:
+        codes->numpad = *keyval;
         break;
     }
-    }
+
+    g_hash_table_insert (ht, (gpointer)codes->id, codes);
+
     return TRUE;
 }
 
@@ -332,6 +414,39 @@ gom_keyboard_evt_get_modifier_state (GomKeyboardEvent *evt,
 {
     GOM_NOT_IMPLEMENTED;
     return FALSE;
+}
+
+static void
+gom_keyboard_evt_get_property (GObject    *object,
+                               guint       property_id,
+                               GValue     *value,
+                               GParamSpec *pspec)
+{
+    GomKeyboardEvtPrivate *priv = PRIV (object);
+
+    switch (property_id) {
+    case PROP_KEY_IDENTIFIER:
+        g_value_set_string (value, priv->key_identifier);
+        break;
+    case PROP_KEY_LOCATION:
+        g_value_set_enum (value, priv->key_location);
+        break;
+    case PROP_CTRL_KEY:
+        g_value_set_boolean (value, priv->state & GDK_CONTROL_MASK);
+        break;
+    case PROP_SHIFT_KEY:
+        g_value_set_boolean (value, priv->state & GDK_SHIFT_MASK);
+        break;
+    case PROP_ALT_KEY:
+        g_value_set_boolean (value, priv->state & GDK_MOD1_MASK);
+        break;
+    case PROP_META_KEY:
+        g_value_set_boolean (value, priv->state & GDK_META_MASK);
+        break;
+    default: 
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+        break;
+    }
 }
 
 GOM_IMPLEMENT (KEYBOARD_EVENT, keyboard_event, gom_keyboard_evt);

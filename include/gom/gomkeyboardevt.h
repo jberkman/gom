@@ -58,9 +58,13 @@ GType gom_keyboard_evt_get_type (void);
 guint gom_keyboard_evt_state_from_string (const char *modifiers_list);
 char *gom_keyboard_evt_string_from_state (guint       state);
 
-gboolean gom_keyboard_evt_lookup_keyval  (guint               keyval,
-                                          const char        **key_identifier, 
-                                          GomKeyLocationCode *key_location);
+gboolean gom_keyboard_evt_keyval_to_key_identifier (guint               keyval,
+                                                    const char        **key_identifier, 
+                                                    GomKeyLocationCode *key_location);
+
+gboolean gom_keyboard_evt_key_identifier_to_keyval (const char         *key_identifier, 
+                                                    GomKeyLocationCode  key_location,
+                                                    guint              *keyval);
 
 G_END_DECLS
 

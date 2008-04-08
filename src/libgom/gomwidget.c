@@ -614,7 +614,7 @@ Meanwhile, for the DOM...
         }                                                               \
         if (GOM_IS_KEYBOARD_EVENT (evt)) {                              \
             modifiers = gom_keyboard_evt_string_from_state (event->key.state); \
-            gom_keyboard_evt_lookup_keyval (event->key.keyval, &key_identifier, &key_location); \
+            gom_keyboard_evt_keyval_to_key_identifier (event->key.keyval, &key_identifier, &key_location); \
             gom_keyboard_event_init_keyboard_event (                    \
                 GOM_KEYBOARD_EVENT (evt),                               \
                 (name), TRUE, TRUE,                                     \
