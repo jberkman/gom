@@ -267,14 +267,16 @@ gom_keyboard_evt_key_identifier_to_keyval (const char        *key_identifier,
             *keyval = codes->numpad;
             break;
         }
-        return TRUE;
+        if (*keyval) {
+            return TRUE;
+        }
     }
 
     if (key_identifier[0] != 'U' || key_identifier[1] != '+') {
         return FALSE;
     }
 
-    *keyval = strtol (&key_identifier[2], NULL, 10);
+    *keyval = strtol (&key_identifier[2], NULL, 16);
     if (!*keyval) {
         return FALSE;
     }

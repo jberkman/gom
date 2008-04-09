@@ -92,8 +92,33 @@ gom_js_event_target_remove_event_listener (JSContext *cx, JSObject *obj, uintN a
 static JSBool
 gom_js_event_target_dispatch_event (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomEventTarget *target;
+    GomEvent *event;
+    JSObject *jsevent;
+    gboolean ret;
+    GError *error = NULL;
+
+    target = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_EVENT_TARGET (target)) {
+        return JS_FALSE;
+    }
+
+    if (!JS_ConvertArguments (cx, argc, argv, "o", &jsevent)) {
+        return JS_FALSE;
+    }
+
+    event = gom_js_object_get_g_object (cx, jsevent);
+    if (!GOM_IS_EVENT (event)) {
+        return JS_FALSE;
+    }
+
+    ret = gom_event_target_dispatch_event (target, event, &error);
+    if (error) {
+        return gom_js_exception_set_error (cx, &error);
+    }
+
+    *rval = INT_TO_JSVAL (ret);
+    return JS_TRUE;
 }
 
 static JSBool

@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "gommacros.h"
 
 #include "gom/dom/gomdocument.h"
+#include "gom/dom/gomdocumentevent.h"
 #include "gom/dom/gomdomexception.h"
 #include "gom/gomdoc.h"
 #include "gom/gomjsexception.h"
@@ -201,6 +202,40 @@ gom_js_document_get_element_by_id (JSContext *cx, JSObject *obj, uintN argc, jsv
     return JS_TRUE;
 }
 
+static JSBool
+gom_js_document_create_event (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GomDocumentEvent *doc;
+    GomEvent *evt;
+    char *type;
+    GError *error = NULL;
+
+    doc = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_DOCUMENT_EVENT (doc)) {
+        return JS_FALSE;
+    }
+
+    if (!JS_ConvertArguments (cx, argc, argv, "s", &type)) {
+        return JS_FALSE;
+    }
+
+    evt = gom_document_event_create_event (doc, type, &error);
+    if (!evt) {
+        return gom_js_exception_set_error (cx, &error);
+    }
+
+    *rval = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, evt));
+
+    return JS_TRUE;
+}
+
+static JSBool
+gom_js_document_can_dispatch (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    GOM_JS_NOT_IMPLEMENTED (cx);
+    return JS_FALSE;
+}
+
 static JSFunctionSpec document_funcs[] = {
     { "createElement",               gom_js_document_create_element, 1 },
     { "createDocumentFragment",      gom_js_document_create_document_fragment, 0 },
@@ -218,6 +253,10 @@ static JSFunctionSpec document_funcs[] = {
     { "createAttributeNS",           gom_js_document_create_attribute_ns, 2 },
     { "getElementsByTagNameNS",      gom_js_document_get_elements_by_tag_name_ns, 2 },
     { "getElementById",              gom_js_document_get_element_by_id, 1 },
+
+    /* Events level 3: */
+    { "createEvent",                 gom_js_document_create_event, 1 },
+    { "canDispatch",                 gom_js_document_can_dispatch, 1 },
 
     { NULL }
 };

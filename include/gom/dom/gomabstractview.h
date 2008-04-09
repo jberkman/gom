@@ -38,8 +38,8 @@ G_END_DECLS
 G_BEGIN_DECLS
 
 #define GOM_TYPE_ABSTRACT_VIEW             (gom_abstract_view_get_type ())
-#define GOM_ABSTRACT_VIEW(i)               (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_ABSTRACT_VIEW, GomAbstractView))
-#define GOM_IS_ABSTRACT_VIEW(i)            (G_TYPE_CHECK_INSTANCE_CAST    ((i), GOM_TYPE_ABSTRACT_VIEW))
+#define GOM_ABSTRACT_VIEW(i)               (G_TYPE_CHECK_INSTANCE_CASE    ((i), GOM_TYPE_ABSTRACT_VIEW, GomAbstractView))
+#define GOM_IS_ABSTRACT_VIEW(i)            (G_TYPE_CHECK_INSTANCE_TYPE    ((i), GOM_TYPE_ABSTRACT_VIEW))
 #define GOM_ABSTRACT_VIEW_GET_INTERFACE(i) (G_TYPE_INSTANCE_GET_INTERFACE ((i), GOM_TYPE_ABSTRACT_VIEW, GomAbstractViewInterface))
 
 #define GOM_IMPLEMENT_ABSTRACT_VIEW(i, p)

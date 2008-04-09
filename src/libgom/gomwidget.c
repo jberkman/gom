@@ -693,7 +693,7 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
     last_event = event;
 
     g_object_ref (widget);
-    gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
+    gom_listener_list_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
     if (error) {
         g_print (G_STRLOC": Error dispatching event: %s\n",
                   error->message);
@@ -712,7 +712,7 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
             g_object_unref (widget);
             return FALSE;
         }
-        gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
+        gom_listener_list_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
         if (error) {
             g_print (G_STRLOC": Error dispatching event: %s\n",
                       error->message);
@@ -771,7 +771,7 @@ gom_widget_event_after (GtkWidget *widget, GdkEvent *event)
     last_type  = event->type;
     last_event = event;
 
-    gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
+    gom_listener_list_dispatch_event (GOM_EVENT_TARGET (widget), evt, &error);
     if (error) {
         g_print (G_STRLOC": Error dispatching event: %s\n",
                   error->message);
@@ -843,7 +843,86 @@ widget_will_trigger_ns (GomEventTarget   *target,
     return gom_listener_list_will_trigger (PRIV (target)->listeners, target, namespace_uri, type);
 }
 
-#define widget_dispatch_event gom_listener_list_dispatch_event
+static gboolean
+widget_dispatch_event (GomEventTarget *target,
+                       GomEvent       *evt,
+                       GError        **error)
+{
+    GdkEvent event = { 0 };
+    gboolean ctrlKey, shiftKey, altKey, metaKey;
+    GdkKeymapKey *keys;
+    gint n_keys;
+    GomKeyLocationCode location;
+    char *identifier;
+    long timestamp;
+    char *type;
+
+    g_object_get (evt, "type", &type, NULL);
+
+    if (GOM_IS_KEYBOARD_EVENT (evt)) {
+        if (!strcmp (type, GOM_KEYDOWN)) {
+            event.any.type = GDK_KEY_PRESS;
+        } else if (!strcmp (type, GOM_KEYUP)) {
+            event.any.type = GDK_KEY_RELEASE;
+        } else {
+            goto dispatch;
+        }
+        g_object_get (evt,
+                      "key-identifier", &identifier,
+                      "key-location",   &location,
+                      "ctrl-key",       &ctrlKey,
+                      "shift-key",      &shiftKey,
+                      "alt-key",        &altKey,
+                      "meta-key",       &metaKey,
+                      "time-stamp",     &timestamp,
+                      NULL);
+        if (!gom_keyboard_evt_key_identifier_to_keyval (identifier, location,
+                                                        &event.key.keyval)) {
+            g_free (identifier);
+            goto dispatch;
+        }
+        if (!gdk_keymap_get_entries_for_keyval (NULL, event.key.keyval, &keys, &n_keys)) {
+            g_free (identifier);
+            goto dispatch;
+        }
+        g_free (identifier);
+
+        event.key.hardware_keycode = keys[0].keycode;
+        event.key.group = keys[0].group;
+        g_free (keys);
+
+        event.key.window = GTK_WIDGET (target)->window;
+        event.key.send_event = FALSE;
+        event.key.time = timestamp;
+        if (ctrlKey) {
+            event.key.state |= GDK_CONTROL_MASK;
+        }
+        if (shiftKey) {
+            event.key.state |= GDK_SHIFT_MASK;
+        }
+        if (altKey) {
+            event.key.state |= GDK_MOD1_MASK;
+        }
+        if (metaKey) {
+            event.key.state |= GDK_META_MASK;
+        }
+    } else if (GOM_IS_MOUSE_EVENT (evt)) {
+
+    } else if (GOM_IS_UI_EVENT (evt)) {
+
+    } else {
+
+    }
+
+    if (event.any.type) {
+        g_free (type);
+        gtk_main_do_event (&event);
+        return TRUE;
+    }
+dispatch:
+    g_free (type);
+    return gom_listener_list_dispatch_event (target, evt, error);
+}
 
 static void
 widget_set_parent (GomNodeInternal *child, GomNode *parent)
@@ -971,7 +1050,7 @@ widget_activate (GtkWidget *w, gpointer data)
                                    GOM_EVENTS_NAMESPACE_URI,
                                    GOM_DOM_ACTIVATE,
                                    TRUE, TRUE, NULL, 0);
-    gom_event_target_dispatch_event (GOM_EVENT_TARGET (w), event, &error);
+    gom_listener_list_dispatch_event (GOM_EVENT_TARGET (w), event, &error);
     g_object_unref (event);
     if (error) {
         g_printerr (G_STRLOC": Error dispatching event: %s\n",
@@ -1014,7 +1093,7 @@ widget_size_allocate (GtkWidget *widget, GdkRectangle *rect, gpointer data)
                                    GOM_EVENTS_NAMESPACE_URI,
                                    GOM_RESIZE,
                                    TRUE, FALSE, NULL, 0);
-    gom_event_target_dispatch_event (GOM_EVENT_TARGET (widget), event, &error);
+    gom_listener_list_dispatch_event (GOM_EVENT_TARGET (widget), event, &error);
     g_object_unref (event);
     if (error) {
         g_printerr (G_STRLOC": Error dispatching event: %s\n",
@@ -1064,7 +1143,7 @@ widget_scroll (GtkWidget *widget, GtkAdjustment *adjust)
                                    GOM_EVENTS_NAMESPACE_URI,
                                    GOM_SCROLL,
                                    TRUE, FALSE, NULL, 0);
-    gom_event_target_dispatch_event (GOM_EVENT_TARGET (child), event, &error);
+    gom_listener_list_dispatch_event (GOM_EVENT_TARGET (child), event, &error);
     g_object_unref (event);
     if (error) {
         g_printerr (G_STRLOC": Error dispatching event: %s\n",

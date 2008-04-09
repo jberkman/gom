@@ -1,3 +1,38 @@
+2008-04-09  jacob berkman  <jacob@ilovegom.org>
+
+	* examples/console.gom: after we change the history, synthesize an
+	End keypress, since it's easier than whatever i'm really supposed
+	to do
+
+	* src/libgom/gomwidget.c (gom_widget_event)
+	(gom_widget_event_after, widget_activate, widget_size_allocate)
+	(widget_scroll): dispatch to our ListenerList, rather than
+	ourselves, because we don't want to put these events back into the
+	gtk stream
+	(widget_dispatch_event): synthesize fake events into the gtk
+	stream
+
+	* src/libgom/gomkeyboardevt.c
+	(gom_keyboard_evt_key_identifier_to_keyval): if we don't have a
+	keyval, fall through to the number parser thing, which should be
+	in hex, not base 10
+
+	* src/libgom/gomjsdocument.c (gom_js_document_create_event): implement
+	(gom_js_document_can_dispatch): stub
+
+	* src/libgom/gomjseventtarget.c
+	(gom_js_event_target_dispatch_event): implement
+
+	* src/libgom/gomlistenerlist.c (gom_listener_list_dispatch_event):
+	this was cut from widget_event(), which has swapped return values
+	from dispatchEvent()
+
+	* src/libgom/gomjskeyboardevent.c
+	(gom_js_event_init_keyboard_event): implement
+
+	* include/gom/dom/gomabstractview.h (GOM_IS_ABSTRACT_VIEW):
+	CASE/TYPE were swapped
+
 2008-04-08  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomkeyboardevt.c (keyval_to_key_identifier_once)

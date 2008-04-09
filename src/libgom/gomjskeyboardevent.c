@@ -53,8 +53,36 @@ static JSPropertySpec gom_js_keyboard_event_props[] = { { NULL } };
 static JSBool
 gom_js_event_init_keyboard_event (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomKeyboardEvent *evt;
+
+    char *type, *identifier, *modifiers;
+    int32 location;
+    JSBool bubbles, cancelable;
+    GomAbstractView *gview;
+    JSObject *view;
+
+    evt = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_KEYBOARD_EVENT (evt)) {
+        return JS_FALSE;
+    }
+    
+    if (!JS_ConvertArguments (cx, argc, argv, "sbbosis",
+                              &type, &bubbles, &cancelable, &view,
+                              &identifier, &location, &modifiers)) {
+        return JS_FALSE;
+    }
+
+    if (view == JSVAL_NULL) {
+        gview = NULL;
+    } else {
+        gview = gom_js_object_get_g_object (cx, view);
+        if (!GOM_IS_ABSTRACT_VIEW (gview)) {
+            return JS_FALSE;
+        }
+    }
+
+    gom_keyboard_event_init_keyboard_event (evt, type, bubbles, cancelable, gview, identifier, location, modifiers);
+    return JS_TRUE;
 }
 
 static JSBool

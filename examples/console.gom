@@ -33,6 +33,11 @@
           function append (text) {
               $('#output').get (0).buffer.text += text + '\n';
           }
+          function sendEnd (target) {
+              evt = document.createEvent ("KeyboardEvent");
+              evt.initKeyboardEvent ("keydown", true, true, null, "End", 0, "");
+              target.dispatchEvent (evt);
+          }
           $('#entry').bind ('DOMActivate', function (evt) {
               if (this.text) {
                   history.unshift (this.text);
@@ -54,7 +59,7 @@
                   histIdx %= history.length;
                   if (history.length) {
                       this.text = history[histIdx];
-	              this.text.cursorPosition = history[histIdx].length - 1;
+                      sendEnd (this);
                   }
                   return false;
                 case "Down":
@@ -66,7 +71,7 @@
                       this.text = '';
                   } else {
                       this.text = history[histIdx];
-	              this.text.cursorPosition = history[histIdx].length - 1;
+                      sendEnd (this);
                   }
                   return false;
               }

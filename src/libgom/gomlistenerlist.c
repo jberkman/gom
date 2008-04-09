@@ -196,7 +196,7 @@ gom_listener_list_dispatch_event (GomEventTarget  *target,
     
     if (!GOM_IS_EVT (evt) || !GOM_IS_CUSTOM_EVENT (evt)) {
         g_warning ("I cannot work with this Event.");
-        return FALSE;
+        return TRUE;
     }
 
     /* this happens to ref our target for us */
@@ -260,7 +260,7 @@ dispatch_out:
     g_list_foreach (parents, (GFunc)g_object_unref, NULL);
     g_list_free (parents);
 
-    return gom_event_is_default_prevented (evt);
+    return !gom_event_is_default_prevented (evt);
 }
 
 GomListenerList *
