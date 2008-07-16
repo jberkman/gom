@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-lib_LTLIBRARIES += libgom.la
+noinst_LTLIBRARIES += libgom.la
 
 libgom_la_SOURCES :=				\
 	include/gommacros.h			\
@@ -12,6 +12,7 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomdominterfaces.c		\
 	src/libgom/gomelem.c			\
 	src/libgom/gomevt.c			\
+	src/libgom/gomgcmanager.c		\
 	src/libgom/gomglist.c			\
 	src/libgom/gomjscontext.c		\
 	src/libgom/gomjsdocument.c		\

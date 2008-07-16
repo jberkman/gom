@@ -21,22 +21,22 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef GOM_JS_WINDOW_H
-#define GOM_JS_WINDOW_H
+#ifndef GOM_GC_MANAGER_H
+#define GOM_GC_MANAGER_H
 
-#include <glib/gmacros.h>
-#include <jsapi.h>
+#include <gom/gomgcmanaged.h>
 
 G_BEGIN_DECLS
 
-JSObject *gom_js_window_init_object (JSContext *cx, JSObject *window);
+void gom_gc_manager_manage_runtime (JSRuntime *runtime);
 
-extern JSClass GomJSWindowClass;
+void gom_gc_manager_manage_object (JSContext *cx, GomGCManaged *obj);
 
-JSObject *gom_js_window_parse_file (JSContext *cx, JSObject *window, const char *filename);
-
-void      gom_js_window_delete_document (JSContext *cx, JSObject *window);
+void gom_gc_manager_mark_live_objects (GomGCManaged *managed,
+                                       JSContext    *cx,
+                                       JSGCStatus    status);
 
 G_END_DECLS
 
-#endif /* GOM_JS_WINDOW_H */
+#endif /* GOM_GC_MANAGER_H */
+

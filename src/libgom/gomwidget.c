@@ -700,8 +700,8 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
         g_clear_error (&error);
     }
     if (gom_event_is_default_prevented (evt)) {
-        g_object_unref (widget);
         g_object_unref (evt);
+        g_object_unref (widget);
         return TRUE;
     }
     g_object_unref (evt);
@@ -719,8 +719,8 @@ gom_widget_event (GtkWidget *widget, GdkEvent *event)
             g_clear_error (&error);
         }
         if (gom_event_is_default_prevented (evt)) {
-            g_object_unref (widget);
             g_object_unref (evt);
+            g_object_unref (widget);
             return TRUE;
         }
         g_object_unref (evt);

@@ -35,6 +35,12 @@ THE SOFTWARE.
 #include "gom/gomjsnode.h"
 #include "gom/gomjsobject.h"
 
+static void
+gom_js_document_finalize (JSContext *cx, JSObject *obj)
+{
+    GomJSNodeClass.finalize (cx, obj);
+}
+
 JSClass GomJSDocumentClass = {
     "Document",
     JSCLASS_NEW_ENUMERATE,
@@ -43,7 +49,8 @@ JSClass GomJSDocumentClass = {
     JS_PropertyStub, JS_PropertyStub,
     (JSEnumerateOp)gom_js_object_enumerate,
     JS_ResolveStub,
-    JS_ConvertStub, JS_FinalizeStub
+    JS_ConvertStub,
+    gom_js_document_finalize
 };
 
 static JSPropertySpec document_props[] = {

@@ -1,3 +1,47 @@
+2008-07-15  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomjsmouseevent.c (gom_js_mouse_event_finalize): 
+	* src/libgom/gomjsnode.c (gom_js_node_finalize): 
+	* src/libgom/gomjsevent.c (gom_js_event_finalize): 
+	* src/libgom/gomjsuievent.c (gom_js_ui_event_finalize): 
+	* src/libgom/gomjsdocument.c (gom_js_document_finalize): 
+	* src/libgom/gomjswindow.c (gom_js_window_finalize)
+	* src/libgom/gomjselement.c (gom_js_element_finalize): 
+	* src/libgom/gomjseventtarget.c (gom_js_event_target_finalize): 
+	* src/libgom/gomjskeyboardevent.c (gom_js_keyboard_event_finalize): 
+	* src/libgom/gomjseventexception.c (gom_js_event_exception_finalize): 
+	* src/libgom/gomjsdomexception.c (gom_js_dom_exception_finalize):
+	chain our finalize calls so that we remove ourselves from the
+	GObject <-> JSObject map, and don't return garbage JSObjects for
+	GObjects that have a longer lifetime
+
+	* src/libgom/gomwidget.c (gom_widget_event): reorder some unrefs for no reason
+
+	* src/libgom/gomjswindow.c (gom_js_window_log): add something for
+	apps to debug with
+	(gom_js_window_delete_document): delete our document
+
+	* src/libgom/gomjsobject.c (gom_js_object_finalize): add a little
+	more debugging bits
+	(gom_js_closure_finalize): remove our roots
+	(gom_js_closure_new): add our roots
+	(gom_js_object_define_static_enums): we should have passed a JSVal
+	here instead of an int
+
+	* src/gom/gom.c (dump_root, gc_cb, parse_idle): add hooks for
+	debugging garbage collection
+	(main): delete the window's document after gtk_main() returns
+
+	* include/gom/gomjswindow.h (gom_js_window_delete_document):
+
+	* src/libgom/Makefile.inc (noinst_LTLIBRARIES): build libgom
+	statically and don't distribute
+	(libgom_la_SOURCES): add disabled gcmanager object
+	
+	* include/gom/Makefile.inc (gominclude_HEADERS): add some util
+	objects for managing garbage collected objects that may be useful
+	in the future
+
 2008-04-09  jacob berkman  <jacob@ilovegom.org>
 
 	* examples/console.gom: after we change the history, synthesize an

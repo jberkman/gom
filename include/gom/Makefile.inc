@@ -8,6 +8,8 @@ gominclude_HEADERS :=				\
 	include/gom/gomdom.h			\
 	include/gom/gomelem.h			\
 	include/gom/gomevt.h			\
+	include/gom/gomgcmanaged.h		\
+	include/gom/gomgcmanager.h		\
 	include/gom/gomglist.h			\
 	include/gom/gomjscontext.h		\
 	include/gom/gomjsdocument.h		\

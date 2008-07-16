@@ -46,13 +46,20 @@ GOM_DEFINE_QUARK (js_window_sources);
 #define SOURCES_QUARK (gom_js_window_sources_quark ())
 #define SOURCES(cx) ((GPtrArray *)GOM_JS_CONTEXT_GET_QDATA (cx, SOURCES_QUARK))
 
+static void
+gom_js_window_finalize (JSContext *cx, JSObject *obj)
+{
+    g_message (G_STRLOC": Finalizing a Window.");
+}
+
 JSClass GomJSWindowClass = {
     "Window", 0,
 
     JS_PropertyStub, JS_PropertyStub,
     JS_PropertyStub, JS_PropertyStub,
     JS_EnumerateStub, JS_ResolveStub,
-    JS_ConvertStub, JS_FinalizeStub
+    JS_ConvertStub,
+    gom_js_window_finalize
 };
 
 static JSPropertySpec gom_js_window_props[] = {
@@ -245,6 +252,19 @@ gom_js_window_quit (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval
     return JS_TRUE;
 }
 
+static JSBool
+gom_js_window_log (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+    char *s;
+    if (!JS_ConvertArguments (cx, argc, argv, "s", &s)) {
+        return JS_FALSE;
+    }
+
+    g_print ("JAVASCRIPT: %s\n", s);
+
+    return JS_TRUE;
+}
+
 static JSFunctionSpec gom_js_window_funcs[] = {
     { "alert",         gom_js_window_alert,          1 },
     { "quit",          gom_js_window_quit,           0 },
@@ -252,6 +272,7 @@ static JSFunctionSpec gom_js_window_funcs[] = {
     { "clearInterval", gom_js_window_clear_interval, 1 },
     { "setTimeout",    gom_js_window_set_timeout,    2 },
     { "clearTimeout",  gom_js_window_clear_timeout,  1 },
+    { "log",           gom_js_window_log,            1 },
     { NULL }
 };
 
@@ -553,8 +574,8 @@ gom_js_window_parser_end_element (GMarkupParseContext *context,
             jsval rval; 
             JSString *str; 
             if (!JS_EvaluateScript(data->cx, data->window,
-                                    script, script_len,
-                                    filename, lineno,&rval)) {
+                                   script, script_len,
+                                   filename, lineno, &rval)) {
                 if (!gom_js_exception_get_error (data->cx, &err)) {
                     g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
                                  "Unknown error encountered while running script at %s:%d\n",
@@ -645,4 +666,12 @@ out:
     }
 
     return data.jsdoc;
+}
+
+void
+gom_js_window_delete_document (JSContext *cx, JSObject *window)
+{
+    JSBool found;
+    JS_SetPropertyAttributes (cx, window, "document", JSPROP_READONLY, &found);
+    JS_DeleteProperty (cx, window, "document");
 }

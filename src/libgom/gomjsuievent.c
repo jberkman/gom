@@ -35,6 +35,12 @@ THE SOFTWARE.
 
 #include <glib.h>
 
+static void
+gom_js_ui_event_finalize (JSContext *cx, JSObject *obj)
+{
+    GomJSEventClass.finalize (cx, obj);
+}
+
 JSClass GomJSUIEventClass = {
     "UIEvent", JSCLASS_NEW_ENUMERATE,
 
@@ -45,7 +51,7 @@ JSClass GomJSUIEventClass = {
     (JSEnumerateOp)gom_js_object_enumerate,
     JS_ResolveStub,
     JS_ConvertStub,
-    JS_FinalizeStub
+    gom_js_ui_event_finalize
 };
 
 static JSPropertySpec gom_js_ui_event_props[] = { { NULL } };

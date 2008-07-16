@@ -35,6 +35,12 @@ THE SOFTWARE.
 
 #include <glib.h>
 
+static void
+gom_js_keyboard_event_finalize (JSContext *cx, JSObject *obj)
+{
+    GomJSUIEventClass.finalize (cx, obj);
+}
+
 JSClass GomJSKeyboardEventClass = {
     "KeyboardEvent", JSCLASS_NEW_ENUMERATE,
 
@@ -45,7 +51,7 @@ JSClass GomJSKeyboardEventClass = {
     (JSEnumerateOp)gom_js_object_enumerate,
     JS_ResolveStub,
     JS_ConvertStub,
-    JS_FinalizeStub
+    gom_js_keyboard_event_finalize
 };
 
 static JSPropertySpec gom_js_keyboard_event_props[] = { { NULL } };

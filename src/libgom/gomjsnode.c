@@ -33,6 +33,12 @@ THE SOFTWARE.
 
 #include "gommacros.h"
 
+static void
+gom_js_node_finalize (JSContext *cx, JSObject *obj)
+{
+    GomJSEventTargetClass.finalize (cx, obj);
+}
+
 JSClass GomJSNodeClass = {
     "Node", JSCLASS_NEW_ENUMERATE,
 
@@ -43,7 +49,7 @@ JSClass GomJSNodeClass = {
     (JSEnumerateOp)gom_js_object_enumerate,
     JS_ResolveStub,
     JS_ConvertStub,
-    JS_FinalizeStub
+    gom_js_node_finalize
 };
 
 static JSPropertySpec gom_js_node_props[] = {

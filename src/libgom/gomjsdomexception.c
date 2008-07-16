@@ -33,6 +33,12 @@ THE SOFTWARE.
 
 #include <glib-object.h>
 
+static void
+gom_js_dom_exception_finalize (JSContext *cx, JSObject *obj)
+{
+    GomJSGErrorExceptionClass.finalize (cx, obj);
+}
+
 JSClass GomJSDOMExceptionClass = {
     "DOMException", JSCLASS_HAS_PRIVATE,
     JS_PropertyStub,
@@ -42,7 +48,7 @@ JSClass GomJSDOMExceptionClass = {
     JS_EnumerateStub,
     JS_ResolveStub,
     JS_ConvertStub,
-    JS_FinalizeStub
+    gom_js_dom_exception_finalize
 };
 
 static JSPropertySpec gom_js_dom_exception_props[] = { { NULL } };

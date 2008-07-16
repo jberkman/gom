@@ -168,6 +168,12 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
     return JS_TRUE;
 }
 
+static void
+gom_js_element_finalize (JSContext *cx, JSObject *obj)
+{
+    GomJSNodeClass.finalize (cx, obj);
+}
+
 JSClass GomJSElementClass = {
     "Element",
     JSCLASS_NEW_RESOLVE | JSCLASS_NEW_RESOLVE_GETS_START | JSCLASS_NEW_ENUMERATE,
@@ -177,7 +183,7 @@ JSClass GomJSElementClass = {
 
     (JSEnumerateOp)gom_js_object_enumerate,
     (JSResolveOp)gom_js_element_resolve,
-    JS_ConvertStub, JS_FinalizeStub
+    JS_ConvertStub, gom_js_element_finalize
 };
 
 static JSPropertySpec gom_js_element_props[] = {

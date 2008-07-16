@@ -26,6 +26,9 @@ THE SOFTWARE.
 #include "gom/gomjsobject.h"
 
 #include "gom/gomcamel.h"
+#ifdef GOM_USE_GC_MANAGER
+#include "gom/gomgcmanager.h"
+#endif
 #include "gom/gomjscontext.h"
 #include "gom/gomobject.h"
 #include "gom/gomvalue.h"
@@ -104,13 +107,16 @@ typedef struct {
     JSContext  *cx;
     JSObject   *obj;
     JSFunction *fun;
+    JSObject   *fun_obj;
 } GomJSClosure;
 
 static void
 gom_js_closure_finalize (gpointer data, GClosure *closure)
 {
-    /*GomJSClosure *jsclosure = (GomJSClosure *)closure;*/
-    GOM_NOT_IMPLEMENTED;
+    GomJSClosure *jsclosure = (GomJSClosure *)closure;
+    g_message(G_STRLOC": finalizing a closure");
+    JS_RemoveRoot (jsclosure->cx, &jsclosure->obj);
+    JS_RemoveRoot (jsclosure->cx, &jsclosure->fun_obj);
 }
 
 static void
@@ -188,6 +194,10 @@ gom_js_closure_new (JSContext *cx, JSObject *obj, JSFunction *fun)
     jsclosure->cx  = cx;
     jsclosure->obj = obj;
     jsclosure->fun = fun;
+    jsclosure->fun_obj = JS_GetFunctionObject (fun);
+
+    JS_AddNamedRoot (cx, &jsclosure->obj,     "JSClosure Object");
+    JS_AddNamedRoot (cx, &jsclosure->fun_obj, "JSClosure Function");
 
     g_closure_set_marshal (closure, gom_js_closure_marshal);
 
@@ -398,9 +408,13 @@ static void
 gom_js_object_finalize (JSContext *cx, JSObject *obj)
 {
     GObject *gobj = gom_js_object_get_g_object (cx, obj);
-    g_print ("Finalizing JSObject %p: unref %s %p\n",
+    g_print ("Finalizing JSObject %p: unref %s %p -> refcnt %d\n",
              obj, gobj ? g_type_name (G_TYPE_FROM_INSTANCE (gobj)) : "<NULL>",
-             gobj);
+             gobj,
+#if 0
+             gobj ? gobj->ref_count :
+#endif
+             0);
     if (gobj) {
         g_assert (G_IS_OBJECT (gobj));
         g_hash_table_remove (G2JS (cx), gobj);
@@ -551,6 +565,11 @@ gom_js_object_set_g_object (JSContext *cx, JSObject *jsobj, gpointer gobject)
 #endif
     g_hash_table_insert (JS2G (cx), jsobj, g_object_ref (gobject));
     g_hash_table_insert (G2JS (cx), gobject, jsobj);
+#ifdef GOM_GC_MANAGER_H
+    if (GOM_IS_GC_MANAGED (gobject)) {
+        gom_gc_manager_manage_object (cx, gobject);
+    }
+#endif
 }
 
 gpointer
@@ -602,7 +621,7 @@ gom_js_object_define_static_enums (JSContext *cx, JSObject *proto, GType enum_ty
         JS_DefinePropertyWithTinyId (cx, ctor,
                                      &enums->values[i].value_name[4],
                                      enums->values[i].value,
-                                     enums->values[i].value,
+                                     INT_TO_JSVAL(enums->values[i].value),
                                      gom_js_object_get_enum, NULL,
                                      JSPROP_READONLY | JSPROP_PERMANENT);
     }

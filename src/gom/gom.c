@@ -23,6 +23,9 @@ THE SOFTWARE.
 */
 #include "config.h"
 
+#ifdef GOM_USE_GC_MANAGER
+#include "gom/gomgcmanager.h"
+#endif
 #include "gom/gomjscontext.h"
 #include "gom/gomjswindow.h"
 #include "gom/gomjsobject.h"
@@ -35,7 +38,7 @@ THE SOFTWARE.
 static void
 gom_error_reporter (JSContext *cx, const char *message, JSErrorReport *report)
 {
-    g_warning ("%s:%d: Unhandled JavaScript exception: %s (%d)\n",
+    g_warning (G_STRLOC"%s:%d: Unhandled JavaScript exception: %s (%d)\n",
                report->filename, report->lineno,
                message, report->errorNumber);
 }
@@ -46,15 +49,40 @@ typedef struct {
     const char  *filename;
 } MainData;
 
+#ifdef GOM_DEBUG_GC
+static void
+dump_root (const char *name, void *rp, void *data)
+{
+    g_print ("\t%s: %p\n", name, rp);
+}
+
+static gboolean
+gc_cb (gpointer data)
+{
+    MainData *d = data;
+    g_print (G_STRLOC": running GC()...\n");
+    JS_DumpNamedRoots(JS_GetRuntime (d->cx), dump_root, NULL);
+    JS_GC (d->cx);
+    return TRUE;
+}
+#endif
+
 static gboolean
 parse_idle (gpointer data)
 {
     MainData *d = data;
+#ifdef GOM_DEBUG_GC
+    JS_GC (d->cx);
+#endif
     gom_js_window_parse_file (d->cx, d->window, d->filename);
     if (JS_IsExceptionPending (d->cx)) {
         JS_ReportPendingException (d->cx);
         JS_ClearPendingException (d->cx);
     }
+#ifdef GOM_DEBUG_GC
+    JS_GC (d->cx);
+    g_timeout_add_seconds (5, gc_cb, d);
+#endif
     return FALSE;
 }
 
@@ -76,7 +104,12 @@ main (int argc, char *argv[])
 
     gom_widget_init ();
 
-    rt   = JS_NewRuntime (0x100000); 
+    rt   = JS_NewRuntime (0x100000);
+
+#ifdef GOM_GC_MANAGER_H
+    gom_gc_manager_manage_runtime (rt);
+#endif
+
     d.cx = JS_NewContext (rt, 0x1000); 
 
     JS_SetErrorReporter (d.cx, gom_error_reporter);
@@ -98,6 +131,8 @@ main (int argc, char *argv[])
     /* parse the file in an idle so that scripts can quit() */
     g_idle_add (parse_idle, &d);
     gtk_main ();
+
+    gom_js_window_delete_document (d.cx, d.window);
 
     cxpriv = GOM_JS_CONTEXT_PRIV (d.cx);
     JS_DestroyContext (d.cx);

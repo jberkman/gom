@@ -35,6 +35,12 @@ THE SOFTWARE.
 
 #include <glib.h>
 
+static void
+gom_js_event_target_finalize (JSContext *cx, JSObject *obj)
+{
+    GomJSObjectClass.finalize (cx, obj);
+}
+
 JSClass GomJSEventTargetClass = {
     "EventTarget", JSCLASS_NEW_ENUMERATE,
 
@@ -45,7 +51,7 @@ JSClass GomJSEventTargetClass = {
     (JSEnumerateOp)gom_js_object_enumerate,
     JS_ResolveStub,
     JS_ConvertStub,
-    JS_FinalizeStub
+    gom_js_event_target_finalize
 };
 
 static JSPropertySpec gom_js_event_target_props[] = { { NULL } };
@@ -57,7 +63,7 @@ gom_js_event_target_add_event_listener (JSContext *cx, JSObject *obj, uintN argc
     JSObject         *js_listener;
     char             *type_name;
     GomEventListener *listener;
-    JSBool            use_capture;  
+    JSBool            use_capture;
 
     target = gom_js_object_get_g_object (cx, obj);
     if (!GOM_IS_EVENT_TARGET (target)) {

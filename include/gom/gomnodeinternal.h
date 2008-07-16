@@ -81,4 +81,4 @@ void  gom_node_internal_dispatch_listeners (GomNodeInternal *current_target,
                                             GomPhaseType     phase);
 G_END_DECLS
 
-#endif /* GOM_TARGET_H */
+#endif /* GOM_NODE_INTERNAL_H */
