@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([gom], [0.1], [http://code.google.com/p/ilovegom/issues/entry])
+AC_INIT([gom], [0.2], [http://code.google.com/p/ilovegom/issues/entry])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/gom/gom.c])
 AC_CONFIG_HEADER([config.h])
@@ -60,17 +60,24 @@ if test -z "$mozilla_source" ; then
 fi
 AC_MSG_CHECKING([for jsapi.c in $mozilla_source])
 if test -r "$mozilla_source"/jsapi.c ; then
-	AC_MSG_RESULT([found])
+    AC_MSG_RESULT([found])
 else
-	AC_MSG_RESULT([not found])
-	AC_MSG_CHECKING([for jsapi.c in $mozilla_source/js/src])
-	if test -r "$mozilla_source"/js/src/jsapi.c ; then
-		AC_MSG_RESULT([found])
-		mozilla_source="$mozilla_source"/js/src
-	else
-		AC_MSG_RESULT([not found])
-		AC_MSG_ERROR([$mozilla_source does not look like a Mozilla JavaScript source tree.])
-	fi
+    AC_MSG_RESULT([not found])
+    AC_MSG_CHECKING([for jsapi.c in $mozilla_source/src])
+    if test -r "$mozilla_source"/src/jsapi.c ; then
+        AC_MSG_RESULT([found])
+        mozilla_source="$mozilla_source"/src
+    else
+        AC_MSG_RESULT([not found])
+        AC_MSG_CHECKING([for jsapi.c in $mozilla_source/js/src])
+        if test -r "$mozilla_source"/js/src/jsapi.c ; then
+            AC_MSG_RESULT([found])
+            mozilla_source="$mozilla_source"/js/src
+        else
+            AC_MSG_RESULT([not found])
+            AC_MSG_ERROR([$mozilla_source does not look like a Mozilla JavaScript source tree.])
+        fi
+    fi
 fi
 AC_MSG_CHECKING([for config.mk in $mozilla_source])
 if test -r "$mozilla_source"/config.mk ; then

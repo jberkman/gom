@@ -1,5 +1,7 @@
 2008-07-18  jacob berkman  <jacob@ilovegom.org>
 
+	* configure.ac: bump version to 0.2, tweak mozilla checks for latest js tarball
+
 	* examples/hello.gom: we auto-delete on quit now
 
 	* src/libgom/gomjseventlistener.c (gom_js_event_listener_handle_event): drop our C ref
