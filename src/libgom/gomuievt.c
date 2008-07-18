@@ -78,6 +78,7 @@ gom_ui_evt_init_ui_event_ns (GomUIEvent      *evt,
     g_object_get (evt, "target", &target, NULL);
     if (target) {
         g_warning ("Event %p has already begun dispatching; changes are not permitted.", evt);
+        g_object_unref (target);
         return;
     }
 

@@ -127,6 +127,7 @@ gom_mouse_evt_init_mouse_event_ns (GomMouseEvent   *evt,
     g_object_get (evt, "target", &target, NULL);
     if (target) {
         g_warning ("Event %p has already begun dispatching; changes are not permitted.", evt);
+        g_object_unref (target);
         return;
     }
 

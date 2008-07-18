@@ -35,6 +35,7 @@ THE SOFTWARE.
 
 #include "gommacros.h"
 
+#include <gtk/gtkwindow.h>
 #include <string.h>
 
 enum {
@@ -131,7 +132,7 @@ gom_noodle_set_property (GObject *object,
 
     switch (property_id) {
     case PROP_OWNER_DOCUMENT:
-        priv->owner_document = g_value_dup_object (value);
+        GOM_SET_WEAK (priv->owner_document, g_value_get_object (value));
         break;
     case PROP_NAMESPACE_URI:
     case PROP_PREFIX:
@@ -383,14 +384,15 @@ gom_noodle_set_parent (GomNodeInternal *child, GomNode *parent)
     g_free (child_name);
     g_free (parent_name);
 #endif
-    priv->next_sibling = NULL;
-    priv->prev_sibling = NULL;
-    priv->parent_node  = parent;
+    GOM_SET_WEAK (priv->next_sibling, NULL);
+    GOM_SET_WEAK (priv->prev_sibling, NULL);
+    GOM_SET_WEAK (priv->parent_node, parent);
 }
 
 static void
 gom_noodle_set_prev_sibling (GomNodeInternal *child, GomNode *sibling)
 {
+    GomNoodlePrivate *priv = PRIV (child);
 #if 0
     char *child_name, *sibling_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
@@ -403,12 +405,13 @@ gom_noodle_set_prev_sibling (GomNodeInternal *child, GomNode *sibling)
     g_free (child_name);
     g_free (sibling_name);
 #endif
-    PRIV (child)->prev_sibling = sibling;
+    GOM_SET_WEAK (priv->prev_sibling, sibling);
 }
 
 static void
 gom_noodle_set_next_sibling (GomNodeInternal *child, GomNode *sibling)
 {
+    GomNoodlePrivate *priv = PRIV (child);
 #if 0
     char *child_name, *sibling_name = NULL;
     g_object_get (child, "node-name", &child_name, NULL);
@@ -421,7 +424,7 @@ gom_noodle_set_next_sibling (GomNodeInternal *child, GomNode *sibling)
     g_free (child_name);
     g_free (sibling_name);
 #endif
-    PRIV (child)->next_sibling = sibling;
+    GOM_SET_WEAK (priv->next_sibling, sibling);
 }
 
 static void
@@ -468,26 +471,38 @@ G_DEFINE_TYPE_WITH_CODE (GomNoodle, gom_noodle, G_TYPE_OBJECT,
 static void gom_noodle_init (GomNoodle *noodle) { }
 
 static void
-gom_noodle_finalize (GObject *object)
+unref_child (gpointer data, gpointer user_data)
+{
+    g_print ("refcnt %s -> %d\n", g_type_name (G_TYPE_FROM_INSTANCE (data)), G_OBJECT (data)->ref_count - 1);
+    if (GTK_IS_WINDOW (data)) {
+        gtk_object_destroy (GTK_OBJECT (data));
+    } else {
+        g_object_unref (data);
+    }
+}
+
+static void
+gom_noodle_dispose (GObject *object)
 {
     GomNoodlePrivate *priv = PRIV (object);
-#if 0
+
+#if 1
     g_print (G_STRLOC": %s %p\n",
              g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
 #endif
-    g_list_foreach (priv->children, (GFunc)g_object_unref, NULL);
-    g_free (priv->children);
+    g_list_foreach (priv->children, unref_child, NULL);
+    g_list_free (priv->children);
     priv->children = NULL;
-
-    if (priv->owner_document) {
-        g_object_unref (priv->owner_document);
-        priv->owner_document = NULL;
-    }
 
     gom_listener_list_free (priv->listeners);
     priv->listeners = NULL;
 
-    G_OBJECT_CLASS (gom_noodle_parent_class)->finalize (object);
+    GOM_UNSET_WEAK (priv->prev_sibling);
+    GOM_UNSET_WEAK (priv->next_sibling);
+    GOM_UNSET_WEAK (priv->parent_node);
+    GOM_UNSET_WEAK (priv->owner_document);
+
+    G_OBJECT_CLASS (gom_noodle_parent_class)->dispose (object);
 }
 
 static void
@@ -519,7 +534,7 @@ gom_noodle_class_init (GomNoodleClass *klass)
     g_type_class_add_private (klass, sizeof (GomNoodlePrivate));
 
     oclass->constructed  = gom_noodle_constructed;
-    oclass->finalize     = gom_noodle_finalize;
+    oclass->dispose      = gom_noodle_dispose;
     oclass->get_property = gom_noodle_get_property;
     oclass->set_property = gom_noodle_set_property;
 

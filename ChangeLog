@@ -1,3 +1,89 @@
+2008-07-18  jacob berkman  <jacob@ilovegom.org>
+
+	* examples/hello.gom: we auto-delete on quit now
+
+	* src/libgom/gomjseventlistener.c (gom_js_event_listener_handle_event): drop our C ref
+	(gom_js_event_listener_dispose)
+	(gom_js_event_listener_class_init): finalize -> dispose
+
+	* src/libgom/gomwidget.c (free_priv): don't leak ownerDocument
+	(widget_get_attribute_ns): don't double-free gvalue
+	(gom_widget_set_property): use a weak ref for our owner doc
+
+	* src/libgom/gomjsnode.c (gom_js_node_append_child): drop our C ref
+
+	* src/libgom/gomdom.c (gom_dom_has_feature): add BasicEvents support
+	(gom_dom_create_document): drop ref to document element
+
+	* src/libgom/gomjsdocument.c (gom_js_document_create_element):
+	unref our ref to elem, as we are handing off sole ownership to the
+	jsobj
+	(gom_js_document_get_elements_by_tag_name): impl
+	(gom_js_document_get_element_by_id): ref ownership -> jsobj
+	(gom_js_document_create_event): ditto
+
+	* src/libgom/gomchardata.c (gom_char_data_dispose)
+	(gom_char_data_class_init): finalize -> dispose
+
+	* src/libgom/gomdoc.c (gom_doc_get_property): don't leak a
+	reference to firstChild
+	(delete_window, gom_doc_create_element_ns): partial; we certainly
+	don't want gtk destroying our windows, so emit an unload event and
+	then quit instead
+	(matches_by_tag_name): does an element's tag match a string?
+	(get_elements_by_tag_name, gom_doc_get_elements_by_tag_name_ns): impl
+	(get_element_by_id): refactor to not leak refs
+	(gom_doc_get_element_by_id): ditto
+	(gom_doc_dispose, gom_doc_class_init): finalize -> dispose
+
+	* src/libgom/gomjswindow.c (gom_js_window_parse_file): unref our
+	doc, as jsdoc now holds the reference
+
+	* src/libgom/gomevt.c (gom_evt_set_dispatch_state)
+	(gom_evt_set_target, gom_evt_dispose, gom_evt_class_init): use
+	weak pointers, and finalize -> dispose
+
+	* src/libgom/gomjselement.c (gom_js_element_get_prop): use a const
+	GValue
+
+	* src/libgom/gomjseventtarget.c (gom_js_event_target_remove_event_listener): implement
+
+	* src/libgom/gomglist.c (gom_g_list_dispose): unref our nodes
+
+	* src/libgom/gomelem.c (gom_elem_get_attribute_ns): don't free the
+	looked-up value; we don't own it
+	(gom_elem_dispose, gom_elem_class_init): finalize -> dispose
+
+	* src/libgom/gomlistenerlist.c (gom_listener_list_will_trigger):
+	propagate using parent-node, not parent
+	(gom_listener_list_dispatch_event): ditto
+
+	* src/libgom/gomnoodle.c (gom_noodle_set_property)
+	(gom_noodle_set_parent, gom_noodle_set_prev_sibling)
+	(gom_noodle_set_next_sibling, gom_noodle_dispose): use weak
+	references for relationships we don't own
+	(ref_info): destroy GtkWindows rather than unrefing - that's just
+	how it's done
+	(gom_noodle_class_init): convert finalize -> dispose
+
+	* src/libgom/gomkeyboardevt.c (gom_keyboard_evt_init_keyboard_event_ns): 
+	* src/libgom/gomuievt.c (gom_ui_evt_init_ui_event_ns): 
+	* src/libgom/gommouseevt.c (gom_mouse_evt_init_mouse_event_ns):
+	don't leak a ref in error checking
+
+	* src/gom/gom.c (main): use JS_ClearScope() instead of manually
+	deleting our document
+
+	* include/gom/gomjswindow.[ch] (gom_js_window_delete_document):
+	remove as this is unneeded
+
+	* include/gommacros.h (GOM_SET_WEAK): util macro for using weak
+	pointers
+
+	* include/gom/gomobject.h: 
+	* src/libgom/gomobject.c (gom_object_get_attribute)
+	(gom_object_set_attribute): use const GValues
+
 2008-07-15  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomjsmouseevent.c (gom_js_mouse_event_finalize): 

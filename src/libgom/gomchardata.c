@@ -139,7 +139,7 @@ G_DEFINE_TYPE_WITH_CODE (GomCharData, gom_char_data, GOM_TYPE_NOODLE,
 static void gom_char_data_init (GomCharData *char_data) { }
 
 static void
-gom_char_data_finalize (GObject *object)
+gom_char_data_dispose (GObject *object)
 {
     GomCharDataPrivate *priv = PRIV (object);
 #if 0
@@ -149,7 +149,7 @@ gom_char_data_finalize (GObject *object)
     g_free (priv->data);
     priv->data = NULL;
 
-    G_OBJECT_CLASS (gom_char_data_parent_class)->finalize (object);
+    G_OBJECT_CLASS (gom_char_data_parent_class)->dispose (object);
 }
 
 static void
@@ -159,7 +159,7 @@ gom_char_data_class_init (GomCharDataClass *klass)
 
     g_type_class_add_private (klass, sizeof (GomCharDataPrivate));
 
-    oclass->finalize     = gom_char_data_finalize;
+    oclass->dispose      = gom_char_data_dispose;
     oclass->get_property = gom_char_data_get_property;
     oclass->set_property = gom_char_data_set_property;
 

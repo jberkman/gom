@@ -101,6 +101,8 @@ gom_js_node_append_child (JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
         return gom_js_exception_set_error (cx, &error);
     }
     *rval = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, new_child));
+    g_object_unref (new_child);
+
     g_assert (*rval == OBJECT_TO_JSVAL (js_new_child));
     return JS_TRUE;
 }

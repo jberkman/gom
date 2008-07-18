@@ -179,10 +179,7 @@ gom_evt_set_dispatch_state (GomCustomEvent *gom_custom_event,
 {
     GomEvtPrivate *priv = PRIV (gom_custom_event);
 
-    if (priv->current_target) {
-        g_object_unref (priv->current_target);
-    }
-    priv->current_target = target ? g_object_ref (target) : NULL;
+    GOM_SET_WEAK (priv->current_target, target);
 
     priv->phase_type = phase;
 }
@@ -201,7 +198,7 @@ gom_evt_set_target (GomEvt *evt, GomEventTarget *target)
         return;
     }
 
-    priv->target = g_object_ref (target);
+    GOM_SET_WEAK (priv->target, target);
 }
 
 GOM_IMPLEMENT (EVENT,        event,        gom_evt);
@@ -223,10 +220,10 @@ gom_evt_init (GomEvt *event)
 }
 
 static void
-gom_evt_finalize (GObject *object)
+gom_evt_dispose (GObject *object)
 {
     GomEvtPrivate *priv = PRIV (object);
-#if 0
+#if 1
     g_print (G_STRLOC": %s %p\n",
              g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
 #endif
@@ -236,17 +233,10 @@ gom_evt_finalize (GObject *object)
     g_free (priv->type);
     priv->type = NULL;
 
-    if (priv->target) {
-        g_object_unref (priv->target);
-        priv->target = NULL;
-    }
+    GOM_UNSET_WEAK (priv->target);
+    GOM_UNSET_WEAK (priv->current_target);
 
-    if (priv->current_target) {
-        g_object_unref (priv->current_target);
-        priv->current_target = NULL;
-    }
-
-    G_OBJECT_CLASS (gom_evt_parent_class)->finalize (object);
+    G_OBJECT_CLASS (gom_evt_parent_class)->dispose (object);
 }
 
 static void
@@ -257,7 +247,7 @@ gom_evt_class_init (GomEvtClass *klass)
     g_type_class_add_private (klass, sizeof (GomEvtPrivate));
 
     oclass->get_property = gom_evt_get_property;
-    oclass->finalize     = gom_evt_finalize;
+    oclass->dispose      = gom_evt_dispose;
 
     g_object_class_override_property (oclass, PROP_TYPE,           "type");
     g_object_class_override_property (oclass, PROP_TARGET,         "target");

@@ -67,7 +67,7 @@ gom_object_resolve (GObject *gobj, const char *name, GParamSpec **spec, guint *s
     return *spec != NULL;
 }
 
-GValue *
+const GValue *
 gom_object_get_attribute (GObject *obj, const char *name)
 {
     GHashTable *attrs = ATTRS (obj);
@@ -83,7 +83,7 @@ free_value (gpointer data)
 }
 
 void
-gom_object_set_attribute (GObject *obj, const char *name, GValue *value)
+gom_object_set_attribute (GObject *obj, const char *name, const GValue *value)
 {
     GHashTable *attrs = ATTRS (obj);
     GValue *newval;

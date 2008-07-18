@@ -89,7 +89,9 @@ gom_js_document_create_element(JSContext *cx, JSObject *obj, uintN argc, jsval *
         return gom_js_exception_set_error (cx, &error);
     }
     *rval = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, elem));
-
+    if (elem) {
+        g_object_unref (elem);
+    }
     return JS_TRUE;
 }
 
@@ -145,8 +147,25 @@ gom_js_document_create_entity_reference (JSContext *cx, JSObject *obj, uintN arg
 static JSBool
 gom_js_document_get_elements_by_tag_name (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomDocument *doc;
+    GomNodeList *nodes;
+    char *tag_name;
+
+    doc = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_DOCUMENT (doc)) {
+        return JS_FALSE;
+    }
+
+    if (!JS_ConvertArguments (cx, argc, argv, "s", &tag_name)) {
+        return JS_FALSE;
+    }
+
+    nodes = gom_document_get_elements_by_tag_name (doc, tag_name);
+    *rval = nodes ? OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, nodes)) : JSVAL_NULL;
+    if (nodes) {
+        g_object_unref (nodes);
+    }
+    return JS_TRUE;
 }
 
 static JSBool
@@ -205,7 +224,9 @@ gom_js_document_get_element_by_id (JSContext *cx, JSObject *obj, uintN argc, jsv
 
     elem = gom_document_get_element_by_id (doc, element_id);
     *rval = elem ? OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, elem)) : JSVAL_NULL;
-
+    if (elem) {
+        g_object_unref (elem);
+    }
     return JS_TRUE;
 }
 
@@ -232,7 +253,9 @@ gom_js_document_create_event (JSContext *cx, JSObject *obj, uintN argc, jsval *a
     }
 
     *rval = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (cx, evt));
-
+    if (evt) {
+        g_object_unref (evt);
+    }
     return JS_TRUE;
 }
 

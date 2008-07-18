@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "gom/gomjswindow.h"
 
 #include "gom/dom/gomdocument.h"
+#include "gom/dom/gomdocumentevent.h"
 #include "gom/dom/gomdomimplementation.h"
 #include "gom/dom/gomeventtarget.h"
 #include "gom/gomdom.h"
@@ -659,19 +660,14 @@ gom_js_window_parse_file (JSContext  *cx,
     }
     g_markup_parse_context_free (ctx);
     g_free (xml);
+    if (data.doc) {
+        g_object_unref (data.doc);
+    }
 
 out:
-    if (error) {        
+    if (error) {
         gom_js_exception_set_error (cx, &error);
     }
 
     return data.jsdoc;
-}
-
-void
-gom_js_window_delete_document (JSContext *cx, JSObject *window)
-{
-    JSBool found;
-    JS_SetPropertyAttributes (cx, window, "document", JSPROP_READONLY, &found);
-    JS_DeleteProperty (cx, window, "document");
 }

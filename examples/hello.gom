@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gom xmlns="http://ilovegom.org/Gom">
   <app>
-    <GtkWindow id="win" title="Gom 0.0" widthRequest="200" heightRequest="50" borderWidth="20" ondeleteEvent="quit()"
+    <GtkWindow id="win" title="Gom 0.0" widthRequest="200" heightRequest="50" borderWidth="20"
       xmlns="http://ilovegom.org/Gtk">
       <GtkLabel label="Hello, World"/>
     </GtkWindow>

@@ -30,9 +30,9 @@ G_BEGIN_DECLS
 
 gboolean  gom_object_resolve (GObject *gobj, const char *name, GParamSpec **spec, guint *signal_id);
 
-GValue   *gom_object_get_attribute (GObject *obj, const char *name);
-void      gom_object_set_attribute (GObject *obj, const char *name, GValue *value);
-void      gom_object_attributes_foreach (GObject *obj, GHFunc func, gpointer user_data);
+const GValue *gom_object_get_attribute (GObject *obj, const char *name);
+void          gom_object_set_attribute (GObject *obj, const char *name, const GValue *value);
+void          gom_object_attributes_foreach (GObject *obj, GHFunc func, gpointer user_data);
 
 G_END_DECLS
 

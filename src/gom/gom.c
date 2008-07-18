@@ -132,8 +132,7 @@ main (int argc, char *argv[])
     g_idle_add (parse_idle, &d);
     gtk_main ();
 
-    gom_js_window_delete_document (d.cx, d.window);
-
+    JS_ClearScope (d.cx, d.window);
     cxpriv = GOM_JS_CONTEXT_PRIV (d.cx);
     JS_DestroyContext (d.cx);
     g_object_unref (cxpriv);

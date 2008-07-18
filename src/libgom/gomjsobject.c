@@ -408,8 +408,9 @@ static void
 gom_js_object_finalize (JSContext *cx, JSObject *obj)
 {
     GObject *gobj = gom_js_object_get_g_object (cx, obj);
-    g_print ("Finalizing JSObject %p: unref %s %p -> refcnt %d\n",
-             obj, gobj ? g_type_name (G_TYPE_FROM_INSTANCE (gobj)) : "<NULL>",
+    g_print ("Finalizing JSObject %s %p: unref %s %p -> refcnt %d\n",
+             JS_GET_CLASS (cx, obj)->name, obj,
+             gobj ? g_type_name (G_TYPE_FROM_INSTANCE (gobj)) : "<NULL>",
              gobj,
 #if 0
              gobj ? gobj->ref_count :

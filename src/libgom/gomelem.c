@@ -143,14 +143,13 @@ gom_elem_set_property (GObject      *object,
 static char *
 gom_elem_get_attribute_ns (GomElement *elem, const char *namespace_uri, const char *name)
 {
-    GValue *gvalp;
+    const GValue *gvalp;
     char *ret = NULL;
     gvalp = gom_object_get_attribute (G_OBJECT (elem), name);
     if (gvalp) {
         if (G_VALUE_HOLDS_STRING (gvalp)) {
             ret = g_value_dup_string (gvalp);
         }
-        g_value_unset (gvalp);
     }
     return ret;
 
@@ -266,7 +265,7 @@ G_DEFINE_TYPE_WITH_CODE (GomElem, gom_elem, GOM_TYPE_NOODLE,
 static void gom_elem_init (GomElem *elem) { }
 
 static void
-gom_elem_finalize (GObject *object)
+gom_elem_dispose (GObject *object)
 {
     GomElemPrivate *priv = PRIV (object);
 
@@ -279,10 +278,13 @@ gom_elem_finalize (GObject *object)
     g_free (priv->local_name);
     priv->local_name = NULL;
 
+    if (priv->tag_name) {
+        g_print (G_STRLOC": <%s>\n", priv->tag_name);
+    }
     g_free (priv->tag_name);
     priv->tag_name = NULL;
 
-    G_OBJECT_CLASS (gom_elem_parent_class)->finalize (object);
+    G_OBJECT_CLASS (gom_elem_parent_class)->dispose (object);
 }
 
 static void
@@ -307,7 +309,7 @@ gom_elem_class_init (GomElemClass *klass)
     oclass->get_property = gom_elem_get_property;
     oclass->set_property = gom_elem_set_property;
     oclass->constructed  = gom_elem_constructed;
-    oclass->finalize     = gom_elem_finalize;
+    oclass->dispose      = gom_elem_dispose;
 
     g_object_class_override_property (oclass, PROP_TAG_NAME,      "tag-name");
     g_object_class_override_property (oclass, PROP_TAG_NAME,      "node-name");

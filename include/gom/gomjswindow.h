@@ -35,8 +35,6 @@ extern JSClass GomJSWindowClass;
 
 JSObject *gom_js_window_parse_file (JSContext *cx, JSObject *window, const char *filename);
 
-void      gom_js_window_delete_document (JSContext *cx, JSObject *window);
-
 G_END_DECLS
 
 #endif /* GOM_JS_WINDOW_H */

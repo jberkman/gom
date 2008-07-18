@@ -95,6 +95,7 @@ gom_js_event_listener_handle_event (GomEventListener *listener,
         return;
     }
 
+    /* this reference we are "giving" to JS below */
     argv = OBJECT_TO_JSVAL (gom_js_object_get_or_create_js_object (priv->cx, evt));
 
     if (JS_ObjectIsFunction (priv->cx, priv->obj)) {
@@ -111,6 +112,7 @@ gom_js_event_listener_handle_event (GomEventListener *listener,
 
         g_object_get (evt, "target", &target, NULL);
         obj = gom_js_object_get_or_create_js_object (priv->cx, target);
+        g_object_unref (target);
 
         JS_CallFunctionValue (priv->cx, obj, fval, 1, &argv, &rval);
     } else {
@@ -126,7 +128,7 @@ G_DEFINE_TYPE_WITH_CODE (GomJSEventListener, gom_js_event_listener, G_TYPE_OBJEC
 static void gom_js_event_listener_init (GomJSEventListener *listener) { }
 
 static void
-gom_js_event_listener_finalize (GObject *obj)
+gom_js_event_listener_dispose (GObject *obj)
 {
     GomJSEventListenerPrivate *priv = PRIV (obj);
     g_print (G_STRLOC": %s %p\n", g_type_name (G_TYPE_FROM_INSTANCE (obj)), obj);
@@ -140,7 +142,7 @@ gom_js_event_listener_finalize (GObject *obj)
         priv->obj = NULL;
     }
 
-    G_OBJECT_CLASS (gom_js_event_listener_parent_class)->finalize (obj);
+    G_OBJECT_CLASS (gom_js_event_listener_parent_class)->dispose (obj);
 }
 
 static void
@@ -151,7 +153,7 @@ gom_js_event_listener_class_init (GomJSEventListenerClass *klass)
     g_type_class_add_private (klass, sizeof (GomJSEventListenerPrivate));
     
     oclass->set_property = gom_js_event_listener_set_property;
-    oclass->finalize     = gom_js_event_listener_finalize;
+    oclass->dispose      = gom_js_event_listener_dispose;
 
     g_object_class_install_property (
         oclass, PROP_JS_CONTEXT,

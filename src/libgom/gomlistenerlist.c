@@ -148,7 +148,7 @@ gom_listener_list_will_trigger (GomListenerList *list,
     if (gom_listener_list_has_event_listener (list, namespace_uri, type)) {
         return TRUE;
     }
-    g_object_get (target, "parent", &parent, NULL);
+    g_object_get (target, "parent-node", &parent, NULL);
     if (!parent) {
         return FALSE;
     }
@@ -209,7 +209,9 @@ gom_listener_list_dispatch_event (GomEventTarget  *target,
                   NULL);
 
     parents = NULL;
-    for (g_object_get (target, "parent", &node, NULL); node; g_object_get (node, "parent", &node, NULL)) {
+    for (g_object_get (target, "parent-node", &node, NULL);
+         node;
+         g_object_get (node, "parent-node", &node, NULL)) {
         /* g_object_get() refs the object */
         parents = g_list_prepend (parents, node);
     }

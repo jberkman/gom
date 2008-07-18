@@ -99,6 +99,7 @@ gom_g_list_dispose (GObject *obj)
     GomGListPrivate *priv = PRIV (obj);
 
     if (priv->glist) {
+        g_list_foreach (priv->glist, (GFunc)g_object_unref, NULL);
         g_list_free (priv->glist);
         priv->glist = NULL;
     }

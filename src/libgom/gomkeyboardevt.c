@@ -382,6 +382,7 @@ gom_keyboard_evt_init_keyboard_event_ns (GomKeyboardEvent   *evt,
     g_object_get (evt, "target", &target, NULL);
     if (target) {
         g_warning ("Event %p has already begun dispatching; changes are not permitted.", evt);
+        g_object_unref (target);
         return;
     }
 

@@ -48,7 +48,7 @@ gom_js_element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     const char *name;
     guint signal_id;
 
-    GValue *gval;
+    const GValue *gval;
     GError *error = NULL;
 
     if (JSVAL_IS_INT (id)) {

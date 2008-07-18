@@ -99,6 +99,10 @@ static void
 free_priv (gpointer data)
 {
     GomWidgetPrivate *priv = data;
+    if (priv->tag_name) {
+        g_print (G_STRLOC": Freeing a <%s>'s privates\n", priv->tag_name);
+    }
+    GOM_UNSET_WEAK (priv->owner_document);
     gom_listener_list_free (priv->listeners);
     g_free (priv->namespace_uri);
     g_free (priv->prefix);
@@ -278,7 +282,7 @@ widget_get_attribute_ns (GomElement *elem, const char *namespace_uri, const char
 {
     GParamSpec *spec;
     GValue gval = { 0 };
-    GValue *gvalp;
+    const GValue *gvalp;
     char *ret = NULL;
 
     spec = g_object_class_find_property (G_OBJECT_GET_CLASS (elem), name);
@@ -295,7 +299,6 @@ widget_get_attribute_ns (GomElement *elem, const char *namespace_uri, const char
             if (G_VALUE_HOLDS_STRING (gvalp)) {
                 ret = g_value_dup_string (gvalp);
             }
-            g_value_unset (gvalp);
         }
     }
 
@@ -533,7 +536,7 @@ gom_widget_set_property (GObject      *object,
 
     switch (property_id) {
     case PROP_OWNER_DOCUMENT:
-        priv->owner_document = g_value_dup_object (value);
+        GOM_SET_WEAK (priv->owner_document, g_value_get_object (value));
         break;
     case PROP_NAMESPACE_URI:
         priv->namespace_uri = g_value_dup_string (value);

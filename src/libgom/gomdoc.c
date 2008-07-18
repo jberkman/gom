@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "gom/dom/gomkeyboardevent.h"
 #include "gom/dom/gommouseevent.h"
 #include "gom/gomelem.h"
+#include "gom/gomglist.h"
 #include "gom/gomkeyboardevt.h"
 #include "gom/gommouseevt.h"
 #include "gom/gomobject.h"
@@ -39,7 +40,9 @@ THE SOFTWARE.
 
 #include "gommacros.h"
 
+#include <gtk/gtkmain.h>
 #include <gtk/gtkwidget.h>
+#include <gtk/gtkwindow.h>
 
 #include <string.h>
 
@@ -79,6 +82,9 @@ gom_doc_get_property (GObject    *object,
         if (GOM_IS_ELEMENT (elem)) {
             g_value_set_object (value, elem);
         }
+        if (G_IS_OBJECT (elem)) {
+            g_object_unref (elem);
+        }
         break;
     case PROP_NODE_NAME:
         g_value_set_static_string (value, "#document");
@@ -110,6 +116,39 @@ gom_doc_set_property (GObject *object,
         }
     }
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+}
+
+static gboolean
+delete_window (GtkWidget *w)
+{
+    GomEvent         *unload;
+    GomDocumentEvent *doc;
+    GError           *err = NULL;
+
+    g_object_get (w, "owner-document", &doc, NULL);
+    g_assert (GOM_IS_DOCUMENT_EVENT (doc));
+
+    unload = gom_document_event_create_event (doc, "Event", &err);
+    if (err) {
+        g_error (G_STRLOC": Could not create an unload event: %s", err->message);
+        g_assert_not_reached ();
+        return TRUE;
+    }
+
+    gom_event_init_event (unload, "unload", FALSE, FALSE);
+    gom_event_target_dispatch_event (GOM_EVENT_TARGET (doc), unload, &err);
+    if (err) {
+        g_error (G_STRLOC": Error dispatching unload event: %s", err->message);
+        g_assert_not_reached ();
+        return TRUE;
+    }
+
+    g_object_unref (unload);
+    g_object_unref (doc);
+
+    gtk_main_quit ();
+
+    return TRUE;
 }
 
 static GomElement *
@@ -173,6 +212,9 @@ gom_doc_create_element_ns (GomDocument *doc,
     }
 
     if (GTK_IS_WIDGET (obj)) {
+        if (GTK_IS_WINDOW (obj)) {
+            g_signal_connect (obj, "delete-event", G_CALLBACK (delete_window), NULL);
+        }
         gtk_widget_show (GTK_WIDGET (obj));
     }
 
@@ -207,6 +249,9 @@ gom_doc_create_element (GomDocument *doc,
     }
 
     if (GTK_IS_WIDGET (obj)) {
+        if (GTK_IS_WINDOW (obj)) {
+            g_signal_connect (obj, "delete-event", G_CALLBACK (delete_window), NULL);
+        }
         gtk_widget_show (GTK_WIDGET (obj));
     }
 
@@ -284,13 +329,79 @@ gom_doc_create_entity_reference (GomDocument *doc,
     return NULL;
 }
 
+static gboolean
+matches_by_tag_name (GomNode    *node,
+                     const char *namespace_uri,
+                     const char *qualified_name)
+{
+    char *tag_prop;
+    char *ns_prop;
+    gboolean retval = FALSE;
+
+    /* i have a paper here that entitles me to fast track status. */
+    if (!strcmp (qualified_name, "*")) {
+        return TRUE;
+    }
+    g_object_get (node,
+                  "namespace-uri", &ns_prop,
+                  "tag-name", &tag_prop,
+                  NULL);
+    
+    retval = !strcmp (qualified_name, tag_prop) &&
+        (!namespace_uri || !strcmp (namespace_uri, ns_prop));
+
+    g_print ("<%s xmlns=\"%s\"> == <%s xmlns=\"%s\"> => %d\n",
+             tag_prop, ns_prop,
+             qualified_name, namespace_uri,
+             retval);
+
+    g_free (ns_prop);
+    g_free (tag_prop);
+
+    return retval;
+}
+                     
+
+static GList *
+get_elements_by_tag_name (GList      *li,
+                          GomNode    *node,
+                          const char *namespace_uri,
+                          const char *qualified_name)
+{
+    GomNode *old_node;
+    
+    if (matches_by_tag_name (node, namespace_uri, qualified_name)) {
+        li = g_list_prepend (li, g_object_ref (node));
+    }
+
+    for (g_object_get (node, "first-child", &node, NULL);
+         node;
+         old_node = node,
+             g_object_get (old_node, "next-sibling", &node, NULL),
+             g_object_unref (old_node)) {
+        if (GOM_IS_ELEMENT (node)) {
+            li = get_elements_by_tag_name (li, node, namespace_uri, qualified_name);
+        }
+    }
+
+    return li;
+}
+
 static GomNodeList *
 gom_doc_get_elements_by_tag_name_ns (GomDocument *doc,
                                      const char  *namespace_uri,
                                      const char  *qualified_name)
 {
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
+    GomNode *node;
+    GList   *li;
+
+    g_object_get (doc, "document-element", &node, NULL);
+
+    li = get_elements_by_tag_name (NULL, node, namespace_uri, qualified_name);
+
+    g_object_unref (node);
+
+    return gom_g_list_new (g_list_reverse (li));
 }
 
 static GomNodeList *
@@ -311,22 +422,27 @@ gom_doc_import_node (GomDocument *doc,
 }
 
 static GomElement *
-element_get_element_by_id (GomElement *elem,
-                           const char *element_id)
+get_element_by_id (GomNode    *node,
+                   const char *element_id)
 {
-    GValue *gval;
-    GomNode *node;
+    const GValue *gval;
+    GomNode *old_node;
     GomElement *ret;
 
-    gval = gom_object_get_attribute (G_OBJECT (elem), "id");
-    if (gval && G_VALUE_HOLDS_STRING (gval) && !strcmp (g_value_get_string (gval), element_id)) {
-        return elem;
-    }
-
-    for (g_object_get (elem, "first-child", &node, NULL); node; g_object_get (node, "next-sibling", &node, NULL)) {
+    for (g_object_get (node, "first-child", &node, NULL);
+         node;
+         old_node = node,
+             g_object_get (old_node, "next-sibling", &node, NULL),
+             g_object_unref (old_node)) {
         if (GOM_IS_ELEMENT (node)) {
-            ret = element_get_element_by_id (GOM_ELEMENT (node), element_id);
+            gval = gom_object_get_attribute (G_OBJECT (node), "id");
+            if (gval && G_VALUE_HOLDS_STRING (gval) && !strcmp (g_value_get_string (gval), element_id)) {
+                return GOM_ELEMENT (node);
+            }
+
+            ret = get_element_by_id (node, element_id);
             if (ret) {
+                g_object_unref (node);
                 return ret;
             }
         }
@@ -339,24 +455,14 @@ element_get_element_by_id (GomElement *elem,
 static GomElement *
 gom_doc_get_element_by_id (GomDocument *doc,
                            const char  *element_id)
- {
-    GomNodeList *children;
-    GomNode *node;
-    GomElement *elem = NULL;
-    gulong i, length;
-    
-    g_object_get (doc, "child-nodes", &children, NULL);
-    g_object_get (children, "length", &length, NULL);
-    for (i = 0; i < length; i++) {
-        node = gom_node_list_item (children, i);
-        if (GOM_IS_ELEMENT (node)) {
-            elem = element_get_element_by_id (GOM_ELEMENT (node), element_id);
-            if (elem) {
-                break;
-            }
-        }
-    }
-    g_object_unref (children);
+{
+    GomElement *elem;
+    GomNode    *node;
+
+    g_object_get (doc, "document-element", &node, NULL);
+    elem = get_element_by_id (node, element_id);
+    g_object_unref (node);
+
     return elem;
 }
 
@@ -459,7 +565,7 @@ gom_doc_constructed (GObject *object)
 }
 
 static void
-gom_doc_finalize (GObject *object)
+gom_doc_dispose (GObject *object)
 {
     GomDocPrivate *priv = PRIV (object);
     g_print (G_STRLOC": %s %p\n",
@@ -472,7 +578,7 @@ gom_doc_finalize (GObject *object)
         g_object_unref (priv->implementation);
         priv->implementation = NULL;
     }
-    G_OBJECT_CLASS (gom_doc_parent_class)->finalize (object);
+    G_OBJECT_CLASS (gom_doc_parent_class)->dispose (object);
 }
 
 static void
@@ -484,7 +590,7 @@ gom_doc_class_init (GomDocClass *klass)
 
     oclass->constructor  = gom_doc_constructor;
     oclass->constructed  = gom_doc_constructed;
-    oclass->finalize     = gom_doc_finalize;
+    oclass->dispose      = gom_doc_dispose;
     oclass->get_property = gom_doc_get_property;
     oclass->set_property = gom_doc_set_property;
 

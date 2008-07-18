@@ -38,6 +38,8 @@ gom_dom_has_feature (GomDOMImplementation *dom, const char *feature, const char 
     }
     if (!g_ascii_strcasecmp (feature, "xml")) {
         return !version || !g_ascii_strcasecmp (version, "1.0");
+    } else if (!g_ascii_strcasecmp (feature, "BasicEvents")) {
+        return !version || !g_ascii_strcasecmp (version, "3.0");
     } else if (!g_ascii_strcasecmp (feature, "Core")) {
         return !version || !g_ascii_strcasecmp (version, "2.0");
     } else if (!g_ascii_strcasecmp (feature, "Events")) {
@@ -100,8 +102,8 @@ gom_dom_create_document (GomDOMImplementation *dom,
     }
 
     gom_node_append_child (GOM_NODE (doc), GOM_NODE (elem), &err);
+    g_object_unref (elem);
     if (err) {
-        g_object_unref (elem);
         g_object_unref (doc);
         g_propagate_error (error, err);
         return NULL;

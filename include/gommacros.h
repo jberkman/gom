@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
 
-#define GOM_NOT_IMPLEMENTED (g_warning (G_STRLOC": Not implemented yet."))
+#define GOM_NOT_IMPLEMENTED (g_message (G_STRLOC": Not implemented yet."))
 
 #define GOM_NOT_IMPLEMENTED_ERROR(error)                                \
     (g_set_error (error, GOM_DOM_EXCEPTION_ERROR, GOM_NOT_IMPLEMENTED_ERR, \
@@ -149,6 +149,19 @@ G_BEGIN_DECLS
     }
 
 #define GOM_IMPLEMENT_INTERFACE(I_N, i_n, p) (G_IMPLEMENT_INTERFACE (GOM_TYPE_##I_N, p##_implement_##i_n))
+
+#define GOM_SET_WEAK(p, v)                                              \
+    G_STMT_START {                                                      \
+        if (p) {                                                        \
+            g_object_remove_weak_pointer (G_OBJECT (p), (gpointer *)&p); \
+        }                                                               \
+        p = v;                                                          \
+        if (p) {                                                        \
+            g_object_add_weak_pointer (G_OBJECT (p), (gpointer *)&p);   \
+        }                                                               \
+    } G_STMT_END
+
+#define GOM_UNSET_WEAK(p) GOM_SET_WEAK(p, NULL)
 
 G_END_DECLS
 
