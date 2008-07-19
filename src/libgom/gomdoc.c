@@ -392,16 +392,22 @@ gom_doc_get_elements_by_tag_name_ns (GomDocument *doc,
                                      const char  *namespace_uri,
                                      const char  *qualified_name)
 {
-    GomNode *node;
-    GList   *li;
+    GomNodeList *ret;
+    GomNode     *node;
+    GList       *li;
 
     g_object_get (doc, "document-element", &node, NULL);
 
-    li = get_elements_by_tag_name (NULL, node, namespace_uri, qualified_name);
+    li = g_list_reverse (get_elements_by_tag_name (NULL, node, namespace_uri, qualified_name));
 
     g_object_unref (node);
 
-    return gom_g_list_new (g_list_reverse (li));
+    ret = GOM_NODE_LIST (g_object_new (GOM_TYPE_G_LIST, "nodes", li, NULL));
+
+    g_list_foreach (li, (GFunc)g_object_unref, NULL);
+    g_list_free (li);
+
+    return ret;
 }
 
 static GomNodeList *

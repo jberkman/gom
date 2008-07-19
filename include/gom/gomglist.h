@@ -56,8 +56,6 @@ struct _GomGListClass {
 
 GType gom_g_list_get_type (void);
 
-GomNodeList *gom_g_list_new (GList *glist);
-
 G_END_DECLS
 
 #endif /* GOM_G_LIST_H */

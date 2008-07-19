@@ -428,6 +428,7 @@ gom_js_window_parser_start_element (GMarkupParseContext *context,
         GomDOMImplementation *dom;
         dom = g_object_new (GOM_TYPE_DOM, NULL);
         data->doc = gom_dom_implementation_create_document (dom, namespace, element_name, NULL, error);
+	g_object_unref (dom);
         if (data->doc) {
             data->jsdoc = gom_js_object_get_or_create_js_object (data->cx, data->doc);
             JS_DefineProperty (data->cx, data->window, "document",

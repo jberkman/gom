@@ -26,9 +26,8 @@ THE SOFTWARE.
 #include "gom/gomjsobject.h"
 
 #include "gom/gomcamel.h"
-#ifdef GOM_USE_GC_MANAGER
+
 #include "gom/gomgcmanager.h"
-#endif
 #include "gom/gomjscontext.h"
 #include "gom/gomobject.h"
 #include "gom/gomvalue.h"
@@ -566,11 +565,9 @@ gom_js_object_set_g_object (JSContext *cx, JSObject *jsobj, gpointer gobject)
 #endif
     g_hash_table_insert (JS2G (cx), jsobj, g_object_ref (gobject));
     g_hash_table_insert (G2JS (cx), gobject, jsobj);
-#ifdef GOM_GC_MANAGER_H
     if (GOM_IS_GC_MANAGED (gobject)) {
         gom_gc_manager_manage_object (cx, gobject);
     }
-#endif
 }
 
 gpointer

@@ -29,12 +29,7 @@ THE SOFTWARE.
 G_BEGIN_DECLS
 
 void gom_gc_manager_manage_runtime (JSRuntime *runtime);
-
-void gom_gc_manager_manage_object (JSContext *cx, GomGCManaged *obj);
-
-void gom_gc_manager_mark_live_objects (GomGCManaged *managed,
-                                       JSContext    *cx,
-                                       JSGCStatus    status);
+void gom_gc_manager_manage_object  (JSContext *cx, GomGCManaged *obj);
 
 G_END_DECLS
 

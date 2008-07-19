@@ -23,9 +23,7 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#ifdef GOM_USE_GC_MANAGER
 #include "gom/gomgcmanager.h"
-#endif
 #include "gom/gomjscontext.h"
 #include "gom/gomjswindow.h"
 #include "gom/gomjsobject.h"
@@ -106,9 +104,7 @@ main (int argc, char *argv[])
 
     rt   = JS_NewRuntime (0x100000);
 
-#ifdef GOM_GC_MANAGER_H
     gom_gc_manager_manage_runtime (rt);
-#endif
 
     d.cx = JS_NewContext (rt, 0x1000); 
 

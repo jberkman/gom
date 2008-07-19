@@ -1,3 +1,39 @@
+2008-07-19  jacob berkman  <jacob@ilovegome.org>
+
+	* src/libgom/gomjseventlistener.c (gom_js_event_listener_set_property):
+	don't add a named root for our JSObject
+	(gom_js_event_listener_mark_live_objects): mark our JSObject
+	(gom_js_event_listener_class_init): remove dispose handler; our
+	JSObject will just get GCd now
+
+	* src/libgom/gomwidget.c (gom_widget_get_property): don't leak a
+	NodeList
+
+	* src/libgom/gomdoc.c (gom_doc_get_elements_by_tag_name_ns): clean
+	up our list of nodes when we're done with it
+
+	* src/libgom/gomjswindow.c (gom_js_window_parser_start_element):
+	unref the DomImplementation when we're done with it
+
+	* src/libgom/gomjseventtarget.c (gom_js_event_target_add_event_listener):
+	if we have created a GomJSEventListener, unref it before we return
+
+	* src/libgom/gomglist.c (gom_g_list_set_property): copy the
+	passed-in list, and ref each item ourselves
+	(gom_g_list_class_init): add a construct-only nodes property
+
+	* src/libgom/gomnoodle.c (gom_noodle_get_property): don't leak the
+	node list, and free the glist too
+
+	* src/libgom/gomjsobject.c (gom_js_object_set_g_object): 
+	* src/gom/gom.c (main): use the gc manager for fun and profit
+
+	* src/libgom/gomgcmanager.c (gom_gc_manager_mark_live_objects):
+	* include/gom/gomgcmanager.h (gom_gc_manager_mark_live_objects):
+	remove ill-concieved function
+
+	* include/gom/gomglist.h (gom_g_list_new): remove superfluous api
+
 2008-07-18  jacob berkman  <jacob@ilovegom.org>
 
 	* configure.ac: bump version to 0.2, tweak mozilla checks for latest js tarball

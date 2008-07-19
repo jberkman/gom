@@ -457,12 +457,18 @@ gom_widget_get_property (GObject    *object,
     case PROP_PARENT_NODE:
         g_value_set_object (value, priv->parent_node);
         break;
-    case PROP_CHILD_NODES:
-        g_value_set_object (value, 
-                            GTK_IS_CONTAINER (object)
-                            ? gom_g_list_new (gtk_container_get_children (GTK_CONTAINER (object)))
-                            : NULL);
-        break;
+    case PROP_CHILD_NODES: {
+	GomNodeList *nodes;
+	GList *li;
+	li = GTK_IS_CONTAINER (object)
+	    ? gtk_container_get_children (GTK_CONTAINER (object))
+	    : NULL;
+	nodes = g_object_new (GOM_TYPE_G_LIST, "nodes", li, NULL);
+	g_value_set_object (value, nodes);
+	g_object_unref (nodes);
+	g_list_free (li);
+	break;
+    }
     case PROP_FIRST_CHILD:
         if (GTK_IS_CONTAINER (object)) {
             children = gtk_container_get_children (GTK_CONTAINER (object));

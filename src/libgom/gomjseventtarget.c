@@ -64,6 +64,7 @@ gom_js_event_target_add_event_listener (JSContext *cx, JSObject *obj, uintN argc
     char             *type_name;
     GomEventListener *listener;
     JSBool            use_capture;
+    gboolean          unref_listener = FALSE;
 
     target = gom_js_object_get_g_object (cx, obj);
     if (!GOM_IS_EVENT_TARGET (target)) {
@@ -79,11 +80,16 @@ gom_js_event_target_add_event_listener (JSContext *cx, JSObject *obj, uintN argc
                                  "js-context", cx,
                                  "js-object",  js_listener,
                                  NULL);
+	unref_listener = TRUE;
     } else if (!GOM_IS_EVENT_LISTENER (listener)) {
         return JS_FALSE;
     }
 
     gom_event_target_add_event_listener (target, type_name, listener, use_capture);
+
+    if (unref_listener) {
+	g_object_unref (listener);
+    }
 
     return JS_TRUE;
 }

@@ -95,9 +95,13 @@ gom_noodle_get_property (GObject    *object,
     case PROP_PARENT_NODE:
         g_value_set_object (value, priv->parent_node);
         break;
-    case PROP_CHILD_NODES:
-        g_value_set_object (value, priv->children ? gom_g_list_new (priv->children) : NULL);
+    case PROP_CHILD_NODES: {
+	GomNodeList *nodes;
+	nodes = g_object_new (GOM_TYPE_G_LIST, "nodes", priv->children, NULL);
+        g_value_set_object (value, nodes);
+	g_object_unref (nodes);
         break;
+    }
     case PROP_FIRST_CHILD:
         g_value_set_object (value, priv->children ? priv->children->data : NULL);
         break;

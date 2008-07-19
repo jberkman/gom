@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#ifdef GOM_USE_GC_MANAGER
 #include "gom/gomgcmanager.h"
 
 #include "gom/gomjscontext.h"
@@ -62,6 +61,7 @@ gom_gc_manager_run (JSContext *cx, JSGCStatus status)
 void
 gom_gc_manager_manage_runtime (JSRuntime *runtime)
 {
+    g_message (G_STRLOC": managing runtime %p", runtime);
     JS_SetGCCallbackRT (runtime, gom_gc_manager_run);
 }
 
@@ -90,27 +90,8 @@ gom_gc_manager_manage_object (JSContext *cx, GomGCManaged *obj)
     g_object_weak_ref (G_OBJECT (obj), gom_gc_manager_unregister, cx);
 }
 
-void
-gom_gc_manager_mark_live_objects (GomGCManaged *managed,
-                                  JSContext    *cx,
-                                  JSGCStatus    status)
-{
-    JSObject *jsobj;
-
-    jsobj = gom_js_object_get_js_object (cx, managed);
-    if (!jsobj) {
-        g_warning(G_STRLOC": could not get a js object while marking live objects for %p",
-                  managed);
-    } else if (!JS_IsAboutToBeFinalized (cx, jsobj)) {
-        g_message (G_STRLOC": Marking a %s live...",
-                   g_type_name (G_TYPE_FROM_INSTANCE (managed)));
-        JS_MarkGCThing (cx, jsobj, g_type_name (G_TYPE_FROM_INSTANCE (managed)), NULL);
-    }
-}
-
 GOM_DEFINE_INTERFACE (GomGCManaged, gom_gc_managed, {});
 
 GOM_STUB_VOID(GOM_GC_MANAGED, gom_gc_managed, mark_live_objects,
               (GomGCManaged *gom_gc_managed, JSContext *cx, JSGCStatus status),
               (gom_gc_managed, cx, status));
-#endif /* GOM_USE_GC_MANAGER */

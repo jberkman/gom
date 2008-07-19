@@ -30,7 +30,8 @@ THE SOFTWARE.
 #include "gommacros.h"
 
 enum {
-    PROP_LENGTH = 1
+    PROP_NODES = 1,
+    PROP_LENGTH
 };
 
 typedef struct {
@@ -42,6 +43,26 @@ typedef struct {
 } GomGListPrivate;
 
 #define PRIV(i) (G_TYPE_INSTANCE_GET_PRIVATE ((i), GOM_TYPE_G_LIST, GomGListPrivate))
+
+static void
+gom_g_list_set_property (GObject      *object,
+                         guint         property_id,
+                         const GValue *value,
+                         GParamSpec   *pspec)
+{
+    GomGListPrivate *priv = PRIV (object);
+    switch (property_id) {
+    case PROP_NODES:
+	priv->glist = priv->last_node = g_list_copy (g_value_get_pointer (value));
+	g_list_foreach (priv->glist, (GFunc)g_object_ref, NULL);
+	priv->length = g_list_length (priv->glist);
+	priv->last_index = 0;
+	break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+        break;
+    }
+}
 
 static void
 gom_g_list_get_property (GObject        *object,
@@ -75,22 +96,6 @@ GOM_IMPLEMENT (NODE_LIST, node_list, gom_g_list);
 G_DEFINE_TYPE_WITH_CODE (GomGList, gom_g_list, G_TYPE_OBJECT,
                          GOM_IMPLEMENT_INTERFACE (NODE_LIST, node_list, gom_g_list));
 
-GomNodeList *
-gom_g_list_new (GList *glist)
-{
-    GomGList *list;
-    GomGListPrivate *priv;
-
-    list = g_object_new (GOM_TYPE_G_LIST, NULL);
-    priv = PRIV (list);
-
-    priv->glist = priv->last_node = glist;
-    priv->length = g_list_length (glist);
-    priv->last_index = 0;
-
-    return GOM_NODE_LIST (list);
-}
-
 static void gom_g_list_init (GomGList *self) { }
 
 static void
@@ -116,7 +121,13 @@ gom_g_list_class_init (GomGListClass *klass)
     g_type_class_add_private (klass, sizeof (GomGListPrivate));
 
     g_class->get_property = gom_g_list_get_property;
+    g_class->set_property = gom_g_list_set_property;
     g_class->dispose = gom_g_list_dispose;
+
+    g_object_class_install_property (g_class, PROP_NODES,
+				     g_param_spec_pointer ("nodes", NULL,
+							   "The list of nodes.",
+							   G_PARAM_CONSTRUCT_ONLY | G_PARAM_WRITABLE | G_PARAM_STATIC_STRINGS));
 
     g_object_class_override_property (g_class, PROP_LENGTH, "length");
 }

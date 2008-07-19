@@ -27,6 +27,7 @@ THE SOFTWARE.
 
 #include "gom/dom/gomeventlistener.h"
 #include "gom/dom/gomeventtarget.h"
+#include "gom/gomgcmanaged.h"
 #include "gom/gomjsobject.h"
 
 #include "gommacros.h"
@@ -66,10 +67,8 @@ gom_js_event_listener_set_property (GObject      *object,
             g_warning (G_STRLOC": Object is already set on %p", object);
         } else if (!priv->cx) {
             g_warning (G_STRLOC": Context needs to be set on %p before object", object);
-        } else {
-            priv->obj = g_value_get_pointer (value);
-            JS_AddNamedRoot (priv->cx, &priv->obj, "EventListener.obj");
         }
+	priv->obj = g_value_get_pointer (value);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -120,30 +119,31 @@ gom_js_event_listener_handle_event (GomEventListener *listener,
     }
 }
 
+static void
+gom_js_event_listener_mark_live_objects (GomGCManaged *managed,
+					 JSContext    *cx,
+					 JSGCStatus    status)
+{
+    GomJSEventListenerPrivate *priv = PRIV (managed);
+
+    g_assert (priv->cx == cx);
+
+    if (!JS_IsAboutToBeFinalized (cx, priv->obj)) {
+        g_message (G_STRLOC": Marking a %s live...", JS_GET_CLASS (cx, priv->obj)->name);
+        JS_MarkGCThing (cx, priv->obj, g_type_name (G_TYPE_FROM_INSTANCE (managed)), NULL);
+    }
+}
+
 GOM_IMPLEMENT (EVENT_LISTENER, event_listener, gom_js_event_listener);
+GOM_IMPLEMENT (GC_MANAGED, gc_managed, gom_js_event_listener);
 
 G_DEFINE_TYPE_WITH_CODE (GomJSEventListener, gom_js_event_listener, G_TYPE_OBJECT,
-                         GOM_IMPLEMENT_INTERFACE (EVENT_LISTENER, event_listener, gom_js_event_listener));
+                         {
+			     GOM_IMPLEMENT_INTERFACE (EVENT_LISTENER, event_listener, gom_js_event_listener);
+			     GOM_IMPLEMENT_INTERFACE (GC_MANAGED, gc_managed, gom_js_event_listener);
+			 });
 
 static void gom_js_event_listener_init (GomJSEventListener *listener) { }
-
-static void
-gom_js_event_listener_dispose (GObject *obj)
-{
-    GomJSEventListenerPrivate *priv = PRIV (obj);
-    g_print (G_STRLOC": %s %p\n", g_type_name (G_TYPE_FROM_INSTANCE (obj)), obj);
-    if (priv->obj) {
-        if (!priv->cx) {
-            g_warning (G_STRLOC": %p has an Object but no Context", obj);
-        } else {
-            JS_RemoveRoot (priv->cx, &priv->obj);
-            priv->cx = NULL;
-        }
-        priv->obj = NULL;
-    }
-
-    G_OBJECT_CLASS (gom_js_event_listener_parent_class)->dispose (obj);
-}
 
 static void
 gom_js_event_listener_class_init (GomJSEventListenerClass *klass)
@@ -153,7 +153,6 @@ gom_js_event_listener_class_init (GomJSEventListenerClass *klass)
     g_type_class_add_private (klass, sizeof (GomJSEventListenerPrivate));
     
     oclass->set_property = gom_js_event_listener_set_property;
-    oclass->dispose      = gom_js_event_listener_dispose;
 
     g_object_class_install_property (
         oclass, PROP_JS_CONTEXT,
