@@ -1,3 +1,7 @@
+2008-07-20  jacob berkman  <jacob@ilovegom.org>
+
+	* configure.ac: version 0.3
+
 2008-07-19  jacob berkman  <jacob@ilovegome.org>
 
 	* src/libgom/gomjseventlistener.c (gom_js_event_listener_set_property):

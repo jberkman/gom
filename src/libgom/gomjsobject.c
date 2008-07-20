@@ -532,6 +532,43 @@ gom_js_object_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, 
 }
 
 static void
+g2js_warn (gpointer key, gpointer value, gpointer user_data)
+{
+    g_print ("\tGObject %p %s -> JSObject %p %s\n",
+	     key, g_type_name (G_TYPE_FROM_INSTANCE (key)),
+	     value, JS_GET_CLASS (NULL, value)->name);
+}
+
+static void
+g2js_free (gpointer data)
+{
+    GHashTable *g2js = data;
+    g_message (G_STRLOC": GObject to JSObject table leaked %d objects",
+	       g_hash_table_size (g2js));
+    g_hash_table_foreach (g2js, g2js_warn, NULL);
+    g_hash_table_destroy (g2js);
+}
+
+
+static void
+js2g_warn (gpointer key, gpointer value, gpointer user_data)
+{
+    g_printerr ("\tJSObject %p %s -> GObject %p %s\n",
+		key, JS_GET_CLASS (NULL, key)->name,
+		value, g_type_name (G_TYPE_FROM_INSTANCE (value)));
+}
+
+static void
+js2g_free (gpointer data)
+{
+    GHashTable *js2g = data;
+    g_message (G_STRLOC": JSObject to GObject table leaked %d objects",
+	       g_hash_table_size (js2g));
+    g_hash_table_foreach (js2g, js2g_warn, NULL);
+    g_hash_table_destroy (js2g);
+}
+
+static void
 g2jsc_free (gpointer data)
 {
     GSList *slist = *(GSList **)data;
@@ -543,8 +580,8 @@ g2jsc_free (gpointer data)
 JSObject *
 gom_js_object_init_class (JSContext *cx, JSObject *obj)
 {
-    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, G2JS_QUARK,   g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
-    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, JS2G_QUARK,   g_hash_table_new (NULL, NULL), (GDestroyNotify)g_hash_table_destroy);
+    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, G2JS_QUARK,   g_hash_table_new (NULL, NULL), g2js_free); // (GDestroyNotify)g_hash_table_destroy);
+    GOM_JS_CONTEXT_SET_QDATA_FULL (cx, JS2G_QUARK,   g_hash_table_new (NULL, NULL), js2g_free); // (GDestroyNotify)g_hash_table_destroy);
     GOM_JS_CONTEXT_SET_QDATA_FULL (cx, GT2JSC_QUARK, g_new0 (GSList *, 1), g2jsc_free);
 
     gom_js_object_register_js_class (cx, G_TYPE_OBJECT, &GomJSObjectClass);
