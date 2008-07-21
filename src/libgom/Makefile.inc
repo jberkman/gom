@@ -12,8 +12,10 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomdominterfaces.c		\
 	src/libgom/gomelem.c			\
 	src/libgom/gomevt.c			\
+	src/libgom/gomevttgt.c			\
 	src/libgom/gomgcmanager.c		\
 	src/libgom/gomglist.c			\
+	src/libgom/gominterfaces.c		\
 	src/libgom/gomjscontext.c		\
 	src/libgom/gomjsdocument.c		\
 	src/libgom/gomjsdomexception.c		\
@@ -31,6 +33,7 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomjsobject.c		\
 	src/libgom/gomjsuievent.c		\
 	src/libgom/gomjswindow.c		\
+	src/libgom/gomjsxmlhttprequest.c	\
 	src/libgom/gomkeyboardevt.c		\
 	src/libgom/gomlistenerlist.c		\
 	src/libgom/gommouseevt.c		\
@@ -39,7 +42,8 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomtxt.c			\
 	src/libgom/gomuievt.c			\
 	src/libgom/gomvalue.c			\
-	src/libgom/gomwidget.c
+	src/libgom/gomwidget.c			\
+	src/libgom/gomxhr.c
 
 libgom_la_CFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include $(GOM_CFLAGS) $(JS_CFLAGS)
 libgom_la_LDFLAGS = $(GOM_LIBS)

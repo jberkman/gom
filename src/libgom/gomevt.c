@@ -23,11 +23,11 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomevt.h>
+#include "gom/dom/gomcustomevent.h"
+
+#include "gom/gomevt.h"
 
 #include "gommacros.h"
-
-#include <gom/dom/gomcustomevent.h>
 
 #include <time.h>
 
@@ -223,7 +223,7 @@ static void
 gom_evt_dispose (GObject *object)
 {
     GomEvtPrivate *priv = PRIV (object);
-#if 1
+#if 0
     g_print (G_STRLOC": %s %p\n",
              g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
 #endif

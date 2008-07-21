@@ -1169,3 +1169,101 @@ GOM_STUB_VOID (GOM_UI_EVENT, gom_ui_event, init_ui_event_ns,
                 GomAbstractView *view_arg,
                 long             detail_arg),
                (gom_ui_event, namespace_uri, type_arg, can_bubble_arg, cancelable_arg, view_arg, detail_arg));
+
+#include <gom/dom/gomxmlhttprequest.h>
+
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomXMLHttpRequest, gom_xml_http_request,
+{
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_object ("onreadystatechange", NULL,
+                             "An event handler which is invoked whenever a "
+                             "readystatechange event is targeted at this "
+                             "object.",
+                             GOM_TYPE_EVENT_LISTENER,
+                             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_enum ("ready-state", NULL,
+                           "The current state of this object.",
+                           GOM_TYPE_XML_HTTP_REQUEST_STATE, GOM_UNSENT,
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_string ("response-text", NULL,
+                             "The text response entity body.",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_object ("response-x-m-l", NULL,
+                             "The XML response entity body.",
+                             GOM_TYPE_DOCUMENT,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_uint ("status", NULL,
+                           "The HTTP status code sent by the server.",
+                           0, G_MAXUINT, 0,
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_string ("status-text", NULL,
+                             "The HTTP status text sent by the server.",
+                             NULL,
+                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+}, GOM_TYPE_EVENT_TARGET);
+
+GOM_STUB_VOID (GOM_XML_HTTP_REQUEST, gom_xml_http_request, open,
+               (GomXMLHttpRequest *gom_xml_http_request,
+                const char        *method,
+                const char        *url,
+                gboolean           async,
+                const char        *user,
+                const char        *password,
+                GError           **error),
+               (gom_xml_http_request, method, url, async, user, password, error));
+
+GOM_STUB_VOID (GOM_XML_HTTP_REQUEST, gom_xml_http_request, set_request_header,
+               (GomXMLHttpRequest *gom_xml_http_request,
+                const char *header,
+                const char *value,
+                GError    **error),
+               (gom_xml_http_request, header, value, error));
+
+GOM_STUB_VOID (GOM_XML_HTTP_REQUEST, gom_xml_http_request, send,
+               (GomXMLHttpRequest *gom_xml_http_request,
+                GError           **error),
+               (gom_xml_http_request, error));
+
+GOM_STUB_VOID (GOM_XML_HTTP_REQUEST, gom_xml_http_request, send_string,
+               (GomXMLHttpRequest *gom_xml_http_request,
+                const char        *data,
+                GError           **error),
+               (gom_xml_http_request, data, error));
+
+GOM_STUB_VOID (GOM_XML_HTTP_REQUEST, gom_xml_http_request, send_document,
+               (GomXMLHttpRequest *gom_xml_http_request,
+                const GomDocument *doc,
+                GError           **error),
+               (gom_xml_http_request, doc, error));
+
+GOM_STUB_VOID (GOM_XML_HTTP_REQUEST, gom_xml_http_request, abort,
+               (GomXMLHttpRequest *gom_xml_http_request),
+               (gom_xml_http_request));
+
+GOM_STUB_FUNC (GOM_XML_HTTP_REQUEST, gom_xml_http_request, get_all_response_headers,
+               (const GomXMLHttpRequest *gom_xml_http_request,
+                GError                 **error),
+               (gom_xml_http_request, error), char *);
+
+GOM_STUB_FUNC (GOM_XML_HTTP_REQUEST, gom_xml_http_request, get_response_header,
+               (const GomXMLHttpRequest *gom_xml_http_request,
+                const char              *header,
+                GError                 **error),
+               (gom_xml_http_request, header, error), char *);

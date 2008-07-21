@@ -23,9 +23,10 @@ THE SOFTWARE.
 */
 #include "config.h"
 
+#include "gom/dom/gomeventlistener.h"
+
 #include "gom/gomjseventlistener.h"
 
-#include "gom/dom/gomeventlistener.h"
 #include "gom/dom/gomeventtarget.h"
 #include "gom/gomgcmanaged.h"
 #include "gom/gomjsobject.h"

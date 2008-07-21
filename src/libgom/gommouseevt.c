@@ -23,12 +23,13 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gommouseevt.h>
+#include "gom/dom/gommouseevent.h"
+
+#include "gom/gommouseevt.h"
+
+#include "gom/dom/gomuievent.h"
 
 #include "gommacros.h"
-
-#include <gom/dom/gommouseevent.h>
-#include <gom/dom/gomuievent.h>
 
 #include <gdk/gdktypes.h>
 

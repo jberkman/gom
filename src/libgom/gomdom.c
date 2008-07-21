@@ -23,9 +23,10 @@ THE SOFTWARE.
 */
 #include "config.h"
 
+#include "gom/dom/gomdomimplementation.h"
+
 #include "gom/gomdom.h"
 
-#include "gom/dom/gomdomimplementation.h"
 #include "gom/gomdoc.h"
 
 #include "gommacros.h"

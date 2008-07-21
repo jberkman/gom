@@ -31,26 +31,37 @@ G_BEGIN_DECLS
 #define GOM_DOM_EXCEPTION_ERROR (gom_dom_exception_error_quark ())
 
 typedef enum {
-    GOM_INDEX_SIZE_ERR = 1,
-    GOM_DOMSTRING_SIZE_ERR,
-    GOM_HIERCHY_REQUEST_ERR,
-    GOM_WRONG_DOCUMENT_ERR,
-    GOM_INVALID_CHARACTER_ERR,
-    GOM_NO_DATA_ALLOWED_ERR,
-    GOM_NO_MODIFICATION_ALLOWED_ERR,
-    GOM_NOT_FOUND_ERR,
-    GOM_NOT_SUPPORTED_ERR,
-    GOM_INUSE_ATTRIBUTE_ERR,
-    GOM_INVALID_STATE_ERR,
-    GOM_SYNTAX_ERR,
-    GOM_INVALID_MODIFICATION_ERR,
-    GOM_NAMESPACE_ERR,
-    GOM_INVALID_ACCESS_ERR,
+    GOM_INDEX_SIZE_ERR              = 1,
+    GOM_DOMSTRING_SIZE_ERR          = 2,
+    GOM_HIERCHY_REQUEST_ERR         = 3,
+    GOM_WRONG_DOCUMENT_ERR          = 4,
+    GOM_INVALID_CHARACTER_ERR       = 5,
+    GOM_NO_DATA_ALLOWED_ERR         = 6,
+    GOM_NO_MODIFICATION_ALLOWED_ERR = 7,
+    GOM_NOT_FOUND_ERR               = 8,
+    GOM_NOT_SUPPORTED_ERR           = 9,
+    GOM_INUSE_ATTRIBUTE_ERR         = 10,
+
+    /* DOM Level 2 */
+    GOM_INVALID_STATE_ERR           = 11,
+    GOM_SYNTAX_ERR                  = 12,
+    GOM_INVALID_MODIFICATION_ERR    = 13,
+    GOM_NAMESPACE_ERR               = 14,
+    GOM_INVALID_ACCESS_ERR          = 15,
+    GOM_VALIDATION_ERR              = 16,
+
+    /* DOM Level 3 */
+    GOM_TYPE_MISMATCH_ERR           = 17,
+    GOM_SECURITY_ERR                = 18,
+
+    /* XMLHttpRequest */
+    GOM_NETWORK_ERR                 = 101,
+    GOM_ABORT_ERR                   = 102,
 
     /* Gom-specific exceptions */
-    GOM_UNKNOWN_TAG_NAME_ERR = 101,
-    GOM_INVALID_ATTRIBUTE_TYPE_ERR,
-    GOM_NOT_IMPLEMENTED_ERR
+    GOM_UNKNOWN_TAG_NAME_ERR        = 87001,
+    GOM_INVALID_ATTRIBUTE_TYPE_ERR  = 87002,
+    GOM_NOT_IMPLEMENTED_ERR         = 87003
 } GomExceptionCode;
 
 GQuark gom_dom_exception_error_quark (void);

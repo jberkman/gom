@@ -23,6 +23,8 @@ THE SOFTWARE.
 */
 #include "config.h"
 
+#include "gom/dom/gomdocument.h"
+
 #include "gom/gomdoc.h"
 
 #include "gom/dom/gomdocumentevent.h"

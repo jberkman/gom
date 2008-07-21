@@ -23,10 +23,11 @@ THE SOFTWARE.
 */
 #include "config.h"
 
+#include "gom/dom/gomelement.h"
+
 #include "gom/gomelem.h"
 
 #include "gom/dom/gomdomexception.h"
-#include "gom/dom/gomelement.h"
 #include "gom/gomobject.h"
 
 #include "gommacros.h"

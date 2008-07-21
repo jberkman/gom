@@ -1,5 +1,47 @@
 2008-07-20  jacob berkman  <jacob@ilovegom.org>
 
+	* src/libgom/gomgcmanager.c: remove GomGCManaged interface
+	definition
+
+	* src/libgom/gominterfaces.c: move internal interface
+	definitions here
+
+	* src/libgom/gomdominterfaces.c: define GomXMLHttpRequest
+	interface
+
+	* src/libgom/gomwidget.c (widget_get_parent_target): implement
+	GomEventTargetInternal
+
+	* src/libgom/gomlistenerlist.c (gom_listener_list_will_trigger)
+	(gom_listener_list_dispatch_event): use new
+	EventTargetInternal interface
+
+	* include/gom/gomeventtargetinternal.h: things our
+	EventTargets need to implement
+
+	* include/gom/gomnodeinternal.h: move dispatch_listeners to
+	GomEventTargetInternal
+
+	* src/libgom/gomxhr.c (gom_xhr_class_init):
+	* include/gom/gomxhr.h (GomXhr): implementation of
+	GomXMLHttpRequest
+
+	* include/gom/dom/gomxmlhttprequest.h (GomXMLHttpRequest): new
+	interface for XMLHttpRequest
+
+	* include/gom/dom/gomdomexception.h (GomExceptionCode): add
+	DOM Level 3 and XMLHttpRequest error codes
+
+	* src/libgom/gomnoodle.c: 
+	* include/gom/gomnoodle.h: re-subclass under GomEvtTgt
+
+	* src/libgom/gomevttgt.c: 
+	* include/gom/gomevttgt.h: new base class which implements
+	GomEventTarget
+
+	* src/libgom/gomjsxmlhttprequest.c: 
+	* include/gom/gomjsxmlhttprequest.h: JS binding to GomXMLHttpRequest
+
 	* configure.ac: version 0.3
 
 2008-07-19  jacob berkman  <jacob@ilovegome.org>

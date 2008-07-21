@@ -33,7 +33,7 @@ typedef struct _GomElemClass GomElemClass;
 
 G_END_DECLS
 
-#include <gom/gomnoodle.h>
+#include "gom/gomnoodle.h"
 
 G_BEGIN_DECLS
 

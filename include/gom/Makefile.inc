@@ -7,7 +7,9 @@ gominclude_HEADERS :=				\
 	include/gom/gomdoc.h			\
 	include/gom/gomdom.h			\
 	include/gom/gomelem.h			\
+	include/gom/gomeventtargetinternal.h	\
 	include/gom/gomevt.h			\
+	include/gom/gomevttgt.h			\
 	include/gom/gomgcmanaged.h		\
 	include/gom/gomgcmanager.h		\
 	include/gom/gomglist.h			\
@@ -28,6 +30,7 @@ gominclude_HEADERS :=				\
 	include/gom/gomjsobject.h		\
 	include/gom/gomjsuievent.h		\
 	include/gom/gomjswindow.h		\
+	include/gom/gomjsxmlhttprequest.h	\
 	include/gom/gomkeyboardevt.h		\
 	include/gom/gomkeyidentifiers.h		\
 	include/gom/gomlistenerlist.h		\
@@ -38,4 +41,6 @@ gominclude_HEADERS :=				\
 	include/gom/gomtxt.h			\
 	include/gom/gomuievt.h			\
 	include/gom/gomvalue.h			\
-	include/gom/gomwidget.h
+	include/gom/gomwidget.h			\
+	include/gom/gomxhr.h
+

@@ -21,31 +21,18 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#include "config.h"
+#ifndef GOM_JS_XML_HTTP_REQUEST_H
+#define GOM_JS_XML_HTTP_REQUEST_H
 
-#include "gom/dom/gomtext.h"
+#include <glib/gmacros.h>
+#include <jsapi.h>
 
-#include "gom/gomtxt.h"
+G_BEGIN_DECLS
 
-#include "gom/dom/gomdomexception.h"
+JSObject *gom_js_xml_http_request_init_class (JSContext *cx, JSObject *obj);
 
-#include "gommacros.h"
+extern JSClass GomJSXMLHttpRequestClass;
 
-#include <string.h>
+G_END_DECLS
 
-static GomText *
-gom_txt_split_text (GomText *text,
-                    gulong   offset,
-                    GError **error)
-{
-    GOM_NOT_IMPLEMENTED_ERROR (error);
-    return NULL;
-}
-
-GOM_IMPLEMENT (TEXT, text, gom_txt);
-
-G_DEFINE_TYPE_WITH_CODE (GomTxt, gom_txt, GOM_TYPE_CHAR_DATA,
-                         GOM_IMPLEMENT_INTERFACE (TEXT, text, gom_txt));
-
-static void gom_txt_init       (GomTxt      *txt)   { }
-static void gom_txt_class_init (GomTxtClass *klass) { }
+#endif /* GOM_JS_XML_HTTP_REQUEST_H */

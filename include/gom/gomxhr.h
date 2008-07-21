@@ -21,31 +21,40 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#include "config.h"
+#ifndef GOM_XHR_H
+#define GOM_XHR_H
 
-#include "gom/dom/gomtext.h"
+#include <glib/gmacros.h>
 
-#include "gom/gomtxt.h"
+G_BEGIN_DECLS
 
-#include "gom/dom/gomdomexception.h"
+typedef struct _GomXhr      GomXhr;
+typedef struct _GomXhrClass GomXhrClass;
 
-#include "gommacros.h"
+G_END_DECLS
 
-#include <string.h>
+#include "gom/gomevttgt.h"
 
-static GomText *
-gom_txt_split_text (GomText *text,
-                    gulong   offset,
-                    GError **error)
-{
-    GOM_NOT_IMPLEMENTED_ERROR (error);
-    return NULL;
-}
+G_BEGIN_DECLS
 
-GOM_IMPLEMENT (TEXT, text, gom_txt);
+#define GOM_TYPE_XHR         (gom_xhr_get_type ())
+#define GOM_XHR(i)           (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_XHR, GomXhr))
+#define GOM_XHR_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST    ((k), GOM_TYPE_XHR, GomXhrClass))
+#define GOM_IS_XHR(i)        (G_TYPE_CHECK_INSTANCE_TYPE ((i), GOM_TYPE_XHR))
+#define GOM_IS_XHR_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_XHR))
+#define GOM_XHR_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_XHR, GomXhrClass))
 
-G_DEFINE_TYPE_WITH_CODE (GomTxt, gom_txt, GOM_TYPE_CHAR_DATA,
-                         GOM_IMPLEMENT_INTERFACE (TEXT, text, gom_txt));
+struct _GomXhr {
+    GomEvtTgt parent;
+};
 
-static void gom_txt_init       (GomTxt      *txt)   { }
-static void gom_txt_class_init (GomTxtClass *klass) { }
+struct _GomXhrClass {
+    GomEvtTgtClass parent_class;
+};
+
+GType gom_xhr_get_type (void);
+
+G_END_DECLS
+
+#endif /* GOM_XHR_H */
+

@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include "gom/dom/gomkeyboardevent.h"
 #include "gom/dom/gommouseevent.h"
 #include "gom/dom/gomuievent.h"
+#include "gom/gomeventtargetinternal.h"
 #include "gom/gomglist.h"
 #include "gom/gomjselement.h"
 #include "gom/gomjsobject.h"
@@ -1012,16 +1013,24 @@ widget_sibling_requested (GomNodeInternal *node, GomNode *child)
 }
 
 static void
-widget_dispatch_listeners (GomNodeInternal *current_target,
-                           GomEvent        *evt,
-                           const char      *namespace_uri,
-                           const char      *type_name,
-                           GomPhaseType     phase)
+widget_dispatch_listeners (GomEventTargetInternal *current_target,
+                           GomEvent               *evt,
+                           const char             *namespace_uri,
+                           const char             *type_name,
+                           GomPhaseType            phase)
 {
     gom_listener_list_dispatch_listeners (
         PRIV (current_target)->listeners,
         GOM_EVENT_TARGET (current_target),
         evt, namespace_uri, type_name, phase);
+}
+
+static GomEventTarget *
+widget_get_parent_target (GomEventTargetInternal *target)
+{
+    GomWidgetPrivate *priv = PRIV (target);
+
+    return priv->parent_node ? GOM_EVENT_TARGET (priv->parent_node) : NULL;
 }
 
 static void
@@ -1171,10 +1180,11 @@ widget_scroll_adjustment_notify (GObject *obj, GParamSpec *arg1, gpointer data)
     }
 }
 
-GOM_IMPLEMENT (NODE,          node,          widget);
-GOM_IMPLEMENT (ELEMENT,       element,       widget);
-GOM_IMPLEMENT (EVENT_TARGET,  event_target,  widget);
-GOM_IMPLEMENT (NODE_INTERNAL, node_internal, widget);
+GOM_IMPLEMENT (NODE,                  node,                  widget);
+GOM_IMPLEMENT (ELEMENT,               element,               widget);
+GOM_IMPLEMENT (EVENT_TARGET,          event_target,          widget);
+GOM_IMPLEMENT (NODE_INTERNAL,         node_internal,         widget);
+GOM_IMPLEMENT (EVENT_TARGET_INTERNAL, event_target_internal, widget);
 
 static void
 gom_widget_constructed (GObject *object)
@@ -1248,6 +1258,11 @@ gom_widget_init_once (gpointer data)
     };
     static const GInterfaceInfo node_internal_info = {
         widget_implement_node_internal,
+        NULL,
+        NULL
+    };
+    static const GInterfaceInfo target_internal_info = {
+        widget_implement_event_target_internal,
         NULL,
         NULL
     };
@@ -1368,10 +1383,11 @@ gom_widget_init_once (gpointer data)
                              NULL,
                              G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET,  &target_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE,          &node_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT,       &element_info);
-    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE_INTERNAL, &node_internal_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET,          &target_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_EVENT_TARGET_INTERNAL, &target_internal_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE,                  &node_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_ELEMENT,               &element_info);
+    g_type_add_interface_static (GTK_TYPE_WIDGET, GOM_TYPE_NODE_INTERNAL,         &node_internal_info);
 
 #define WIDGET(w) type ^= w;
 #include "gomwidgets.c"

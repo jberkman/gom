@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include "gom/gomjsobject.h"
 #include "gom/gomjsuievent.h"
 #include "gom/gomjswindow.h"
+#include "gom/gomjsxmlhttprequest.h"
 
 #include "gommacros.h"
 
@@ -66,6 +67,8 @@ gom_js_context_init_standard_classes (JSContext *cx, JSObject *obj)
     gom_js_g_error_exception_init_class (cx, obj);
     gom_js_dom_exception_init_class (cx, obj);
     gom_js_event_exception_init_class (cx, obj);
+
+    gom_js_xml_http_request_init_class (cx, obj);
 }
 
 static gboolean

@@ -33,7 +33,7 @@ typedef struct _GomNoodleClass GomNoodleClass;
 
 G_END_DECLS
 
-#include <glib-object.h>
+#include "gom/gomevttgt.h"
 
 G_BEGIN_DECLS
 
@@ -45,11 +45,11 @@ G_BEGIN_DECLS
 #define GOM_NOODLE_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_NOODLE, GomNoodleClass))
 
 struct _GomNoodle {
-    GObject parent;
+    GomEvtTgt parent;
 };
 
 struct _GomNoodleClass {
-    GObjectClass parent_class;
+    GomEvtTgtClass parent_class;
 };
 
 GType gom_noodle_get_type (void);

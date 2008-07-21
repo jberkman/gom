@@ -23,9 +23,9 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomglist.h>
+#include "gom/dom/gomnodelist.h"
 
-#include <gom/dom/gomnodelist.h>
+#include "gom/gomglist.h"
 
 #include "gommacros.h"
 

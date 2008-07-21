@@ -23,12 +23,13 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include <gom/gomuievt.h>
+#include "gom/dom/gomuievent.h"
+
+#include "gom/gomuievt.h"
 
 #include "gommacros.h"
 
-#include <gom/dom/gomabstractview.h>
-#include <gom/dom/gomuievent.h>
+#include "gom/dom/gomabstractview.h"
 
 enum {
     PROP_VIEW = 1,

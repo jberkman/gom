@@ -23,9 +23,10 @@ THE SOFTWARE.
 */
 #include "config.h"
 
+#include "gom/dom/gomcharacterdata.h"
+
 #include "gom/gomchardata.h"
 
-#include "gom/dom/gomcharacterdata.h"
 #include "gom/dom/gomdomexception.h"
 
 #include "gommacros.h"

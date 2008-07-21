@@ -25,9 +25,8 @@ THE SOFTWARE.
 #include "gom/gomlistenerlist.h"
 
 #include "gom/dom/gomcustomevent.h"
-#include "gom/dom/gomnode.h"
 #include "gom/gomevt.h"
-#include "gom/gomnodeinternal.h"
+#include "gom/gomeventtargetinternal.h"
 
 #include "gommacros.h"
 
@@ -148,12 +147,14 @@ gom_listener_list_will_trigger (GomListenerList *list,
     if (gom_listener_list_has_event_listener (list, namespace_uri, type)) {
         return TRUE;
     }
-    g_object_get (target, "parent-node", &parent, NULL);
+    if (!GOM_IS_EVENT_TARGET_INTERNAL (target)) {
+        return FALSE;
+    }
+    parent = gom_event_target_internal_get_parent_target (GOM_EVENT_TARGET_INTERNAL (target));
     if (!parent) {
         return FALSE;
     }
     ret = gom_event_target_will_trigger_ns (parent, namespace_uri, type);
-    g_object_unref (parent);
     return ret;
 }
 
@@ -192,10 +193,17 @@ gom_listener_list_dispatch_event (GomEventTarget  *target,
     char *namespace_uri, *type_name;
     gboolean bubbles;
     GList  *parents, *li;
-    GomNode *node;
+    GomEventTarget *parent;
     
     if (!GOM_IS_EVT (evt) || !GOM_IS_CUSTOM_EVENT (evt)) {
-        g_warning ("I cannot work with this Event.");
+        g_warning (G_STRLOC": I cannot work with a \"%s\" Event.",
+                   g_type_name (G_TYPE_FROM_INSTANCE (evt)));
+        return TRUE;
+    }
+
+    if (!GOM_IS_EVENT_TARGET_INTERNAL (target)) {
+        g_warning (G_STRLOC": I cannot work with a \"%s\" EventTarget.",
+                   g_type_name (G_TYPE_FROM_INSTANCE (target)));
         return TRUE;
     }
 
@@ -209,22 +217,17 @@ gom_listener_list_dispatch_event (GomEventTarget  *target,
                   NULL);
 
     parents = NULL;
-    for (g_object_get (target, "parent-node", &node, NULL);
-         node;
-         g_object_get (node, "parent-node", &node, NULL)) {
-        /* g_object_get() refs the object */
-        parents = g_list_prepend (parents, node);
+    for (parent = gom_event_target_internal_get_parent_target (GOM_EVENT_TARGET_INTERNAL (target));
+         GOM_IS_EVENT_TARGET_INTERNAL (parent);
+         parent = gom_event_target_internal_get_parent_target (GOM_EVENT_TARGET_INTERNAL (parent))) {
+        parents = g_list_prepend (parents, g_object_ref (parent));
     }
     
     /* CAPTURING_PHASE */
     for (li = parents; li; li = li->next) {
-        if (!GOM_IS_NODE_INTERNAL (li->data)) {
-            g_warning (G_STRLOC": cannot dispatch event to %s %p",
-                       g_type_name (G_TYPE_FROM_INSTANCE (li->data)), li->data);
-            continue;
-        }
-        gom_node_internal_dispatch_listeners (GOM_NODE_INTERNAL (li->data),
-                                              evt, namespace_uri, type_name, GOM_CAPTURING_PHASE);
+        gom_event_target_internal_dispatch_listeners (GOM_EVENT_TARGET_INTERNAL (li->data),
+                                                      evt, namespace_uri, type_name,
+                                                      GOM_CAPTURING_PHASE);
         if (gom_custom_event_is_propagation_stopped (GOM_CUSTOM_EVENT (evt)) ||
             gom_custom_event_is_immediate_propagation_stopped (GOM_CUSTOM_EVENT (evt))) {
             goto dispatch_out;
@@ -232,8 +235,9 @@ gom_listener_list_dispatch_event (GomEventTarget  *target,
     }
 
     /* AT_TARGET */
-    gom_node_internal_dispatch_listeners (GOM_NODE_INTERNAL (target),
-                                          evt, namespace_uri, type_name, GOM_AT_TARGET);
+    gom_event_target_internal_dispatch_listeners (GOM_EVENT_TARGET_INTERNAL (target),
+                                                  evt, namespace_uri, type_name,
+                                                  GOM_AT_TARGET);
     if (gom_custom_event_is_propagation_stopped (GOM_CUSTOM_EVENT (evt)) ||
         gom_custom_event_is_immediate_propagation_stopped (GOM_CUSTOM_EVENT (evt))) {
         goto dispatch_out;
@@ -242,13 +246,9 @@ gom_listener_list_dispatch_event (GomEventTarget  *target,
     /* BUBBLING_PHASE */
     if (bubbles) {
         for (li = g_list_last (parents); li; li = li->prev) {
-            if (!GOM_IS_NODE_INTERNAL (li->data)) {
-                g_warning (G_STRLOC": cannot dispatch event to %s %p",
-                           g_type_name (G_TYPE_FROM_INSTANCE (li->data)), li->data);
-                continue;
-        }
-            gom_node_internal_dispatch_listeners (GOM_NODE_INTERNAL (li->data),
-                                                  evt, namespace_uri, type_name, GOM_BUBBLING_PHASE);
+            gom_event_target_internal_dispatch_listeners (GOM_EVENT_TARGET_INTERNAL (li->data),
+                                                          evt, namespace_uri, type_name,
+                                                          GOM_BUBBLING_PHASE);
             if (gom_custom_event_is_propagation_stopped (GOM_CUSTOM_EVENT (evt)) ||
                 gom_custom_event_is_immediate_propagation_stopped (GOM_CUSTOM_EVENT (evt))) {
                 goto dispatch_out;

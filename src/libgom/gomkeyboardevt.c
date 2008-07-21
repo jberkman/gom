@@ -23,9 +23,10 @@ THE SOFTWARE.
 */
 #include "config.h"
 
+#include "gom/dom/gomkeyboardevent.h"
+
 #include "gom/gomkeyboardevt.h"
 
-#include "gom/dom/gomkeyboardevent.h"
 #include "gom/dom/gomuievent.h"
 #include "gom/gomkeyidentifiers.h"
 

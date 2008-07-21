@@ -50,7 +50,6 @@ G_BEGIN_DECLS
         _GOM_IMPLEMENT_NODE_INTERNAL (i, p, set_next_sibling);   \
         _GOM_IMPLEMENT_NODE_INTERNAL (i, p, set_prev_sibling);   \
         _GOM_IMPLEMENT_NODE_INTERNAL (i, p, sibling_requested);  \
-        _GOM_IMPLEMENT_NODE_INTERNAL (i, p, dispatch_listeners); \
     } G_STMT_END
 
 struct _GomNodeInternalInterface {
@@ -60,11 +59,6 @@ struct _GomNodeInternalInterface {
     void (*set_next_sibling)   (GomNodeInternal *child,  GomNode *sibling);
     void (*set_prev_sibling)   (GomNodeInternal *child,  GomNode *sibling);
     void (*sibling_requested)  (GomNodeInternal *parent, GomNode *child);
-    void (*dispatch_listeners) (GomNodeInternal *current_target,
-                                GomEvent        *evt,
-                                const char      *namespace_uri,
-                                const char      *type_name,
-                                GomPhaseType     phase);
 };
 
 GType gom_node_internal_get_type (void);
@@ -74,11 +68,6 @@ void  gom_node_internal_set_next_sibling   (GomNodeInternal *child, GomNode *sib
 void  gom_node_internal_set_prev_sibling   (GomNodeInternal *child, GomNode *sibling);
 void  gom_node_internal_sibling_requested  (GomNodeInternal *parent, GomNode *child);
 
-void  gom_node_internal_dispatch_listeners (GomNodeInternal *current_target,
-                                            GomEvent        *evt,
-                                            const char      *namespace_uri,
-                                            const char      *type_name,
-                                            GomPhaseType     phase);
 G_END_DECLS
 
 #endif /* GOM_NODE_INTERNAL_H */

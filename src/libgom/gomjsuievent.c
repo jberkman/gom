@@ -57,22 +57,22 @@ JSClass GomJSUIEventClass = {
 static JSPropertySpec gom_js_ui_event_props[] = { { NULL } };
 
 static JSBool
-gom_js_event_init_ui_event (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_ui_event_init_ui_event (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSBool
-gom_js_event_init_ui_event_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gom_js_ui_event_init_ui_event_ns (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
     GOM_JS_NOT_IMPLEMENTED (cx);
     return JS_FALSE;
 }
 
 static JSFunctionSpec gom_js_ui_event_funcs[] = {
-    { "initUIEvent",   gom_js_event_init_ui_event,    5 },
-    { "initUIEventNS", gom_js_event_init_ui_event_ns, 6 },
+    { "initUIEvent",   gom_js_ui_event_init_ui_event,    5 },
+    { "initUIEventNS", gom_js_ui_event_init_ui_event_ns, 6 },
     { NULL }
 };
 

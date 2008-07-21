@@ -90,8 +90,3 @@ gom_gc_manager_manage_object (JSContext *cx, GomGCManaged *obj)
     g_object_weak_ref (G_OBJECT (obj), gom_gc_manager_unregister, cx);
 }
 
-GOM_DEFINE_INTERFACE (GomGCManaged, gom_gc_managed, {});
-
-GOM_STUB_VOID(GOM_GC_MANAGED, gom_gc_managed, mark_live_objects,
-              (GomGCManaged *gom_gc_managed, JSContext *cx, JSGCStatus status),
-              (gom_gc_managed, cx, status));
