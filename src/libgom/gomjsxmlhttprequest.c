@@ -60,43 +60,160 @@ static JSPropertySpec gom_js_xml_http_request_props[] = { { NULL } };
 static JSBool
 gom_js_xml_http_request_open (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomXMLHttpRequest *req;
+    char *method;
+    char *url;
+    JSBool async;
+    char *user;
+    char *password;
+    GError *error = NULL;
+
+    req = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_XML_HTTP_REQUEST (req)) {
+        return JS_FALSE;
+    }
+    if (!JS_ConvertArguments (cx, argc, argv, "ss/bss",
+                              &method, &url, &async,
+                              &user, &password)) {
+        return JS_FALSE;
+    }
+
+    gom_xml_http_request_open (req, method, url,
+                               argc >= 3 ? async ? TRUE : FALSE : TRUE,
+                               argc >= 4 ? user : GOM_XML_HTTP_REQUEST_OMITTED,
+                               argc >= 5 ? password : GOM_XML_HTTP_REQUEST_OMITTED,
+                               &error);
+    if (error) {
+        return gom_js_exception_set_error (cx, &error);
+    }
+
+    return JS_TRUE;
 }
 
 static JSBool
 gom_js_xml_http_request_set_request_header (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomXMLHttpRequest *req;
+    char *name;
+    char *value;
+    GError *error = NULL;
+
+    req = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_XML_HTTP_REQUEST (req)) {
+        return JS_FALSE;
+    }
+    if (!JS_ConvertArguments (cx, argc, argv, "ss", &name, &value)) {
+        return JS_FALSE;
+    }
+
+    gom_xml_http_request_set_request_header (req, name, value, &error);
+    if (error) {
+        return gom_js_exception_set_error (cx, &error);
+    }
+
+    return JS_TRUE;
 }
 
 static JSBool
 gom_js_xml_http_request_send (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomXMLHttpRequest *req;
+    GError *error = NULL;
+    char *data;
+    JSObject *jsdoc;
+    GomDocument *doc;
+
+    req = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_XML_HTTP_REQUEST (req)) {
+        return JS_FALSE;
+    }
+
+    if (argc == 0) {
+        gom_xml_http_request_send (req, &error);
+    } else if (JSVAL_IS_STRING (argv[0]) && 
+               JS_ConvertArguments (cx, argc, argv, "s", &data)) {
+        gom_xml_http_request_send_string (req, data, &error);
+    } else if (JSVAL_IS_OBJECT (argv[0]) &&
+               JS_ConvertArguments (cx, argc, argv, "o", &jsdoc)) {
+        doc = gom_js_object_get_g_object (cx, obj);
+        if (!GOM_IS_DOCUMENT (doc)) {
+            return JS_FALSE;
+        }
+        gom_xml_http_request_send_document (req, doc, &error);
+    }
+    if (error) {
+        return gom_js_exception_set_error (cx, &error);
+    }
+    return JS_TRUE;
 }
 
 static JSBool
 gom_js_xml_http_request_abort (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomXMLHttpRequest *req;
+
+    req = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_XML_HTTP_REQUEST (req)) {
+        return JS_FALSE;
+    }
+    if (argc != 0) {
+        return JS_FALSE;
+    }
+
+    gom_xml_http_request_abort (req);
+
+    return JS_TRUE;
 }
 
 static JSBool
 gom_js_xml_http_request_get_all_response_headers (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomXMLHttpRequest *req;
+    GError *error = NULL;
+    char *headers;
+
+    req = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_XML_HTTP_REQUEST (req)) {
+        return JS_FALSE;
+    }
+    if (argc != 0) {
+        return JS_FALSE;
+    }
+
+    headers = gom_xml_http_request_get_all_response_headers (req, &error);
+    if (error) {
+        return gom_js_exception_set_error (cx, &error);
+    }
+
+    *rval = STRING_TO_JSVAL (JS_NewStringCopyZ (cx, headers));
+
+    return JS_TRUE;
 }
 
 static JSBool
 gom_js_xml_http_request_get_response_header (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GOM_JS_NOT_IMPLEMENTED (cx);
-    return JS_FALSE;
+    GomXMLHttpRequest *req;
+    char *header;
+    GError *error = NULL;
+
+    req = gom_js_object_get_g_object (cx, obj);
+    if (!GOM_IS_XML_HTTP_REQUEST (req)) {
+        return JS_FALSE;
+    }
+    if (!JS_ConvertArguments (cx, argc, argv, "s", &header)) {
+        return JS_FALSE;
+    }
+
+    /* the passed-in header belongs to the JS runtime; no need to free */
+    header = gom_xml_http_request_get_response_header (req, header, &error);
+    if (error) {
+        return gom_js_exception_set_error (cx, &error);
+    }
+
+    *rval = STRING_TO_JSVAL (JS_NewStringCopyZ (cx, header));
+
+    return JS_TRUE;
 }
 
 static JSFunctionSpec gom_js_xml_http_request_funcs[] = {
@@ -112,9 +229,27 @@ static JSFunctionSpec gom_js_xml_http_request_funcs[] = {
 static JSBool
 gom_js_xml_http_request_construct (JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-    GObject *gobj = g_object_new (GOM_TYPE_XHR, NULL);
+    JSObject *win;
+    GObject *gobj;
+    GomDocument *doc;
+    jsval jsdoc;
+
+    win = JS_GetPrototype (cx, obj);
+    if (win) {
+        win = JS_GetParent (cx, win);
+    }
+    if (!win ||
+        !JS_LookupProperty (cx, win, "document", &jsdoc) ||
+        !JSVAL_IS_OBJECT (jsdoc)) {
+        return JS_FALSE;
+    }
+
+    doc = gom_js_object_get_g_object (cx, JSVAL_TO_OBJECT (jsdoc));
+
+    gobj = g_object_new (GOM_TYPE_XHR, "document", doc, NULL);
     gom_js_object_set_g_object (cx, obj, gobj);
     g_object_unref (gobj);
+
     return JS_TRUE;
 }
 

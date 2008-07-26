@@ -13,6 +13,7 @@ ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 # Checks for packages
 GLIB_REQVER="2.6.0"
 GTK_REQVER="2.6.0"
+CURL_REQVER="0"
 
 GOM_MODULES="gtk+-2.0 >= $GTK_REQVER gthread-2.0"
 PKG_CHECK_MODULES(GOM, [$GOM_MODULES])
@@ -103,6 +104,10 @@ AC_SUBST(JS_CFLAGS, ["$moz_oscflags -I$mozilla_source -I$mozilla_source/$moz_obj
 AC_SUBST(JS_LIBS, ["$mozilla_source/$moz_objdir/libjs.a $moz_oslibs"])
 AC_SUBST(DISTCHECK_CONFIGURE_FLAGS,["--with-mozilla-source=$mozilla_source"])
 
+AC_SUBST(PY_LDFLAGS,[$(python ldflags.py)])
+AC_SUBST(PY_CPPFLAGS,[$(python cppflags.py)])
+AC_SUBST(CURL_CFLAGS,[$(pkg-config --cflags libcurl)])
+AC_SUBST(CURL_LIBS,[$(pkg-config --libs-only-L --libs-only-l libcurl)])
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.

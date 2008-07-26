@@ -36,7 +36,7 @@ THE SOFTWARE.
 static void
 gom_error_reporter (JSContext *cx, const char *message, JSErrorReport *report)
 {
-    g_warning (G_STRLOC"%s:%d: Unhandled JavaScript exception: %s (%d)\n",
+    g_warning (G_STRLOC": %s:%d: Unhandled JavaScript exception: %s (%d)\n",
                report->filename, report->lineno,
                message, report->errorNumber);
 }

@@ -29,11 +29,13 @@ THE SOFTWARE.
 #include "gom/dom/gomdocumentevent.h"
 #include "gom/dom/gomdomimplementation.h"
 #include "gom/dom/gomeventtarget.h"
+#include "gom/gomdoc.h"
 #include "gom/gomdom.h"
 #include "gom/gomjscontext.h"
 #include "gom/gomjsexception.h"
 #include "gom/gomjsobject.h"
 #include "gom/gomobject.h"
+#include "gom/gomuri.h"
 
 #include "gommacros.h"
 
@@ -317,7 +319,7 @@ struct _ParserScope {
 };
 
 typedef struct {
-    const char  *filename;
+    char  *filename;
     JSContext   *cx;
     JSObject    *window;
     GomDocument *doc;
@@ -426,16 +428,29 @@ gom_js_window_parser_start_element (GMarkupParseContext *context,
 
     if (!data->doc) {
         GomDOMImplementation *dom;
+
         dom = g_object_new (GOM_TYPE_DOM, NULL);
-        data->doc = gom_dom_implementation_create_document (dom, namespace, element_name, NULL, error);
-	g_object_unref (dom);
-        if (data->doc) {
-            data->jsdoc = gom_js_object_get_or_create_js_object (data->cx, data->doc);
-            JS_DefineProperty (data->cx, data->window, "document",
-                               OBJECT_TO_JSVAL (data->jsdoc), NULL, NULL,
-                               JSPROP_PERMANENT | JSPROP_READONLY);
-            g_object_get (data->doc, "document-element", &data->scope->elem, NULL);
+        data->doc = g_object_new (GOM_TYPE_DOC,
+                                  "doctype",        NULL,
+                                  "implementation", dom,
+                                  "document-u-r-i", data->filename,
+                                  NULL);
+        g_object_unref (dom);
+
+        data->scope->elem = gom_document_create_element_ns (data->doc, namespace, element_name, error);
+        if (data->scope->elem) {
+            gom_node_append_child (GOM_NODE (data->doc), GOM_NODE (data->scope->elem), error);
         }
+        if (!data->scope->elem || *error) {
+            pop_scope (data);
+            g_object_unref (data->doc);
+            data->doc = NULL;
+            return;
+        }
+        data->jsdoc = gom_js_object_get_or_create_js_object (data->cx, data->doc);
+        JS_DefineProperty (data->cx, data->window, "document",
+                           OBJECT_TO_JSVAL (data->jsdoc), NULL, NULL,
+                           JSPROP_PERMANENT | JSPROP_READONLY);
     } else {
         data->scope->elem = gom_document_create_element_ns (data->doc, namespace, element_name, error);
     }
@@ -533,17 +548,26 @@ gom_js_window_parser_end_element (GMarkupParseContext *context,
          */
         file = gom_element_get_attribute (data->scope->elem, "src");
         if (file) {
-            if (!g_path_is_absolute (file)) {
-                char *dir = g_path_get_dirname (data->filename);
-                char *f2  = g_build_filename (dir, file, NULL);
-                g_free (file);
-                g_free (dir);
-                file = f2;
-            }
-            if (!g_file_get_contents (file, &script, &script_len, &err)) {
-                g_printerr (G_STRLOC": could not load %s: %s\n",
-                            file, err->message);
-                g_error_free (err);
+            char *f2;
+            f2 = gom_uri_join (data->filename, file);
+            if (!f2) {
+                g_printerr (G_STRLOC": could not resolve relative filename %s\n", file);
+            } else {
+                GomURI *uri;
+                char *scheme;
+                uri = g_object_new (GOM_TYPE_URI, "uri", f2, NULL);
+                g_free (f2);
+                g_object_get (uri, "scheme", &scheme, "path", &f2, NULL);
+                g_object_unref (uri);
+                if (!strcmp (scheme, "file")) {
+                    g_free (file);
+                    file = f2;
+                }
+                if (!g_file_get_contents (file, &script, &script_len, &err)) {
+                    g_printerr (G_STRLOC": could not load %s: %s\n",
+                                file, err->message);
+                    g_error_free (err);
+                }
             }
             filename = file;
             lineno   = 0;
@@ -579,7 +603,7 @@ gom_js_window_parser_end_element (GMarkupParseContext *context,
                                    script, script_len,
                                    filename, lineno, &rval)) {
                 if (!gom_js_exception_get_error (data->cx, &err)) {
-                    g_set_error (error, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
+                    g_set_error (&err, GOM_JS_ERROR, GOM_JS_ERROR_UNKNOWN,
                                  "Unknown error encountered while running script at %s:%d\n",
                                  data->filename, lineno);
                 }
@@ -649,7 +673,19 @@ gom_js_window_parse_file (JSContext  *cx,
         goto out;
     }
 
-    data.filename = filename;
+    if (g_path_is_absolute (filename)) {
+        data.filename = g_strdup_printf ("file://%s", filename);
+    } else {
+        char *base;
+        char *pwd;
+
+        pwd = g_get_current_dir ();
+        base = g_strdup_printf ("file://%s/", pwd);
+        g_free (pwd);
+
+        data.filename = gom_uri_join (base, filename);
+        g_free (base);
+    }
     data.cx = cx;
     data.window = window;
     
@@ -660,6 +696,7 @@ gom_js_window_parse_file (JSContext  *cx,
         g_markup_parse_context_end_parse (ctx, &error);
     }
     g_markup_parse_context_free (ctx);
+    g_free (data.filename);
     g_free (xml);
     if (data.doc) {
         g_object_unref (data.doc);

@@ -40,6 +40,7 @@ gominclude_HEADERS :=				\
 	include/gom/gomobject.h			\
 	include/gom/gomtxt.h			\
 	include/gom/gomuievt.h			\
+	include/gom/gomuri.h			\
 	include/gom/gomvalue.h			\
 	include/gom/gomwidget.h			\
 	include/gom/gomxhr.h

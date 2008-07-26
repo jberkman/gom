@@ -53,13 +53,15 @@ enum {
     PROP_IMPLEMENTATION,
     PROP_DOCUMENT_ELEMENT,
     PROP_NODE_NAME,
-    PROP_NODE_TYPE
+    PROP_NODE_TYPE,
+    PROP_DOCUMENT_URI
 };
 
 typedef struct {
     GomDOMImplementation *implementation;
     GomDocumentType      *doctype;
     guint                 constructed : 1;
+    const char           *document_uri;
 } GomDocPrivate;
 
 #define PRIV(o) G_TYPE_INSTANCE_GET_PRIVATE ((o), GOM_TYPE_DOC, GomDocPrivate)
@@ -94,6 +96,9 @@ gom_doc_get_property (GObject    *object,
     case PROP_NODE_TYPE:
         g_value_set_enum (value, GOM_DOCUMENT_NODE);
         break;
+    case PROP_DOCUMENT_URI:
+        g_value_set_string (value, priv->document_uri);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
         break;
@@ -114,6 +119,9 @@ gom_doc_set_property (GObject *object,
             return;
         case PROP_IMPLEMENTATION:
             priv->implementation = g_value_dup_object (value);
+            return;
+        case PROP_DOCUMENT_URI:
+            priv->document_uri = g_value_dup_string (value);
             return;
         }
     }
@@ -607,4 +615,5 @@ gom_doc_class_init (GomDocClass *klass)
     g_object_class_override_property (oclass, PROP_DOCUMENT_ELEMENT, "document-element");
     g_object_class_override_property (oclass, PROP_NODE_NAME,        "node-name");
     g_object_class_override_property (oclass, PROP_NODE_TYPE,        "node-type");
+    g_object_class_override_property (oclass, PROP_DOCUMENT_URI,     "document-u-r-i");
 }

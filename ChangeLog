@@ -1,3 +1,40 @@
+2008-07-26  jacob berkman  <jacob@ilovegom.org>
+
+	* src/libgom/gomdominterfaces.c: 
+	* src/libgom/gomdoc.c (gom_doc_get_property)
+	(gom_doc_set_property): add documentURI level 3 property
+
+	* src/libgom/gomjswindow.c
+	(gom_js_window_parser_start_element): create a document
+	manually, that is without using the standard DOM api, so we
+	can pass in the document's uri
+	(gom_js_window_parser_end_element): use GomURI to resolve
+	relative hrefs
+	(gom_js_window_parse_file): use GomURI to resolve relative
+	paths
+
+	* src/libgom/gomxhr.c (gom_xhr_get_property): impl for readyState
+	(gom_xhr_set_property): impl for document
+	(is_token): determine if something is an HTTP token
+	(gom_xhr_open): begin implementation
+	(is_lws): determine if something is http leading whitespace
+	(is_quoted_string, is_value): more http rfc checks
+	(gom_xhr_set_request_header): implement
+
+	* src/libgom/gomjsxmlhttprequest.c (gom_js_xml_http_request_open)
+	(gom_js_xml_http_request_set_request_header)
+	(gom_js_xml_http_request_send)
+	(gom_js_xml_http_request_abort)
+	(gom_js_xml_http_request_get_all_response_headers)
+	(gom_js_xml_http_request_get_response_header): implement binding
+	(gom_js_xml_http_request_construct): set the appropriate
+	document object when constructing
+
+	* cppflags.py: 
+	* ldflags.py: detect python build options
+
+	* src/libgom/gomuri.c: new object for manipulating uris
+
 2008-07-20  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomgcmanager.c: remove GomGCManaged interface

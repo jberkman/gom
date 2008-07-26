@@ -41,12 +41,13 @@ libgom_la_SOURCES :=				\
 	src/libgom/gomobject.c			\
 	src/libgom/gomtxt.c			\
 	src/libgom/gomuievt.c			\
+	src/libgom/gomuri.c			\
 	src/libgom/gomvalue.c			\
 	src/libgom/gomwidget.c			\
 	src/libgom/gomxhr.c
 
-libgom_la_CFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include $(GOM_CFLAGS) $(JS_CFLAGS)
-libgom_la_LDFLAGS = $(GOM_LIBS)
+libgom_la_CFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include $(GOM_CFLAGS) $(JS_CFLAGS) $(PY_CPPFLAGS) $(CURL_CFLAGS)
+libgom_la_LDFLAGS = $(PY_LDFLAGS) $(GOM_LIBS) $(CURL_LIBS)
 
 src/libgom/gomdominterfaces.c: include/gom/dom/gomdombuiltins.h
 

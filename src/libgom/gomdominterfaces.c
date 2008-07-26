@@ -164,6 +164,15 @@ GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomDocument, gom_document,
                              "This is a convenience attribute that allows direct access to the child node that is the root element of the document.",
                              GOM_TYPE_ELEMENT,
                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+    /* DOM Level 3 */
+    g_object_interface_install_property (
+        g_iface,
+        g_param_spec_string ("document-u-r-i", NULL,
+                             "The location of the document or null if undefined or if the Document was created using DOMImplementation.createDocument.",
+                             NULL,
+                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
 }, GOM_TYPE_NODE);
 
 GOM_STUB_FUNC (GOM_DOCUMENT, gom_document, create_element,
