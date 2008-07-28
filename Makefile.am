@@ -24,12 +24,14 @@ check_PROGRAMS :=
 
 # sbin_SCRIPTS :=
 
+noinst_LIBRARIES :=
 noinst_LTLIBRARIES :=
 
 # dist_sbin_SCRIPTS :=
 dist_noinst_SCRIPTS :=
 # dist_pkglibexec_SCRIPTS :=
 
+lib_LIBRARIES :=
 lib_LTLIBRARIES :=
 
 # apps_DATA :=
@@ -46,7 +48,7 @@ TESTS :=
 
 AM_CPPFLAGS :=
 
-dist_noinst_DATA += Makefile.am.subdir Makefile.configure gomwidgets.in
+dist_noinst_DATA += Makefile.am.subdir gomwidgets.in
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA := gom-0.pc

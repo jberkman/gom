@@ -23,11 +23,50 @@ THE SOFTWARE.
 */
 #include "config.h"
 
+#include "xpcom-config.h"
+
 #include "gom/gomgcmanager.h"
 #include "gom/gomjscontext.h"
 #include "gom/gomjswindow.h"
 #include "gom/gomjsobject.h"
 #include "gom/gomwidget.h"
+
+#include <nsXPCOM.h>
+
+#if 0
+#include <nsXPCOMGlue.h>
+#else
+/*
+ * nsXPCOMGlue.h could easily be included by C sources... but it
+ * isn't.  Include C-compatible definitions of the things we use.
+ * They'd probably complain that it's a red herring, since the XPCOM
+ * glue needs C++ things to link, but we have C++ files places we
+ * actually use XPCOM so it works out fine for us.
+ */
+#include <nscore.h>
+
+typedef struct {
+    const char *lower;
+    PRBool      lowerInclusive;
+    const char *upper;
+    PRBool      upperInclusive;
+} GREVersionRange;
+
+typedef struct {
+    const char *property;
+    const char *value;
+} GREProperty;
+
+NS_COM_GLUE nsresult
+GRE_GetGREPathWithProperties(const GREVersionRange *versions,
+                             PRUint32 versionsLength,
+                             const GREProperty *properties,
+                             PRUint32 propertiesLength,
+                             char *buffer, PRUint32 buflen);
+
+NS_HIDDEN_(nsresult)
+XPCOMGlueStartup(const char* xpcomFile);
+#endif
 
 #include <gtk/gtk.h>
 
@@ -68,7 +107,7 @@ gc_cb (gpointer data)
 static gboolean
 parse_idle (gpointer data)
 {
-    MainData *d = data;
+    MainData *d = (MainData *)data;
 #ifdef GOM_DEBUG_GC
     JS_GC (d->cx);
 #endif
@@ -90,12 +129,28 @@ main (int argc, char *argv[])
     MainData d = { NULL };
     GObject *cxpriv;
     JSRuntime *rt; 
+    nsresult rv;
+    char xpcom_path[PATH_MAX];
+    GREVersionRange gre_version = { "1.9", PR_TRUE, "2", PR_TRUE };
 
     gtk_init (&argc, &argv);
 
     if (argc < 2) {
         g_printerr ("Usage: gom <file.gom>\n");
         return 1;
+    }
+
+    rv = GRE_GetGREPathWithProperties (&gre_version, 1, nsnull, 0,
+					xpcom_path, sizeof (xpcom_path));
+    if (NS_FAILED (rv)) {
+	g_printerr ("Could not find a compatible Mozilla GRE.\n");
+	return 1;
+    }
+
+    rv = XPCOMGlueStartup (xpcom_path);
+    if (NS_FAILED (rv)) {
+	g_printerr ("Could not start up xpcom glue.\n");
+	return 1;
     }
 
     d.filename = argv[1];

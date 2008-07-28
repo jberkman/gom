@@ -1,3 +1,20 @@
+2008-07-27  jacob berkman  <jacob@ilovegom.org>
+
+	* configure.ac: port to using xulrunner sdk rather than
+	spidermonkey checkout
+
+	* src/libgom/gomjswindow.c (gom_js_window_parser_end_element):
+	(gom_js_window_parse_file): use new gom_uri_* methods for
+	loading files
+
+	* src/libgom/gomxhr.c (gom_xhr_open): comment out bits that
+	used GomURI until this is back in action
+
+	* src/gom/gom.c (main): find a GRE and initialize XPCOM
+
+	* src/libgom/gomuriutils.cc (gom_uri_join): new nsIURI-based implementation
+	(gom_uri_get_contents): glib-like api for loading uris
+
 2008-07-26  jacob berkman  <jacob@ilovegom.org>
 
 	* src/libgom/gomdominterfaces.c: 

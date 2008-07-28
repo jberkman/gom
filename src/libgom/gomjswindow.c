@@ -35,7 +35,7 @@ THE SOFTWARE.
 #include "gom/gomjsexception.h"
 #include "gom/gomjsobject.h"
 #include "gom/gomobject.h"
-#include "gom/gomuri.h"
+#include "gom/gomuriutils.h"
 
 #include "gommacros.h"
 
@@ -548,26 +548,19 @@ gom_js_window_parser_end_element (GMarkupParseContext *context,
          */
         file = gom_element_get_attribute (data->scope->elem, "src");
         if (file) {
-            char *f2;
-            f2 = gom_uri_join (data->filename, file);
-            if (!f2) {
-                g_printerr (G_STRLOC": could not resolve relative filename %s\n", file);
+            if (!gom_uri_get_contents (file, data->filename, &script, &script_len, &err)) {
+                g_printerr (G_STRLOC": could not load %s: %s\n",
+                            filename, err->message);
+                g_error_free (err);
             } else {
-                GomURI *uri;
-                char *scheme;
-                uri = g_object_new (GOM_TYPE_URI, "uri", f2, NULL);
-                g_free (f2);
-                g_object_get (uri, "scheme", &scheme, "path", &f2, NULL);
-                g_object_unref (uri);
-                if (!strcmp (scheme, "file")) {
-                    g_free (file);
-                    file = f2;
-                }
-                if (!g_file_get_contents (file, &script, &script_len, &err)) {
-                    g_printerr (G_STRLOC": could not load %s: %s\n",
+                char *uri = gom_uri_join (file, data->filename, &err);
+                if (!uri) {
+                    g_printerr (G_STRLOC": could not build uri %s: %s\n",
                                 file, err->message);
                     g_error_free (err);
                 }
+                g_free (file);
+                file = uri;
             }
             filename = file;
             lineno   = 0;
@@ -668,24 +661,20 @@ gom_js_window_parse_file (JSContext  *cx,
     char *xml;
     gsize xmllen;
     GError *error = NULL;
+    char *base;
+    char *pwd;
 
-    if (!g_file_get_contents (filename, &xml, &xmllen, &error)) {
+    pwd = g_get_current_dir ();
+    base = g_strdup_printf ("file://%s/", pwd);
+    if (!gom_uri_get_contents (filename, base, &xml, &xmllen, &error)) {
         goto out;
     }
 
-    if (g_path_is_absolute (filename)) {
-        data.filename = g_strdup_printf ("file://%s", filename);
-    } else {
-        char *base;
-        char *pwd;
-
-        pwd = g_get_current_dir ();
-        base = g_strdup_printf ("file://%s/", pwd);
-        g_free (pwd);
-
-        data.filename = gom_uri_join (base, filename);
-        g_free (base);
+    data.filename = gom_uri_join (filename, base, &error);
+    if (!data.filename) {
+        goto out;
     }
+
     data.cx = cx;
     data.window = window;
     
@@ -703,6 +692,8 @@ gom_js_window_parse_file (JSContext  *cx,
     }
 
 out:
+    g_free (base);
+    g_free (pwd);
     if (error) {
         gom_js_exception_set_error (cx, &error);
     }

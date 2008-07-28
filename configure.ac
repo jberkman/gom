@@ -7,6 +7,15 @@ AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/gom/gom.c])
 AC_CONFIG_HEADER([config.h])
 
+AC_ARG_WITH([xulrunner-sdk],
+	[AS_HELP_STRING([--with-xulrunner-sdk],
+		[path to XulRunner SDK directory])],
+	[xulrunnersdk=$withval])
+if test -z "$xulrunnersdk" ; then
+	AC_MSG_ERROR([You must specify the path to a XulRunner SDK with the --with-xulrunner-sdk option.])
+fi
+AC_SUBST(DISTCHECK_CONFIGURE_FLAGS,["--with-xulrunner-sdk=$xulrunnersdk"])
+
 # Honor aclocal flags
 ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 
@@ -30,14 +39,13 @@ AM_CONDITIONAL([HAVE_CHECK],[test x$has_check = xtrue])
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
-AM_PROG_LIBTOOL
+AC_PROG_CXX
+AC_PROG_RANLIB
 
 # Make libtool use --silent when --silent is passed to make
 changequote(,)dnl
 LIBTOOL="${LIBTOOL} \$(shell echo \"\$(MFLAGS)\" | awk '/^[^ ]*s/ { print \"--silent\" }')"
 changequote([,])dnl
-
-# Checks for programs.
 
 # Checks for libraries.
 #
@@ -52,67 +60,43 @@ AM_PATH_GLIB_2_0(["$GLIB_REQVER"], :,
 *** GLIB is always available from ftp://ftp.gtk.org/pub/gtk/.]),
   gobject gmodule-no-export gthread)
 
-AC_ARG_WITH([mozilla-source],
-	[AS_HELP_STRING([--with-mozilla-source],
-		[path to checked-out and built Mozilla JavaScript source tree])],
-	[mozilla_source=$withval])
-if test -z "$mozilla_source" ; then
-	AC_MSG_ERROR([You must specify the path to a checked-out and built Mozilla JavaScript source tree with the --with-mozilla-source option.])
-fi
-AC_MSG_CHECKING([for jsapi.c in $mozilla_source])
-if test -r "$mozilla_source"/jsapi.c ; then
-    AC_MSG_RESULT([found])
-else
-    AC_MSG_RESULT([not found])
-    AC_MSG_CHECKING([for jsapi.c in $mozilla_source/src])
-    if test -r "$mozilla_source"/src/jsapi.c ; then
-        AC_MSG_RESULT([found])
-        mozilla_source="$mozilla_source"/src
-    else
-        AC_MSG_RESULT([not found])
-        AC_MSG_CHECKING([for jsapi.c in $mozilla_source/js/src])
-        if test -r "$mozilla_source"/js/src/jsapi.c ; then
-            AC_MSG_RESULT([found])
-            mozilla_source="$mozilla_source"/js/src
-        else
-            AC_MSG_RESULT([not found])
-            AC_MSG_ERROR([$mozilla_source does not look like a Mozilla JavaScript source tree.])
-        fi
-    fi
-fi
-AC_MSG_CHECKING([for config.mk in $mozilla_source])
-if test -r "$mozilla_source"/config.mk ; then
-	AC_MSG_RESULT([found])
-else
-	AC_MSG_RESULT([not found])
-	AC_MSG_ERROR([$mozilla_source does not look like a Mozilla JavaScript source tree.])
-fi
-mozmake="make -s mozilla_source=$mozilla_source -f $srcdir/Makefile.configure"
-AC_MSG_CHECKING([for Mozilla OBJDIR])
-moz_objdir=$($mozmake objdir)
-AC_MSG_RESULT([$moz_objdir])
-AC_MSG_CHECKING([for libjs.a in $mozilla_source/$moz_objdir])
-if test -r "$mozilla_source/$moz_objdir"/libjs.a ; then
-	AC_MSG_RESULT([found])
-else
-	AC_MSG_RESULT([not found])
-	AC_MSG_ERROR([$mozilla_source does not look like a Mozilla JavaScript source tree.])
-fi
-moz_oscflags=$($mozmake oscflags)
-moz_oslibs=$($mozmake oslibs)
-AC_SUBST(JS_CFLAGS, ["$moz_oscflags -I$mozilla_source -I$mozilla_source/$moz_objdir"])
-AC_SUBST(JS_LIBS, ["$mozilla_source/$moz_objdir/libjs.a $moz_oslibs"])
-AC_SUBST(DISTCHECK_CONFIGURE_FLAGS,["--with-mozilla-source=$mozilla_source"])
-
-AC_SUBST(PY_LDFLAGS,[$(python ldflags.py)])
-AC_SUBST(PY_CPPFLAGS,[$(python cppflags.py)])
-AC_SUBST(CURL_CFLAGS,[$(pkg-config --cflags libcurl)])
-AC_SUBST(CURL_LIBS,[$(pkg-config --libs-only-L --libs-only-l libcurl)])
 # Checks for header files.
+CPPFLAGS_save=$CPPFLAGS
+
+js_cppflags="-I$xulrunnersdk/include/js -DXP_UNIX"
+CPPFLAGS="$CPPFLAGS_save $js_cppflags"
+AC_CHECK_HEADERS([jsapi.h],[],[
+	AC_MSG_ERROR([$xulrunnersdk is missing Spidermonkey headers.])
+])
+GOM_CFLAGS="$GOM_CFLAGS $js_cppflags"
+
+xulrunner_cppflags="-I$xulrunnersdk/sdk/include -DXPCOMGLUE=1"
+CPPFLAGS="$CPPFLAGS_save $xulrunner_cppflags"
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADERS([nsXPCOM.h nsIIOService.h],[],[
+	AC_MSG_ERROR([$xulrunnersdk is missing XPCOM headers.])
+])
+AC_LANG_POP([C++])
+GOM_CFLAGS="$GOM_CFLAGS $xulrunner_cppflags"
+
+CPPFLAGS=$CPPFLAGS_save
 
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
+LIBS_save=$LIBS
+
+xulrunner_libs="-L$xulrunnersdk/sdk/lib"
+LIBS="$LIBS_save $xulrunner_libs"
+AC_CHECK_LIB([mozjs],[JS_Init],[],[
+	AC_MSG_ERROR([$xulrunner is missing Spidermonkey libraries.])
+])
+AC_CHECK_LIB([xpcomglue],[XPCOMGlueStartup],[],[
+	AC_MSG_ERROR([$xulrunnersdk is missing XPCOM libraries.])
+])
+GOM_LIBS="$GOM_LIBS $xulrunner_libs -lxpcomglue -lmozjs"
+
+LIBS=$LIBS_save
 
 rm -rf a.out.dSYM
 

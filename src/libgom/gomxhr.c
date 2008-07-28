@@ -29,12 +29,10 @@ THE SOFTWARE.
 
 #include "gom/dom/gomeventtarget.h"
 #include "gom/dom/gomdomexception.h"
-#include "gom/gomuri.h"
 
 #include "gommacros.h"
 
 #include <string.h>
-#include <curl/curl.h>
 
 enum {
     PROP_DOCUMENT = 1,
@@ -51,8 +49,6 @@ typedef struct {
 
     GSList *reqhdr_names;
     GSList *reqhdr_values;
-
-    GomURI *uri;
 
     GomXMLHttpRequestState state;
 
@@ -176,9 +172,7 @@ gom_xhr_open (GomXMLHttpRequest *xml_http_request,
 {
     GomXhrPrivate *priv = PRIV (xml_http_request);
     const char **s;
-    GomURI *uri;
     char *scheme;
-    const curl_version_info_data *curl_data;
     const char * const*protocol;
 
     /* 1. Let stored method be the method argument. */
@@ -222,17 +216,19 @@ gom_xhr_open (GomXMLHttpRequest *xml_http_request,
      * 5.  Drop the fragment identifier (if any) from url and let
      * stored url be the result of that operation.
      */
+#if 0
     uri = g_object_new (GOM_TYPE_URI,
                         "uri", url,
                         "fragment", NULL,
                         NULL);
-
+#endif
     /*
      * 6.  If stored url is a relative reference resolve it using the
      * current value of the baseURI attribute of the Document
      * pointer. If this fails raise a SYNTAX_ERR exception and
      * terminate these steps.
      */
+#if 0
     if (gom_uri_is_relative (uri)) {
         char *new_uri = NULL;
         if (priv->doc) {
@@ -242,6 +238,7 @@ gom_xhr_open (GomXMLHttpRequest *xml_http_request,
                 char *rel_uri;
                 g_object_get (uri, "uri", &rel_uri, NULL);
                 new_uri = gom_uri_join (base_uri, rel_uri);
+                new_uri = g_build_filename (base_uri, 
                 g_free (rel_uri);
             }
             g_free (base_uri);
@@ -254,7 +251,6 @@ gom_xhr_open (GomXMLHttpRequest *xml_http_request,
         }
         uri = g_object_new (GOM_TYPE_URI, "uri", new_uri, NULL);
     }
-
     /*
      * 7. If stored url contains an unsupported scheme raise a
      * NOT_SUPPORTED_ERR and terminate these steps.
@@ -339,7 +335,7 @@ gom_xhr_open (GomXMLHttpRequest *xml_http_request,
     if (password != GOM_XML_HTTP_REQUEST_OMITTED) {
         g_object_set (uri, "password", password, NULL);
     }
-
+#endif
     /*
      * 19. Abort the send() algorithm, set response entity body to
      * "null" and reset the list of request headers.
@@ -362,10 +358,12 @@ gom_xhr_open (GomXMLHttpRequest *xml_http_request,
      */
     priv->state = GOM_OPENED;
     priv->send = FALSE;
+#if 0
     if (priv->uri) {
         g_object_unref (priv->uri);
     }
     priv->uri = uri;
+#endif
 }
 
 /*
