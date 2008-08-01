@@ -40,7 +40,8 @@ AM_CONDITIONAL([HAVE_CHECK],[test x$has_check = xtrue])
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CXX
-AC_PROG_RANLIB
+# AC_PROG_RANLIB
+AC_PROG_LIBTOOL
 
 # Make libtool use --silent when --silent is passed to make
 changequote(,)dnl
@@ -70,15 +71,16 @@ AC_CHECK_HEADERS([jsapi.h],[],[
 ])
 GOM_CFLAGS="$GOM_CFLAGS $js_cppflags"
 
-xulrunner_cppflags="-I$xulrunnersdk/sdk/include -DXPCOMGLUE=1"
+xulrunner_cppflags="-I$xulrunnersdk/sdk/include -DMOZILLA_STRICT_API"
 CPPFLAGS="$CPPFLAGS_save $xulrunner_cppflags"
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS([nsXPCOM.h nsIIOService.h],[],[
 	AC_MSG_ERROR([$xulrunnersdk is missing XPCOM headers.])
 ])
 AC_LANG_POP([C++])
-GOM_CFLAGS="$GOM_CFLAGS $xulrunner_cppflags"
-
+XPGOM_CFLAGS="$GOM_CFLAGS $xulrunner_cppflags"
+GOM_CFLAGS="$GOM_CFLAGS $xulrunner_cppflags -DXPCOMGLUE=1"
+			 
 CPPFLAGS=$CPPFLAGS_save
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -94,11 +96,26 @@ AC_CHECK_LIB([mozjs],[JS_Init],[],[
 AC_CHECK_LIB([xpcomglue],[XPCOMGlueStartup],[],[
 	AC_MSG_ERROR([$xulrunnersdk is missing XPCOM libraries.])
 ])
+case $host_os in
+     darwin*)
+	xplibpath="-Wl,-executable_path,$xulrunnersdk/bin"
+	;;
+    linux*)
+	xplibpath="-Wl,-rpath-link,$xulrunnersdk/bin"
+	;;
+    *)
+	AC_MSG_ERROR([I don't know how to link components on $host_os])
+	;;
+esac
+XPGOM_LIBS="$GOM_LIBS $xulrunner_libs -L$xulrunnersdk/bin $xplibpath -lxpcomglue_s -lmozjs -lxpcom -lnspr4"
 GOM_LIBS="$GOM_LIBS $xulrunner_libs -lxpcomglue -lmozjs"
 
 LIBS=$LIBS_save
 
 rm -rf a.out.dSYM
+
+AC_SUBST(XPGOM_CFLAGS)
+AC_SUBST(XPGOM_LIBS)
 
 AC_CONFIG_FILES([
 gom-0.pc

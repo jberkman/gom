@@ -1,3 +1,15 @@
+2008-07-31  jacob berkman  <jacob@ilovegom.org>
+
+	* configure.ac: turn libtool on again, for now, and use
+	correct flags for building xpcom components
+
+	* src/xpgom/xgGomModule.cc: register our xpcom components
+
+	* src/xpgom/xgDOMImplementation.cc: 
+	* include/xpgom/xgDOMImplementation.hh
+	(nsIDOMDOMImplementation): XPCOM-based DOMImplementation
+	object
+
 2008-07-27  jacob berkman  <jacob@ilovegom.org>
 
 	* configure.ac: port to using xulrunner sdk rather than
