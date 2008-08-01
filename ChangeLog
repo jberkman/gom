@@ -1,3 +1,20 @@
+2008-08-01  jacob berkman  <jacob@ilovegom.org>
+
+	* src/xpgom/xgGomModule.cc (xgGomRegistrationProc): try to
+	initialize Gtk
+
+	* src/xpgom/xgDOMImplementation.cc (xgDOMImplementation):
+	initialize gdom
+	(xgDOMImplementation): release gdom
+	(HasFeature): initial implementation
+
+	* include/xpgom/xgDOMImplementation.hh
+	(nsIDOMDOMImplementation): add a C object that we will proxy for
+
+	* src/xpgom/xpgom.js: a new Gom shell, written in JS
+
+	* include/gom/dom/*.h: add missing G_END_DECLS
+
 2008-07-31  jacob berkman  <jacob@ilovegom.org>
 
 	* configure.ac: turn libtool on again, for now, and use

@@ -25,12 +25,15 @@ THE SOFTWARE.
 
 #include "xpgom/xgDOMImplementation.hh"
 
+#include <gtk/gtkmain.h>
+
 #include <nsIGenericFactory.h>
 #include <nsIClassInfoImpl.h>
+#include <nsIFile.h>
+#include <nsStringAPI.h>
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(xgDOMImplementation)
+NS_GENERIC_FACTORY_CONSTRUCTOR(xgDOMImplementation);
 
-#if 0
 static NS_METHOD
 xgGomRegistrationProc (nsIComponentManager         *aCompMgr,
 		       nsIFile                     *aPath,
@@ -38,9 +41,14 @@ xgGomRegistrationProc (nsIComponentManager         *aCompMgr,
 		       const char                  *componentType,
 		       const nsModuleComponentInfo *info)
 {
+    if (!gtk_init_check (NULL, NULL)) {
+	g_warning ("Could not initialize Gtk; Gom module unavailable.");
+	return NS_ERROR_NOT_AVAILABLE;
+    }
     return NS_OK;
 }
 
+#if 0
 static NS_METHOD
 xgGomUnregistrationProc (nsIComponentManager         *aCompMgr,
 			 nsIFile                     *aPath,
@@ -58,7 +66,7 @@ static const nsModuleComponentInfo components[] = {
 	"DOM Implementation",
 	XG_DOMIMPLEMENTATION_CID, XG_DOMIMPLEMENTATION_CONTRACTID,
 	xgDOMImplementationConstructor,
-	NULL, NULL, NULL,
+	xgGomRegistrationProc, NULL, NULL,
 	NS_CI_INTERFACE_GETTER_NAME (xgDOMImplementation),
 	NULL,
 	&NS_CLASSINFO_NAME(xgDOMImplementation)

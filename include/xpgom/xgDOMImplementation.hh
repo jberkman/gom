@@ -25,6 +25,7 @@ THE SOFTWARE.
 #define XG_DOM_IMPLEMENTATION_HH
 
 #include <nsIDOMDOMImplementation.h>
+#include "gom/dom/gomdomimplementation.h"
 
 #define XG_DOMIMPLEMENTATION_CID_STR "4138BAA2-29BD-4D1C-9193-2D2254D4CA28"
 #define XG_DOMIMPLEMENTATION_CID \
@@ -42,6 +43,7 @@ public:
 private:
     ~xgDOMImplementation();
 
+    GomDOMImplementation *gdom;
 protected:
 };
 

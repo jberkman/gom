@@ -59,4 +59,6 @@ GType gom_text_get_type (void);
 
 GomText *gom_text_split_text (GomText *text, gulong offset, GError **error);
 
+G_END_DECLS
+
 #endif /* GOM_TEXT_H */

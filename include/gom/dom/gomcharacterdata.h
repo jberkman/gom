@@ -98,4 +98,6 @@ void gom_character_data_replace_data (GomCharacterData *cdata,
                                       const char *arg,
                                       GError **error);
 
+G_END_DECLS
+
 #endif /* GOM_CHARACTER_DATA_H */

@@ -139,4 +139,6 @@ char *gom_xml_http_request_get_response_header (const GomXMLHttpRequest *xml_htt
                                                 const char              *header,
                                                 GError                 **error);
 
+G_END_DECLS
+
 #endif /* GOM_XML_HTTP_REQUEST_H */

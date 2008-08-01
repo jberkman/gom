@@ -50,4 +50,6 @@ struct _GomDocumentFragmentInterface {
 
 GType gom_document_fragment_get_type (void);
 
+G_END_DECLS
+
 #endif /* GOM_DOCUMENT_FRAGMENT_H */

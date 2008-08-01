@@ -50,4 +50,6 @@ struct _GomNotationInterface {
 
 GType gom_notation_get_type (void);
 
+G_END_DECLS
+
 #endif /* GOM_NOTATION_H */

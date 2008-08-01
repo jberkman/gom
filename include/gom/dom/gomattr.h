@@ -50,4 +50,6 @@ struct _GomAttrInterface {
 
 GType gom_attr_get_type (void);
 
+G_END_DECLS
+
 #endif /* GOM_ATTR_H */

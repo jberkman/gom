@@ -51,4 +51,6 @@ struct _GomDocumentTypeInterface {
 
 GType gom_document_type_get_type (void);
 
+G_END_DECLS
+
 #endif /* GOM_DOCUMENT_TYPE_H */

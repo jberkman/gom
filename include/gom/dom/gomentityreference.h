@@ -50,4 +50,6 @@ struct _GomEntityReferenceInterface {
 
 GType gom_entity_reference_get_type (void);
 
+G_END_DECLS
+
 #endif /* GOM_ENTITY_REFERENCE_H */

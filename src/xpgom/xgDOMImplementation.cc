@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include "config.h"
 
 #include "xpgom/xgDOMImplementation.hh"
+#include "gom/gomdom.h"
 
 #include <nsIClassInfoImpl.h>
 
@@ -31,14 +32,17 @@ THE SOFTWARE.
 #include <nsEmbedString.h>
 
 xgDOMImplementation::xgDOMImplementation()
+    : gdom(GOM_DOM_IMPLEMENTATION (g_object_new (GOM_TYPE_DOM, NULL)))
 {
+    g_object_add_weak_pointer (G_OBJECT (gdom), (gpointer *)&gdom);
 }
 
 xgDOMImplementation::~xgDOMImplementation()
 {
+    g_object_unref (gdom);
 }
 
-NS_IMPL_ISUPPORTS1_CI(xgDOMImplementation, nsIDOMDOMImplementation)
+NS_IMPL_ISUPPORTS1_CI(xgDOMImplementation, nsIDOMDOMImplementation);
 
 /* boolean hasFeature (in DOMString feature, in DOMString version); */
 NS_IMETHODIMP
@@ -46,7 +50,19 @@ xgDOMImplementation::HasFeature (const nsAString &feature,
 				 const nsAString &version,
 				 PRBool          *_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsCAutoString cfeature;
+    if (NS_FAILED (NS_UTF16ToCString (feature, NS_CSTRING_ENCODING_UTF8, cfeature))) {
+	return NS_ERROR_INVALID_ARG;
+    }
+
+    nsCAutoString cversion;
+    if (NS_FAILED (NS_UTF16ToCString (version, NS_CSTRING_ENCODING_UTF8, cversion))) {
+	return NS_ERROR_INVALID_ARG;
+    }
+
+    *_retval = gom_dom_implementation_has_feature (gdom, cfeature.get(), cversion.get());
+
+    return NS_OK;
 }
 
 /* nsIDOMDocumentType createDocumentType (in DOMString qualifiedName, in DOMString publicId, in DOMString systemId)  raises (DOMException); */

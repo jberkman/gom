@@ -60,4 +60,6 @@ GType gom_event_listener_get_type (void);
 void  gom_event_listener_handle_event (GomEventListener *listener,
                                        GomEvent         *evt);
 
+G_END_DECLS
+
 #endif /* GOM_EVENTLISTENER_H */

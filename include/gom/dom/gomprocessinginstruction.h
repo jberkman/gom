@@ -50,4 +50,6 @@ struct _GomProcessingInstructionInterface {
 
 GType gom_processing_instruction_get_type (void);
 
+G_END_DECLS
+
 #endif /* GOM_PROCESSING_INSTRUCTION_H */

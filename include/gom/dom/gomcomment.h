@@ -50,4 +50,6 @@ struct _GomCommentInterface {
 
 GType gom_comment_get_type (void);
 
+G_END_DECLS
+
 #endif /* GOM_COMMENT_H */

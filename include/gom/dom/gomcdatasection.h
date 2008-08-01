@@ -50,4 +50,6 @@ struct _GomCDATASectionInterface {
 
 GType gom_cdata_section_get_type (void);
 
+G_END_DECLS
+
 #endif /* GOM_CDATA_SECTION_H */
