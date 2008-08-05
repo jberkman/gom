@@ -34,6 +34,7 @@ THE SOFTWARE.
 
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(xgDOMImplementation, Init);
 
+#if 0
 static NS_METHOD
 xgGomRegistrationProc (nsIComponentManager         *aCompMgr,
 		       nsIFile                     *aPath,
@@ -48,7 +49,6 @@ xgGomRegistrationProc (nsIComponentManager         *aCompMgr,
     return NS_OK;
 }
 
-#if 0
 static NS_METHOD
 xgGomUnregistrationProc (nsIComponentManager         *aCompMgr,
 			 nsIFile                     *aPath,
@@ -66,13 +66,21 @@ static const nsModuleComponentInfo components[] = {
 	"DOM Implementation",
 	XG_DOMIMPLEMENTATION_CID, XG_DOMIMPLEMENTATION_CONTRACTID,
 	xgDOMImplementationConstructor,
-	xgGomRegistrationProc, NULL, NULL,
+	/* xgGomRegistrationProc */ NULL, NULL, NULL,
 	NS_CI_INTERFACE_GETTER_NAME (xgDOMImplementation),
 	NULL,
 	&NS_CLASSINFO_NAME(xgDOMImplementation)
     }
 };
 
-NS_IMPL_NSGETMODULE(nsGomModule, components)
+static nsresult
+nsGomModuleConstructor (nsIModule *self)
+{
+    if (!gtk_init_check (NULL, NULL)) {
+	g_warning ("Could not initialize Gtk; Gom module unavailable.");
+	return NS_ERROR_NOT_AVAILABLE;
+    }
+    return NS_OK;
+}
 
-
+NS_IMPL_NSGETMODULE_WITH_CTOR(nsGomModule, components, nsGomModuleConstructor)

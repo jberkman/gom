@@ -160,14 +160,11 @@ THE SOFTWARE.
 #define GOM_UNSET_WEAK(p) GOM_SET_WEAK(p, NULL)
 
 #define GOM_ASTRING_TO_GSTRING(_aCString, _aString, _errval)            \
-    const char *_aCString;                                              \
-    {                                                                   \
-        nsCAutoString _aCString##String;                                \
-        if (NS_FAILED (NS_UTF16ToCString (_aString, NS_CSTRING_ENCODING_UTF8, _aCString##String))) { \
-            return _errval;                                             \
-        }                                                               \
-        _aCString = _aCString##String.get();                            \
-    }
+    nsCAutoString _aCString##String;                                    \
+    if (NS_FAILED (NS_UTF16ToCString (_aString, NS_CSTRING_ENCODING_UTF8, _aCString##String))) { \
+        return _errval;                                                 \
+    }                                                                   \
+    const char *_aCString = _aCString##String.get();
 
 #define GOM_GERROR_TO_NSRESULT(_err)                    \
     (_err->domain == GOM_DOM_EXCEPTION_ERROR) ? NS_ERROR_GENERATE_FAILURE (NS_ERROR_MODULE_DOM, _err->code) : NS_ERROR_UNEXPECTED;

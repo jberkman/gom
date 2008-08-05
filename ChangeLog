@@ -1,3 +1,11 @@
+2008-08-05  jacob berkman  <jacob@ilovegom.org>
+
+	* src/xpgom/xgGomModule.cc (nsGomModuleConstructor): use a proper
+	module constructor to initialize Gtk
+
+	* include/gommacros.h (GOM_ASTRING_TO_GSTRING): remove bogus
+	optimization that referenced free memory
+
 2008-08-04  jacob berkman  <jacob@ilovegom.org>
 
 	* src/xpgom/xgGomModule.cc: xgDOMImplementation has an init

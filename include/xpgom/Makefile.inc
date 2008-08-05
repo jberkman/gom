@@ -2,7 +2,7 @@
 
 # xpgomincludedir := $(includedir)/gom-0/xpgom
 # xpgominclude_HEADERS :=
-noinst_HEADERS += xgDOMImplementation.hh
-noinst_HEADERS += xgDocument.hh
-noinst_HEADERS += xgNode.hh
-noinst_HEADERS += xgObject.hh
+noinst_HEADERS += include/xpgom/xgDOMImplementation.hh
+noinst_HEADERS += include/xpgom/xgDocument.hh
+noinst_HEADERS += include/xpgom/xgNode.hh
+noinst_HEADERS += include/xpgom/xgObject.hh
