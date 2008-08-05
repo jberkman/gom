@@ -21,31 +21,44 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_DOM_IMPLEMENTATION_HH
-#define XG_DOM_IMPLEMENTATION_HH
+#include "config.h"
 
 #include "xpgom/xgObject.hh"
-#include "gom/dom/gomdomimplementation.h"
 
-#include <nsIDOMDOMImplementation.h>
-
-#define XG_DOMIMPLEMENTATION_CID_STR "4138BAA2-29BD-4D1C-9193-2D2254D4CA28"
-#define XG_DOMIMPLEMENTATION_CID \
-{ 0x4138BAA2, 0x29BD, 0x4D1C, { 0x91, 0x93, 0x2D, 0x22, 0x54, 0xD4, 0xCA, 0x28 } }
-#define XG_DOMIMPLEMENTATION_CONTRACTID "@ilovegom.org/dom-implementation;1"
-
-class xgDOMImplementation : protected xgObject,
-			    public nsIDOMDOMImplementation
+xgObject::xgObject (GObject *aObject, GType aType) 
+  : mObject (aObject ? (GObject *)g_object_ref (aObject) : aObject)
+  , mType(aType)
 {
-public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_NSIDOMDOMIMPLEMENTATION
+}
 
-    xgDOMImplementation (GomDOMImplementation *aDom = NULL);
-    nsresult Init ();
+xgObject::~xgObject ()
+{
+    if (mObject) {
+	g_object_unref (mObject);
+    }
+}
 
-private:
-    ~xgDOMImplementation ();
-};
-
-#endif /* XG_DOM_IMPLEMENTATION_HH */
+nsresult
+xgObject::Init (GType *ifaces)
+{
+    if (!mObject) {
+	if (mType) {
+	    mObject = (GObject *)g_object_new (mType, NULL);
+	    if (!mObject) {
+		return NS_ERROR_OUT_OF_MEMORY;
+	    }
+	} else {
+	    return NS_ERROR_NOT_IMPLEMENTED;
+	}
+    }
+    for (GType t = G_OBJECT_TYPE (mObject);
+	 *ifaces;
+	 ++ifaces) {
+	if (!g_type_is_a (t, *ifaces)) {
+	    g_object_unref (mObject);
+	    mObject = NULL;
+	    return NS_ERROR_NO_INTERFACE;
+	}
+    }
+    return NS_OK;
+}

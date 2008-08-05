@@ -1,3 +1,40 @@
+2008-08-04  jacob berkman  <jacob@ilovegom.org>
+
+	* src/xpgom/xgGomModule.cc: xgDOMImplementation has an init
+	function now
+
+	* src/xpgom/xgObject.cc (xgObject): unref our object
+	(Init): if we don't yet have an object, but do have a type,
+	try creating an object; then check that our object implements
+	our required interfaces
+
+	* src/xpgom/xgNode.cc (GetNodeName, GetNodeType): implement
+
+	* src/xpgom/xgDOMImplementation.cc (Init): check that our
+	GObject implements GOM_TYPE_DOM_IMPLEMENTATION
+	(HasFeature): use new macros
+	(CreateDocument): implement
+
+	* src/libgom/gomdom.c (gom_dom_class_init): there's really no
+	reason to make this a singleton object
+
+	* include/gommacros.h (GOM_ASTRING_TO_GSTRING)
+	(GOM_GERROR_TO_NSRESULT, GOM_RETURN_NSRESULT_FROM_GERROR)
+	(GOM_XGO_CHECK_INIALIZED): some macros useful for xpcom
+	objects
+
+	* src/xpgom/xgDocument.cc: 
+	* include/xpgom/xgDocument.hh: xpcom binding for GomDocument
+	interface
+
+	* include/xpgom/xgObject.hh (class xgObject): base class for
+	xpcom objects proxying a GObject
+
+	* include/xpgom/xgNode.hh: xpcom binding for GomNode interface
+
+	* include/xpgom/xgDOMImplementation.hh
+	(nsIDOMDOMImplementation): abstract some common bits to xgObject
+
 2008-08-01  jacob berkman  <jacob@ilovegom.org>
 
 	* src/xpgom/xgGomModule.cc (xgGomRegistrationProc): try to

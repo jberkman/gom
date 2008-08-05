@@ -115,40 +115,6 @@ gom_dom_create_document (GomDOMImplementation *dom,
 GOM_IMPLEMENT (DOM_IMPLEMENTATION, dom_implementation, gom_dom);
 
 G_DEFINE_TYPE_WITH_CODE (GomDOM, gom_dom, G_TYPE_OBJECT, GOM_IMPLEMENT_INTERFACE (DOM_IMPLEMENTATION, dom_implementation, gom_dom));                         
-
-typedef struct {
-    GType                  type;
-    guint                  n_construct_properties;
-    GObjectConstructParam *construct_properties;
-} OnceData;
-
-static gpointer
-gom_dom_once (gpointer data)
-{
-    OnceData *d = data;
-    return G_OBJECT_CLASS (gom_dom_parent_class)->constructor (
-        d->type, d->n_construct_properties, d->construct_properties);
-}
-
-static GObject *
-gom_dom_constructor (GType                  type,
-                     guint                  n_construct_properties,
-                     GObjectConstructParam *construct_properties)
-{
-    static GOnce once = G_ONCE_INIT;
-    OnceData data;
-
-    data.type = type;
-    data.n_construct_properties = n_construct_properties;
-    data.construct_properties = construct_properties;
-
-    return g_object_ref (g_once (&once, gom_dom_once, &data));
-}
-
 static void gom_dom_init (GomDOM *dom) { }
 
-static void
-gom_dom_class_init (GomDOMClass *klass)
-{
-    G_OBJECT_CLASS (klass)->constructor = gom_dom_constructor;
-}
+static void gom_dom_class_init (GomDOMClass *klass) { }

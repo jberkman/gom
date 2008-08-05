@@ -21,31 +21,27 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_DOM_IMPLEMENTATION_HH
-#define XG_DOM_IMPLEMENTATION_HH
+#ifndef XG_DOCUMENT_HH
+#define XG_DOCUMENT_HH
 
-#include "xpgom/xgObject.hh"
-#include "gom/dom/gomdomimplementation.h"
+#include "xpgom/xgNode.hh"
+#include "gom/dom/gomdocument.h"
 
-#include <nsIDOMDOMImplementation.h>
+#include <nsIDOMDocument.h>
 
-#define XG_DOMIMPLEMENTATION_CID_STR "4138BAA2-29BD-4D1C-9193-2D2254D4CA28"
-#define XG_DOMIMPLEMENTATION_CID \
-{ 0x4138BAA2, 0x29BD, 0x4D1C, { 0x91, 0x93, 0x2D, 0x22, 0x54, 0xD4, 0xCA, 0x28 } }
-#define XG_DOMIMPLEMENTATION_CONTRACTID "@ilovegom.org/dom-implementation;1"
-
-class xgDOMImplementation : protected xgObject,
-			    public nsIDOMDOMImplementation
+class xgDocument : public xgNode,
+		   public nsIDOMDocument
 {
-public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_NSIDOMDOMIMPLEMENTATION
+    NS_DECL_ISUPPORTS_INHERITED
+    NS_FORWARD_NSIDOMNODE(xgNode::)
+    NS_DECL_NSIDOMDOCUMENT
+    
+    xgDocument (GomDocument *aDoc = NULL);
+    nsresult Init();
 
-    xgDOMImplementation (GomDOMImplementation *aDom = NULL);
-    nsresult Init ();
-
-private:
-    ~xgDOMImplementation ();
+protected:
+    xgDocument (GomDocument *aDoc, GType aType);
+    ~xgDocument ();
 };
 
-#endif /* XG_DOM_IMPLEMENTATION_HH */
+#endif /* XG_DOCUMENT_HH */

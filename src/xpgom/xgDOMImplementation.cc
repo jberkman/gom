@@ -26,23 +26,38 @@ THE SOFTWARE.
 #include "xpgom/xgDOMImplementation.hh"
 #include "gom/gomdom.h"
 
-#include <nsIClassInfoImpl.h>
+#include "xpgom/xgDocument.hh"
 
-#include <nsMemory.h>
+#include "gom/dom/gomdomexception.h"
+
+#include <nsCOMPtr.h>
 #include <nsEmbedString.h>
+#include <nsIClassInfoImpl.h>
+#include <nsMemory.h>
 
-xgDOMImplementation::xgDOMImplementation()
-    : gdom(GOM_DOM_IMPLEMENTATION (g_object_new (GOM_TYPE_DOM, NULL)))
+#include "gommacros.h"
+
+#define CHECK_INITIALIZED GOM_XGO_CHECK_INIALIZED (GOM_TYPE_DOM_IMPLEMENTATION)
+
+NS_IMPL_ISUPPORTS1_CI(xgDOMImplementation, nsIDOMDOMImplementation)
+
+xgDOMImplementation::xgDOMImplementation (GomDOMImplementation *aDom)
+    : xgObject (aDom ? G_OBJECT (aDom) : NULL, GOM_TYPE_DOM)
 {
-    g_object_add_weak_pointer (G_OBJECT (gdom), (gpointer *)&gdom);
 }
 
-xgDOMImplementation::~xgDOMImplementation()
+xgDOMImplementation::~xgDOMImplementation ()
 {
-    g_object_unref (gdom);
 }
 
-NS_IMPL_ISUPPORTS1_CI(xgDOMImplementation, nsIDOMDOMImplementation);
+nsresult
+xgDOMImplementation::Init ()
+{
+    GType ifaces[2];
+    ifaces[0] = GOM_TYPE_DOM_IMPLEMENTATION;
+    ifaces[1] = 0;
+    return xgObject::Init (ifaces);
+}    
 
 /* boolean hasFeature (in DOMString feature, in DOMString version); */
 NS_IMETHODIMP
@@ -50,17 +65,12 @@ xgDOMImplementation::HasFeature (const nsAString &feature,
 				 const nsAString &version,
 				 PRBool          *_retval)
 {
-    nsCAutoString cfeature;
-    if (NS_FAILED (NS_UTF16ToCString (feature, NS_CSTRING_ENCODING_UTF8, cfeature))) {
-	return NS_ERROR_INVALID_ARG;
-    }
+    CHECK_INITIALIZED;
+    GOM_ASTRING_TO_GSTRING (feat, feature, NS_ERROR_INVALID_ARG);
+    GOM_ASTRING_TO_GSTRING (ver, version, NS_ERROR_INVALID_ARG);
 
-    nsCAutoString cversion;
-    if (NS_FAILED (NS_UTF16ToCString (version, NS_CSTRING_ENCODING_UTF8, cversion))) {
-	return NS_ERROR_INVALID_ARG;
-    }
-
-    *_retval = gom_dom_implementation_has_feature (gdom, cfeature.get(), cversion.get());
+    *_retval = gom_dom_implementation_has_feature (GOM_DOM_IMPLEMENTATION (mObject),
+						   feat, ver);
 
     return NS_OK;
 }
@@ -72,6 +82,7 @@ xgDOMImplementation::CreateDocumentType (const nsAString     &qualifiedName,
 					 const nsAString     &systemId,
 					 nsIDOMDocumentType **_retval)
 {
+    CHECK_INITIALIZED;
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -82,5 +93,26 @@ xgDOMImplementation::CreateDocument (const nsAString    &namespaceURI,
 				     nsIDOMDocumentType *doctype,
 				     nsIDOMDocument    **_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    CHECK_INITIALIZED;
+    GOM_ASTRING_TO_GSTRING (nspace, namespaceURI, NS_ERROR_INVALID_ARG);
+    GOM_ASTRING_TO_GSTRING (qname, qualifiedName, NS_ERROR_INVALID_ARG);
+    g_return_val_if_fail (doctype == NULL, NS_ERROR_INVALID_ARG);
+
+    GError *error = NULL;
+    GomDocument *doc = gom_dom_implementation_create_document (GOM_DOM_IMPLEMENTATION (mObject),
+							       nspace, qname, NULL, &error);
+    if (!doc) {
+	// frees error
+	GOM_RETURN_NSRESULT_FROM_GERROR (error);
+    }
+
+    xgDocument *xDoc = new xgDocument (doc);
+    if (!xDoc) {
+	return NS_ERROR_OUT_OF_MEMORY;
+    }
+    nsresult rv = xDoc->Init();
+    if (NS_SUCCEEDED (rv)) {
+	rv = CallQueryInterface (xDoc, _retval);
+    }
+    return rv;
 }

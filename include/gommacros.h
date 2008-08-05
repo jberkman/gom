@@ -24,10 +24,6 @@ THE SOFTWARE.
 #ifndef GOM_MACROS_H
 #define GOM_MACROS_H
 
-#include <glib/gmacros.h>
-
-G_BEGIN_DECLS
-
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
 
 #define GOM_NOT_IMPLEMENTED (g_message (G_STRLOC": Not implemented yet."))
@@ -163,6 +159,31 @@ G_BEGIN_DECLS
 
 #define GOM_UNSET_WEAK(p) GOM_SET_WEAK(p, NULL)
 
-G_END_DECLS
+#define GOM_ASTRING_TO_GSTRING(_aCString, _aString, _errval)            \
+    const char *_aCString;                                              \
+    {                                                                   \
+        nsCAutoString _aCString##String;                                \
+        if (NS_FAILED (NS_UTF16ToCString (_aString, NS_CSTRING_ENCODING_UTF8, _aCString##String))) { \
+            return _errval;                                             \
+        }                                                               \
+        _aCString = _aCString##String.get();                            \
+    }
 
+#define GOM_GERROR_TO_NSRESULT(_err)                    \
+    (_err->domain == GOM_DOM_EXCEPTION_ERROR) ? NS_ERROR_GENERATE_FAILURE (NS_ERROR_MODULE_DOM, _err->code) : NS_ERROR_UNEXPECTED;
+
+#define GOM_RETURN_NSRESULT_FROM_GERROR(_err)           \
+    G_STMT_START {                                      \
+        nsresult _rv = GOM_GERROR_TO_NSRESULT(_err);    \
+        g_error_free (_err);                            \
+        return _rv;                                     \
+    } G_STMT_END
+
+#define GOM_XGO_CHECK_INIALIZED(t)                                      \
+    G_STMT_START {                                                      \
+        if (!mObject || !g_type_is_a (G_OBJECT_TYPE (mObject), t)) {    \
+            return NS_ERROR_NOT_INITIALIZED;                            \
+        }                                                               \
+    } G_STMT_END
+    
 #endif /* GOM_MACROS_H */

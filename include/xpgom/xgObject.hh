@@ -21,31 +21,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_DOM_IMPLEMENTATION_HH
-#define XG_DOM_IMPLEMENTATION_HH
+#ifndef XG_OBJECT_HH
+#define XG_OBJECT_HH
 
-#include "xpgom/xgObject.hh"
-#include "gom/dom/gomdomimplementation.h"
+#include <nscore.h>
+#include <glib-object.h>
 
-#include <nsIDOMDOMImplementation.h>
-
-#define XG_DOMIMPLEMENTATION_CID_STR "4138BAA2-29BD-4D1C-9193-2D2254D4CA28"
-#define XG_DOMIMPLEMENTATION_CID \
-{ 0x4138BAA2, 0x29BD, 0x4D1C, { 0x91, 0x93, 0x2D, 0x22, 0x54, 0xD4, 0xCA, 0x28 } }
-#define XG_DOMIMPLEMENTATION_CONTRACTID "@ilovegom.org/dom-implementation;1"
-
-class xgDOMImplementation : protected xgObject,
-			    public nsIDOMDOMImplementation
+class xgObject
 {
-public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_NSIDOMDOMIMPLEMENTATION
+protected:
+    xgObject (GObject *aObject = NULL, GType aType = 0);
+    ~xgObject ();
 
-    xgDOMImplementation (GomDOMImplementation *aDom = NULL);
-    nsresult Init ();
+    nsresult Init (GType *ifaces);
+
+    GObject *mObject;
 
 private:
-    ~xgDOMImplementation ();
+    GType mType;
 };
 
-#endif /* XG_DOM_IMPLEMENTATION_HH */
+#endif /* XG_OBJECT_HH */

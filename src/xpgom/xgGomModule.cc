@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include <nsIFile.h>
 #include <nsStringAPI.h>
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(xgDOMImplementation);
+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(xgDOMImplementation, Init);
 
 static NS_METHOD
 xgGomRegistrationProc (nsIComponentManager         *aCompMgr,

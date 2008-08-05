@@ -3,8 +3,11 @@
 lib_LTLIBRARIES += libxpgom.la
 
 libxpgom_la_SOURCES :=
+libxpgom_la_SOURCES += src/xpgom/xgDocument.cc
 libxpgom_la_SOURCES += src/xpgom/xgDOMImplementation.cc
 libxpgom_la_SOURCES += src/xpgom/xgGomModule.cc
+libxpgom_la_SOURCES += src/xpgom/xgNode.cc
+libxpgom_la_SOURCES += src/xpgom/xgObject.cc
 
 libxpgom_la_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include $(XPGOM_CFLAGS)
 libxpgom_la_CXXFLAGS = -fshort-wchar
