@@ -170,7 +170,7 @@ gom_listener_list_dispatch_listeners (GomListenerList *list,
     GSList *li;
 
     if (!GOM_IS_CUSTOM_EVENT (evt)) {
-        g_warning (G_STRLOC": cannot dispatch an event that is not a CustomEvent");
+        g_warning (GOM_LOC ("cannot dispatch an event that is not a CustomEvent"));
     } else {
         for (li = list->listeners;
              (li = find_entry (li, namespace_uri, type_name, NULL, phase == GOM_CAPTURING_PHASE));
@@ -196,14 +196,14 @@ gom_listener_list_dispatch_event (GomEventTarget  *target,
     GomEventTarget *parent;
     
     if (!GOM_IS_EVT (evt) || !GOM_IS_CUSTOM_EVENT (evt)) {
-        g_warning (G_STRLOC": I cannot work with a \"%s\" Event.",
-                   g_type_name (G_TYPE_FROM_INSTANCE (evt)));
+        g_warning (GOM_LOC ("I cannot work with a \"%s\" Event."),
+                    G_OBJECT_TYPE_NAME (evt));
         return TRUE;
     }
 
     if (!GOM_IS_EVENT_TARGET_INTERNAL (target)) {
-        g_warning (G_STRLOC": I cannot work with a \"%s\" EventTarget.",
-                   g_type_name (G_TYPE_FROM_INSTANCE (target)));
+        g_warning (GOM_LOC ("I cannot work with a \"%s\" EventTarget."),
+                    G_OBJECT_TYPE_NAME (target));
         return TRUE;
     }
 

@@ -61,7 +61,7 @@ gom_camel_case (const char *s)
         r[ri] = s[si];
     }
 #if 0
-    g_print ("\n"G_STRLOC": %s -> %s\n", s, r);
+    g_print ("\n"GOM_LOC ("%s -> %s\n"), s, r);
 #endif
     return (const char *)r;
 }
@@ -88,7 +88,7 @@ gom_camel_uncase (const char *s)
         r[ri] = s[si];
     }
 #if 0
-    g_print (G_STRLOC": %s -> %s\n", s, r);
+    g_print (GOM_LOC ("%s -> %s\n"), s, r);
 #endif
     return (const char *)r;
 }

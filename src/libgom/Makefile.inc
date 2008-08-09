@@ -5,7 +5,9 @@ noinst_LIBRARIES += libgom.a
 libgom_a_SOURCES :=				\
 	include/gommacros.h			\
 	src/libgom/gomcamel.c			\
+	src/libgom/gomcdata.c			\
 	src/libgom/gomchardata.c		\
+	src/libgom/gomcmt.c			\
 	src/libgom/gomdoc.c			\
 	src/libgom/gomdom.c			\
 	src/libgom/gomdombuiltins.c		\

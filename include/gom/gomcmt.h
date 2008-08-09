@@ -21,24 +21,39 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_OBJECT_HH
-#define XG_OBJECT_HH
+#ifndef GOM_CMT_H
+#define GOM_CMT_H
 
-#include <nscore.h>
-#include <glib-object.h>
+#include <glib/gmacros.h>
 
-class xgObject
-{
-protected:
-    xgObject (GObject *aObject = NULL, GType aType = 0);
-    ~xgObject ();
+G_BEGIN_DECLS
 
-    nsresult Init (GType *ifaces);
+typedef struct _GomCmt      GomCmt;
+typedef struct _GomCmtClass GomCmtClass;
 
-    GObject *mObject;
+G_END_DECLS
 
-private:
-    GType mType;
+#include <gom/gomchardata.h>
+
+G_BEGIN_DECLS
+
+#define GOM_TYPE_CMT         (gom_cmt_get_type ())
+#define GOM_CMT(i)           (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_CMT, GomCmt))
+#define GOM_CMT_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST    ((k), GOM_TYPE_CMT, GomCmtClass))
+#define GOM_IS_CMT(i)        (G_TYPE_CHECK_INSTANCE_TYPE ((i), GOM_TYPE_CMT))
+#define GOM_IS_CMT_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_CMT))
+#define GOM_CMT_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_CMT, GomCmtClass))
+
+struct _GomCmt {
+    GomCharData parent;
 };
 
-#endif /* XG_OBJECT_HH */
+struct _GomCmtClass {
+    GomCharDataClass parent_class;
+};
+
+GType gom_cmt_get_type (void);
+
+G_END_DECLS
+
+#endif /* GOM_CMT_H */

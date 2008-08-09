@@ -24,22 +24,23 @@ THE SOFTWARE.
 #include "config.h"
 
 #include "xpgom/xgNode.hh"
-
 #include "gom/gomnoodle.h"
+#include "gom/dom/gomdomexception.h"
+#include "xpgom/gomwrapped.hh"
 
 #include <nsStringAPI.h>
 
 #include "gommacros.h"
 
-#define CHECK_INITIALIZED GOM_XGO_CHECK_INIALIZED (GOM_TYPE_NODE)
+#define CHECK_INITIALIZED GOM_XG_WRAPPED_CHECK_INIALIZED (GOM_TYPE_NODE)
 
-NS_IMPL_ISUPPORTS1 (xgNode, nsIDOMNode)
+NS_IMPL_ISUPPORTS_INHERITED1 (xgNode, xgWrapped, nsIDOMNode)
 
-xgNode::xgNode (GomNode *aNode) : xgObject (aNode ? G_OBJECT (aNode) : NULL, GOM_TYPE_NOODLE)
+xgNode::xgNode () : xgWrapped (GOM_TYPE_NOODLE)
 {
 }
 
-xgNode::xgNode (GomNode *aNode, GType aType) : xgObject (aNode ? G_OBJECT (aNode) : NULL, aType)
+xgNode::xgNode (GType aType) : xgWrapped (aType)
 {
 }
 
@@ -48,12 +49,12 @@ xgNode::~xgNode ()
 }
 
 nsresult
-xgNode::Init()
+xgNode::Init (GObject *aNode)
 {
     GType ifaces[2];
     ifaces[0] = GOM_TYPE_NODE;
     ifaces[1] = 0;
-    return xgObject::Init (ifaces);
+    return xgWrapped::Init (ifaces, aNode);
 }
 
 /* readonly attribute DOMString nodeName; */
@@ -61,7 +62,7 @@ NS_IMETHODIMP xgNode::GetNodeName(nsAString & aNodeName)
 {
     CHECK_INITIALIZED;
     char *s;
-    g_object_get (mObject, "node-name", &s, NULL);
+    g_object_get (mWrapped, "node-name", &s, NULL);
     nsCAutoString cstr(s);
     g_free (s);
     CopyUTF8toUTF16 (cstr, aNodeName);
@@ -85,7 +86,7 @@ NS_IMETHODIMP xgNode::GetNodeType(PRUint16 *aNodeType)
 {
     CHECK_INITIALIZED;
     GomNodeType t;
-    g_object_get (mObject, "node-type", &t, NULL);
+    g_object_get (mWrapped, "node-type", &t, NULL);
     *aNodeType = t;
     return NS_OK;
 }
@@ -154,10 +155,28 @@ NS_IMETHODIMP xgNode::InsertBefore(nsIDOMNode *newChild, nsIDOMNode *refChild, n
 }
 
 /* nsIDOMNode replaceChild (in nsIDOMNode newChild, in nsIDOMNode oldChild)  raises (DOMException); */
-NS_IMETHODIMP xgNode::ReplaceChild(nsIDOMNode *newChild, nsIDOMNode *oldChild, nsIDOMNode **_retval)
+NS_IMETHODIMP xgNode::ReplaceChild (nsIDOMNode *newChild, nsIDOMNode *oldChild, nsIDOMNode **_retval)
 {
     CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    GError *error = NULL;
+    GomNode *new_child = (GomNode *)gom_wrap_xpcom (newChild, GOM_TYPE_NODE, &error);
+    if (!new_child) {
+	GOM_RETURN_NSRESULT_FROM_GERROR (error);
+    }
+    GomNode *old_child = (GomNode *)gom_wrap_xpcom (oldChild, GOM_TYPE_NODE, &error);
+    if (!old_child) {
+	g_object_unref (new_child);
+	GOM_RETURN_NSRESULT_FROM_GERROR (error);
+    }
+    GomNode *ret = gom_node_replace_child (GOM_NODE (mWrapped), new_child, old_child, &error);
+    g_object_unref (new_child);
+    g_object_unref (old_child);
+    if (!ret) {
+	GOM_RETURN_NSRESULT_FROM_GERROR (error);
+    }
+    nsresult rv = gom_wrap_g_object (ret, NS_GET_IID (nsIDOMNode), (gpointer *)_retval);
+    g_object_unref (ret);
+    return rv;
 }
 
 /* nsIDOMNode removeChild (in nsIDOMNode oldChild)  raises (DOMException); */

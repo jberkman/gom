@@ -3,7 +3,9 @@
 gomincludedir := $(includedir)/gom-0/gom
 gominclude_HEADERS :=				\
 	include/gom/gomcamel.h			\
+	include/gom/gomcdata.h			\
 	include/gom/gomchardata.h		\
+	include/gom/gomcmt.h			\
 	include/gom/gomdoc.h			\
 	include/gom/gomdom.h			\
 	include/gom/gomelem.h			\
@@ -40,6 +42,7 @@ gominclude_HEADERS :=				\
 	include/gom/gomobject.h			\
 	include/gom/gomtxt.h			\
 	include/gom/gomuievt.h			\
+	include/gom/gomunknown.h		\
 	include/gom/gomuriutils.h		\
 	include/gom/gomvalue.h			\
 	include/gom/gomwidget.h			\

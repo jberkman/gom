@@ -1,3 +1,56 @@
+2008-08-09  jacob berkman  <jacob@ilovegom.org>
+
+	* src/xpgom/xgElement.cc: an nsIElement wrapper of a
+	GomElement
+
+	* src/xpgom/xgGomModule.cc (nsGomModuleConstructor):
+	initialize GomWidget, and our wrapper classes
+
+	* src/xpgom/gomwrapped.cc: the base GObject for a wrapped
+	nsISupports object; implement wrapping a GObject or an
+	nsISupports with the other
+
+	* src/xpgom/gomwrappeddocument.cc: a GObject wrapping of an
+	nsIDOMDocument
+
+	* src/xpgom/xgNode.cc (ReplaceChild): implement
+
+	* src/xpgom/xgDOMImplementation.cc (CreateDocument): use the
+	gom_wrap* api to create our nsIDOMDocument
+
+	* src/xpgom/xgWrapped.cc: rename xgObject.cc; support the
+	xgPIWrapped interface
+
+	* src/xpgom/gomwrappedelement.cc: a GObject wrapping of an
+	nsIDOMElement
+
+	* src/xpgom/xgDocument.cc (Init): take our wrapped object here
+	rather than in the constructor
+	(GetDocumentElement): implement
+	(ImportNode): implement
+
+	* src/xpgom/gomwrappednode.cc: a GObject wrapping of an
+	nsIDOMNode
+
+	* src/xpgom/gomwrappeddomimplementation.cc: a GObject wrapping
+	of an nsIDOMDOMImplementation
+
+	* src/libgom/gomcmt.c: implementation of GomComment
+
+	* src/libgom/gominterfaces.c (gom_unknown_query_interface): a
+	clever implementation of _query_interface() for GObjects
+
+	* src/libgom/gomdoc.c (gom_doc_get_property): use gom_unknown
+	to query our first child for its element interface
+	(gom_doc_create_comment): implement
+	(gom_doc_create_cdata_section): implement
+	(get_elements_by_tag_name): instead of using a GObject type
+	check, use gom_unknown_query_interface
+	(gom_doc_import_node): begin to implement
+	(get_element_by_id): use gom_unknown_query_interface
+
+	* src/libgom/gomcdata.c: implementaion of GomCDATASection
+
 2008-08-05  jacob berkman  <jacob@ilovegom.org>
 
 	* src/xpgom/xgGomModule.cc (nsGomModuleConstructor): use a proper

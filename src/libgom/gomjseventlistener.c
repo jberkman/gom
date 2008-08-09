@@ -58,16 +58,16 @@ gom_js_event_listener_set_property (GObject      *object,
     switch (property_id) {
     case PROP_JS_CONTEXT:
         if (priv->cx) {
-            g_warning (G_STRLOC": Context is already set on %p", object);
+            g_warning (GOM_LOC ("Context is already set on %p"), object);
         } else {
             priv->cx = g_value_get_pointer (value);
         }
         break;
     case PROP_JS_OBJECT:
         if (priv->obj) {
-            g_warning (G_STRLOC": Object is already set on %p", object);
+            g_warning (GOM_LOC ("Object is already set on %p"), object);
         } else if (!priv->cx) {
-            g_warning (G_STRLOC": Context needs to be set on %p before object", object);
+            g_warning (GOM_LOC ("Context needs to be set on %p before object"), object);
         }
 	priv->obj = g_value_get_pointer (value);
         break;
@@ -87,11 +87,11 @@ gom_js_event_listener_handle_event (GomEventListener *listener,
     jsval argv, rval, fval;
 
     if (!priv->cx) {
-        g_warning (G_STRLOC": %p.cx is NULL\n", listener);
+        g_warning (GOM_LOC ("%p.cx is NULL\n"), listener);
         return;
     }
     if (!priv->obj) {
-        g_warning (G_STRLOC": %p.obj is NULL\n", listener);
+        g_warning (GOM_LOC ("%p.obj is NULL\n"), listener);
         return;
     }
 
@@ -130,7 +130,7 @@ gom_js_event_listener_mark_live_objects (GomGCManaged *managed,
     g_assert (priv->cx == cx);
 
     if (!JS_IsAboutToBeFinalized (cx, priv->obj)) {
-        g_message (G_STRLOC": Marking a %s live...", JS_GET_CLASS (cx, priv->obj)->name);
+        g_message (GOM_LOC ("Marking a %s live..."), JS_GET_CLASS (cx, priv->obj)->name);
         JS_MarkGCThing (cx, priv->obj, g_type_name (G_TYPE_FROM_INSTANCE (managed)), NULL);
     }
 }

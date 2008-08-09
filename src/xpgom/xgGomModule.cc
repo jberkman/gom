@@ -24,6 +24,10 @@ THE SOFTWARE.
 #include "config.h"
 
 #include "xpgom/xgDOMImplementation.hh"
+#include "xpgom/gomwrappeddomimplementation.hh"
+#include "xpgom/gomwrappeddocument.hh"
+#include "xpgom/gomwrappedelement.hh"
+#include "gom/gomwidget.h"
 
 #include <gtk/gtkmain.h>
 
@@ -33,31 +37,6 @@ THE SOFTWARE.
 #include <nsStringAPI.h>
 
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(xgDOMImplementation, Init);
-
-#if 0
-static NS_METHOD
-xgGomRegistrationProc (nsIComponentManager         *aCompMgr,
-		       nsIFile                     *aPath,
-		       const char                  *registryLocation,
-		       const char                  *componentType,
-		       const nsModuleComponentInfo *info)
-{
-    if (!gtk_init_check (NULL, NULL)) {
-	g_warning ("Could not initialize Gtk; Gom module unavailable.");
-	return NS_ERROR_NOT_AVAILABLE;
-    }
-    return NS_OK;
-}
-
-static NS_METHOD
-xgGomUnregistrationProc (nsIComponentManager         *aCompMgr,
-			 nsIFile                     *aPath,
-			 const char                  *registryLocation,
-			 const nsModuleComponentInfo *info)
-{
-    return NS_OK;
-}
-#endif
 
 NS_DECL_CLASSINFO(xgDOMImplementation)
 
@@ -80,6 +59,10 @@ nsGomModuleConstructor (nsIModule *self)
 	g_warning ("Could not initialize Gtk; Gom module unavailable.");
 	return NS_ERROR_NOT_AVAILABLE;
     }
+    gom_widget_init ();
+    g_type_class_ref (GOM_TYPE_WRAPPED_DOM_IMPLEMENTATION);
+    g_type_class_ref (GOM_TYPE_WRAPPED_ELEMENT);
+    g_type_class_ref (GOM_TYPE_WRAPPED_DOCUMENT);
     return NS_OK;
 }
 

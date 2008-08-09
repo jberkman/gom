@@ -21,26 +21,40 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_NODE_HH
-#define XG_NODE_HH
+#ifndef GOM_WRAPPED_NODE_HH
+#define GOM_WRAPPED_NODE_HH
 
-#include "xpgom/xgWrapped.hh"
-#include "gom/dom/gomnode.h"
+#include <glib/gmacros.h>
 
-#include <nsIDOMNode.h>
+G_BEGIN_DECLS
 
-class xgNode : protected xgWrapped,
-	       public nsIDOMNode
-{
-    NS_DECL_ISUPPORTS_INHERITED
-    NS_DECL_NSIDOMNODE
-    
-    xgNode ();
-    nsresult Init (GObject *aNode = NULL);
+typedef struct _GomWrappedNode      GomWrappedNode;
+typedef struct _GomWrappedNodeClass GomWrappedNodeClass;
 
-protected:
-    xgNode (GType aType);
-    ~xgNode ();
+G_END_DECLS
+
+#include <xpgom/gomwrapped.hh>
+
+G_BEGIN_DECLS
+
+#define GOM_TYPE_WRAPPED_NODE         (gom_wrapped_node_get_type ())
+#define GOM_WRAPPED_NODE(i)           (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_WRAPPED_NODE, GomWrappedNode))
+#define GOM_WRAPPED_NODE_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST    ((k), GOM_TYPE_WRAPPED_NODE, GomWrappedNodeClass))
+#define GOM_IS_WRAPPED_NODE(i)        (G_TYPE_CHECK_INSTANCE_TYPE ((i), GOM_TYPE_WRAPPED_NODE))
+#define GOM_IS_WRAPPED_NODE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_WRAPPED_NODE))
+#define GOM_WRAPPED_NODE_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_WRAPPED_NODE, GomWrappedNodeClass))
+
+struct _GomWrappedNode {
+    GomWrapped parent;
 };
 
-#endif /* XG_NODE_HH */
+struct _GomWrappedNodeClass {
+    GomWrappedClass parent_class;
+};
+
+GType gom_wrapped_node_get_type (void);
+
+G_END_DECLS
+
+#endif /* GOM_WRAPPED_NODE_HH */
+

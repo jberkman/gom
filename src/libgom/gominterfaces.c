@@ -25,7 +25,10 @@ THE SOFTWARE.
 
 #include "gommacros.h"
 
+#include "gom/gomunknown.h"
 #include "gom/gomeventtargetinternal.h"
+
+#include "gom/dom/gomdomexception.h"
 
 GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomEventTargetInternal, gom_event_target_internal, {}, GOM_TYPE_EVENT_TARGET);
 
@@ -65,3 +68,19 @@ GOM_STUB_VOID (GOM_NODE_INTERNAL, gom_node_internal, set_prev_sibling,
 GOM_STUB_VOID (GOM_NODE_INTERNAL, gom_node_internal, sibling_requested,
                (GomNodeInternal *gom_node_internal, GomNode *child), (gom_node_internal, child));
 
+
+GOM_DEFINE_INTERFACE_WITH_PREREQUISITE (GomUnknown, gom_unknown, {}, G_TYPE_OBJECT);
+
+gpointer
+gom_unknown_query_interface (gpointer unknown, GType requested_interface, GError **error)
+{
+    if (GOM_IS_UNKNOWN (unknown)) {
+        g_return_val_if_fail (GOM_UNKNOWN_GET_INTERFACE (unknown)->query_interface, (gpointer)0);
+        return GOM_UNKNOWN_GET_INTERFACE (unknown)->query_interface (unknown, requested_interface, error);
+    } else if (g_type_is_a (G_OBJECT_TYPE (unknown), requested_interface)) {
+        return g_object_ref (unknown);
+    }
+    g_set_error (error, GOM_DOM_EXCEPTION_ERROR, GOM_NO_INTERFACE_ERR,
+                 "Object does not support %s", g_type_name (requested_interface));
+    return NULL;
+}

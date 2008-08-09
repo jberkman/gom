@@ -23,30 +23,34 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include "xpgom/xgDocument.hh"
+#include "gom/dom/gomdomexception.h"
 #include "gom/gomdoc.h"
+#include "xpgom/gomwrapped.hh"
+#include "xpgom/xgDocument.hh"
+
+#include <nsIDOMElement.h>
 
 #include "gommacros.h"
 
-#define CHECK_INITIALIZED GOM_XGO_CHECK_INIALIZED (GOM_TYPE_DOCUMENT)
+#define CHECK_INITIALIZED GOM_XG_WRAPPED_CHECK_INIALIZED (GOM_TYPE_DOCUMENT)
 
 NS_IMPL_ISUPPORTS_INHERITED1(xgDocument, xgNode, nsIDOMDocument)
 
-xgDocument::xgDocument (GomDocument *aDoc) : xgNode (aDoc ? GOM_NODE (aDoc) : NULL, GOM_TYPE_DOC)
+xgDocument::xgDocument () : xgNode (GOM_TYPE_DOC)
 {
 }
 
-xgDocument::xgDocument (GomDocument *aDoc, GType aType) : xgNode (aDoc ? GOM_NODE (aDoc) : NULL, aType)
+xgDocument::xgDocument (GType aType) : xgNode (aType)
 {
 }
 
 nsresult
-xgDocument::Init()
+xgDocument::Init (GObject *aDoc)
 {
     GType ifaces[2];
     ifaces[0] = GOM_TYPE_DOCUMENT;
     ifaces[1] = 0;
-    return xgObject::Init (ifaces);
+    return xgWrapped::Init (ifaces, aDoc);
 }
 
 /* readonly attribute nsIDOMDocumentType doctype; */
@@ -64,10 +68,20 @@ NS_IMETHODIMP xgDocument::GetImplementation(nsIDOMDOMImplementation * *aImplemen
 }
 
 /* readonly attribute nsIDOMElement documentElement; */
-NS_IMETHODIMP xgDocument::GetDocumentElement(nsIDOMElement * *aDocumentElement)
+NS_IMETHODIMP
+xgDocument::GetDocumentElement (nsIDOMElement **aDocumentElement)
 {
     CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    GomElement *elem;
+    g_object_get (mWrapped, "document-element", &elem, NULL);
+    if (!GOM_IS_ELEMENT (elem)) {
+	g_message (GOM_LOC ("got document element: %s"),
+		   elem ? G_OBJECT_TYPE_NAME (elem) : "NULL");
+	return NS_ERROR_UNEXPECTED;
+    }
+    nsresult rv = gom_wrap_g_object (elem, NS_GET_IID (nsIDOMElement), (gpointer *)aDocumentElement);
+    g_object_unref (elem);
+    return rv;
 }
 
 /* nsIDOMElement createElement (in DOMString tagName)  raises (DOMException); */
@@ -134,10 +148,25 @@ NS_IMETHODIMP xgDocument::GetElementsByTagName(const nsAString & tagname, nsIDOM
 }
 
 /* nsIDOMNode importNode (in nsIDOMNode importedNode, in boolean deep)  raises (DOMException); */
-NS_IMETHODIMP xgDocument::ImportNode(nsIDOMNode *importedNode, PRBool deep, nsIDOMNode **_retval)
+NS_IMETHODIMP
+xgDocument::ImportNode (nsIDOMNode  *importedNode,
+			PRBool       deep,
+			nsIDOMNode **_retval)
 {
     CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    GError *error = NULL;
+    GomNode *node = (GomNode *)gom_wrap_xpcom (importedNode, GOM_TYPE_NODE, &error);
+    if (!node) {
+	GOM_RETURN_NSRESULT_FROM_GERROR (error);
+    }
+    GomNode *ret = gom_document_import_node (GOM_DOCUMENT (mWrapped), node, deep, &error);
+    g_object_unref (node);
+    if (!ret) {
+	GOM_RETURN_NSRESULT_FROM_GERROR (error);
+    }
+    nsresult rv = gom_wrap_g_object (ret, NS_GET_IID (nsIDOMNode), (gpointer *)_retval);
+    g_object_unref (ret);
+    return rv;
 }
 
 /* nsIDOMElement createElementNS (in DOMString namespaceURI, in DOMString qualifiedName)  raises (DOMException); */

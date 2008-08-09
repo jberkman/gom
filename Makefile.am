@@ -73,6 +73,7 @@ gomwidgets.c: gomwidgets.in Makefile
 	fi
 
 include examples/Makefile.inc
+include idl/Makefile.inc
 include include/gom/Makefile.inc
 include include/gom/dom/Makefile.inc
 include include/xpgom/Makefile.inc
@@ -87,3 +88,6 @@ update-makefiles:
 		echo " cp $(top_srcdir)/Makefile.am.subdir $(top_srcdir)/$$dir/Makefile.am" ; \
 		cp "$(top_srcdir)/Makefile.am.subdir" "$(top_srcdir)/$$dir/Makefile.am" || exit 1 ; \
 	done
+
+.idl.hh:
+	$(XPIDL) $(XPIDL_FLAGS) -m header -e $@ $<

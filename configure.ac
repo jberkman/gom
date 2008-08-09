@@ -42,11 +42,17 @@ AM_PROG_CC_C_O
 AC_PROG_CXX
 # AC_PROG_RANLIB
 AC_PROG_LIBTOOL
-
 # Make libtool use --silent when --silent is passed to make
 changequote(,)dnl
 LIBTOOL="${LIBTOOL} \$(shell echo \"\$(MFLAGS)\" | awk '/^[^ ]*s/ { print \"--silent\" }')"
 changequote([,])dnl
+
+AC_CHECK_PROG([XPIDL],[xpidl],[$xulrunnersdk/bin/xpidl],[],[$xulrunnersdk/bin])
+if test -z "$XPIDL" ; then
+   AC_MSG_ERROR([$xuldunnersdk is missing xpidl])
+fi
+XPIDL_FLAGS="-I $xulrunnersdk/idl"
+AC_SUBST(XPIDL_FLAGS)
 
 # Checks for libraries.
 #

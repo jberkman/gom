@@ -56,7 +56,7 @@ gom_js_element_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     }
 
 #if 0
-    g_print (G_STRLOC": ");
+    g_print (GOM_LOC ("");
 #endif
     name = JSVAL_CHARS (id);
 
@@ -92,7 +92,7 @@ gom_js_element_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     }
 
 #if 0
-    g_print (G_STRLOC": ");
+    g_print (GOM_LOC());
 #endif
     name = JSVAL_CHARS (id);
 
@@ -146,8 +146,8 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
     }
     if (has_prop) {
 #if 0
-        g_print (G_STRLOC": %s.%s already exists\n",
-                 JS_GET_CLASS (cx, proto)->name, name);
+        g_print (GOM_LOC ("%s.%s already exists\n",
+                  JS_GET_CLASS (cx, proto)->name, name);
 #endif
         *objp = NULL;
         return JS_TRUE;
@@ -162,8 +162,8 @@ gom_js_element_resolve (JSContext *cx, JSObject *obj, jsval id, uintN flags, JSO
         return JS_FALSE;
     }
 #if 0
-    g_print (G_STRLOC": defined new property: %s.%s (%s)\n", 
-             JS_GET_CLASS (cx, *objp)->name, name, JS_GET_CLASS (cx, obj)->name);
+    g_print (GOM_LOC ("defined new property: %s.%s (%s)\n", 
+              JS_GET_CLASS (cx, *objp)->name, name, JS_GET_CLASS (cx, obj)->name);
 #endif
     return JS_TRUE;
 }

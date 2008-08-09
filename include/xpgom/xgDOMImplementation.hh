@@ -24,7 +24,7 @@ THE SOFTWARE.
 #ifndef XG_DOM_IMPLEMENTATION_HH
 #define XG_DOM_IMPLEMENTATION_HH
 
-#include "xpgom/xgObject.hh"
+#include "xpgom/xgWrapped.hh"
 #include "gom/dom/gomdomimplementation.h"
 
 #include <nsIDOMDOMImplementation.h>
@@ -34,15 +34,15 @@ THE SOFTWARE.
 { 0x4138BAA2, 0x29BD, 0x4D1C, { 0x91, 0x93, 0x2D, 0x22, 0x54, 0xD4, 0xCA, 0x28 } }
 #define XG_DOMIMPLEMENTATION_CONTRACTID "@ilovegom.org/dom-implementation;1"
 
-class xgDOMImplementation : protected xgObject,
+class xgDOMImplementation : protected xgWrapped,
 			    public nsIDOMDOMImplementation
 {
 public:
-    NS_DECL_ISUPPORTS
+    NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSIDOMDOMIMPLEMENTATION
 
-    xgDOMImplementation (GomDOMImplementation *aDom = NULL);
-    nsresult Init ();
+    xgDOMImplementation ();
+    nsresult Init (GObject *aDom = NULL);
 
 private:
     ~xgDOMImplementation ();

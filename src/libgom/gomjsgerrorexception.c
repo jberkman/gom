@@ -33,7 +33,7 @@ static void
 gom_js_g_error_exception_finalize (JSContext *cx, JSObject *obj)
 {
     GError *err;
-    g_print (G_STRLOC": %s %p\n", JS_GET_CLASS (cx, obj)->name, obj);
+    g_print (GOM_LOC ("%s %p\n"), JS_GET_CLASS (cx, obj)->name, obj);
     err = JS_GetPrivate (cx, obj);
     if (err) {
         g_error_free (err);

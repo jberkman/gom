@@ -48,20 +48,20 @@ gom_gc_manager_run (JSContext *cx, JSGCStatus status)
         return JS_TRUE;
     }
 
-    g_message (G_STRLOC": Marking live objects...");
+    g_message (GOM_LOC ("Marking live objects..."));
     for (li = OBJECTS(cx); li; li = li->next) {
         g_assert (GOM_IS_GC_MANAGED (li->data));
         gom_gc_managed_mark_live_objects (
             GOM_GC_MANAGED (li->data), cx, status);
     }
-    g_message (G_STRLOC": done.");
+    g_message (GOM_LOC ("done."));
     return JS_TRUE;
 }
 
 void
 gom_gc_manager_manage_runtime (JSRuntime *runtime)
 {
-    g_message (G_STRLOC": managing runtime %p", runtime);
+    g_message (GOM_LOC ("managing runtime %p"), runtime);
     JS_SetGCCallbackRT (runtime, gom_gc_manager_run);
 }
 

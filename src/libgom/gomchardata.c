@@ -144,7 +144,7 @@ gom_char_data_dispose (GObject *object)
 {
     GomCharDataPrivate *priv = PRIV (object);
 #if 0
-    g_print (G_STRLOC": %s %p\n",
+    g_print (GOM_LOC ("%s %p\n"),
              g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
 #endif
     g_free (priv->data);

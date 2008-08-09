@@ -1,0 +1,13 @@
+#include "nsISupports.idl"
+
+%{C++
+#include <glib-object.h>
+%}
+
+[ptr] native xgNativeGObject(GObject);
+
+[uuid(97457374-87E2-4213-9B18-9ED575692D2E)]
+interface xgPIWrapped : nsISupports
+{
+    xgNativeGObject getWrappedGObject();
+};

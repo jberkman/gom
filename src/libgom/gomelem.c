@@ -88,21 +88,21 @@ update_tag_name (GObject *object)
     if (priv->namespace_uri) {
         if (priv->prefix && !strcmp (priv->prefix, "xml") &&
             strcmp (priv->namespace_uri, "http://www.w3.org/XML/1998/namespace")) {
-            g_warning (G_STRLOC": invalid prefix '%s' for namespace '%s' on %p",
+            g_warning (GOM_LOC ("invalid prefix '%s' for namespace '%s' on %p"),
                        priv->prefix, priv->namespace_uri, object);
             g_free (priv->prefix);
             priv->prefix = NULL;
             return;
         }
         if (!priv->local_name) {
-            g_warning (G_STRLOC": no local name set on %p", object);
+            g_warning (GOM_LOC ("no local name set on %p"), object);
             return;
         }
     } else if (priv->prefix) {
-        g_warning (G_STRLOC": prefix set without namespace on %p", object);
+        g_warning (GOM_LOC ("prefix set without namespace on %p"), object);
         return;
     } else if (priv->local_name) {
-        g_warning (G_STRLOC": localName set without namespace on %p", object);
+        g_warning (GOM_LOC ("localName set without namespace on %p"), object);
         return;
     } else {
         return;
@@ -280,7 +280,7 @@ gom_elem_dispose (GObject *object)
     priv->local_name = NULL;
 
     if (priv->tag_name) {
-        g_print (G_STRLOC": <%s>\n", priv->tag_name);
+        g_print (GOM_LOC ("<%s>\n"), priv->tag_name);
     }
     g_free (priv->tag_name);
     priv->tag_name = NULL;
@@ -306,7 +306,7 @@ gom_elem_class_init (GomElemClass *klass)
     GObjectClass *oclass = G_OBJECT_CLASS (klass);
 
     g_type_class_add_private (klass, sizeof (GomElemPrivate));
-
+    
     oclass->get_property = gom_elem_get_property;
     oclass->set_property = gom_elem_set_property;
     oclass->constructed  = gom_elem_constructed;

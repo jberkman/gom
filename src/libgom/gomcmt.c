@@ -21,26 +21,22 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_NODE_HH
-#define XG_NODE_HH
+#include "config.h"
 
-#include "xpgom/xgWrapped.hh"
-#include "gom/dom/gomnode.h"
+#include "gom/dom/gomcomment.h"
 
-#include <nsIDOMNode.h>
+#include "gom/gomcmt.h"
 
-class xgNode : protected xgWrapped,
-	       public nsIDOMNode
-{
-    NS_DECL_ISUPPORTS_INHERITED
-    NS_DECL_NSIDOMNODE
-    
-    xgNode ();
-    nsresult Init (GObject *aNode = NULL);
+#include "gom/dom/gomdomexception.h"
 
-protected:
-    xgNode (GType aType);
-    ~xgNode ();
-};
+#include "gommacros.h"
 
-#endif /* XG_NODE_HH */
+#include <string.h>
+
+GOM_IMPLEMENT (COMMENT, comment, gom_cmt);
+
+G_DEFINE_TYPE_WITH_CODE (GomCmt, gom_cmt, GOM_TYPE_CHAR_DATA,
+                         GOM_IMPLEMENT_INTERFACE (COMMENT, comment, gom_cmt));
+
+static void gom_cmt_init       (GomCmt      *cmt)   { }
+static void gom_cmt_class_init (GomCmtClass *klass) { }

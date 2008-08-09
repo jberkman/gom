@@ -36,11 +36,11 @@ class xgDocument : public xgNode,
     NS_FORWARD_NSIDOMNODE(xgNode::)
     NS_DECL_NSIDOMDOCUMENT
     
-    xgDocument (GomDocument *aDoc = NULL);
-    nsresult Init();
+    xgDocument ();
+    nsresult Init (GObject *aDoc = NULL);
 
 protected:
-    xgDocument (GomDocument *aDoc, GType aType);
+    xgDocument (GType aType);
     ~xgDocument ();
 };
 

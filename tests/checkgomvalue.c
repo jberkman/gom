@@ -39,67 +39,67 @@ static GValue gval = { 0 };
 static jsval  jval;
 
 #define JSINT_VALUES                            \
-    JSVAL_TO_INT (JSVAL_INT_MIN),               \
-        JSVAL_TO_INT (JSVAL_INT_MIN / 2),       \
-        -3700,                                  \
-        -270,                                   \
-        -1,                                     \
-        0,                                      \
-        1,                                      \
-        270,                                    \
-        3700,                                   \
-        JSVAL_TO_INT (JSVAL_INT_MAX / 2),       \
+    JSVAL_TO_INT (JSVAL_INT_MIN)),              \
+        JSVAL_TO_INT (JSVAL_INT_MIN / 2)),      \
+        -3700),                                 \
+        -270),                                  \
+        -1),                                    \
+        0),                                     \
+        1),                                     \
+        270),                                   \
+        3700),                                  \
+        JSVAL_TO_INT (JSVAL_INT_MAX / 2)),      \
         JSVAL_TO_INT (JSVAL_INT_MAX)
 
 #define JSDOUBLE_VALUES                         \
-    G_E, -G_E,                                  \
-        G_LN2, -G_LN2,                          \
-        G_LN10, -G_LN10,                        \
-        G_PI, -G_PI,                            \
-        G_PI_2, -G_PI_2,                        \
-        G_PI_4, -G_PI_4,                        \
+    G_E, -G_E),                                 \
+        G_LN2, -G_LN2),                         \
+        G_LN10, -G_LN10),                       \
+        G_PI, -G_PI),                           \
+        G_PI_2, -G_PI_2),                       \
+        G_PI_4, -G_PI_4),                       \
         G_SQRT2, -G_SQRT2
 
 #define GINT_VALUES                             \
-    INT_MIN,                                    \
-        INT_MIN / 2,                            \
-        INT_MAX / 2,                            \
+    INT_MIN),                                   \
+        INT_MIN / 2),                           \
+        INT_MAX / 2),                           \
         INT_MAX
 
 #define GUINT_VALUES                            \
-    0,                                          \
-        1,                                      \
-        270,                                    \
-        3700,                                   \
-        JSVAL_TO_INT (JSVAL_INT_MAX / 2),       \
-        JSVAL_TO_INT (JSVAL_INT_MAX),           \
-        INT_MAX / 2,                            \
-        INT_MAX,                                \
-        UINT_MAX / 2,                           \
+    0),                                         \
+        1),                                     \
+        270),                                   \
+        3700),                                  \
+        JSVAL_TO_INT (JSVAL_INT_MAX / 2)),      \
+        JSVAL_TO_INT (JSVAL_INT_MAX)),          \
+        INT_MAX / 2),                           \
+        INT_MAX),                               \
+        UINT_MAX / 2),                          \
         UINT_MAX
 
 #define GLONG_VALUES                            \
-    LONG_MIN,                                   \
-        LONG_MIN / 2,                           \
-        LONG_MAX / 2,                           \
+    LONG_MIN),                                  \
+        LONG_MIN / 2),                          \
+        LONG_MAX / 2),                          \
         LONG_MAX
 
 #define GULONG_VALUES                           \
-    LONG_MAX / 2,                               \
-        LONG_MAX,                               \
-        ULONG_MAX / 2,                          \
+    LONG_MAX / 2),                              \
+        LONG_MAX),                              \
+        ULONG_MAX / 2),                         \
         ULONG_MAX
 
 #define GINT64_VALUES                           \
-    G_MININT64,                                 \
-        G_MININT64 / 2,                         \
-        G_MAXINT64 / 2,                         \
+    G_MININT64),                                \
+        G_MININT64 / 2),                        \
+        G_MAXINT64 / 2),                        \
         G_MAXINT64
 
 #define GUINT64_VALUES                          \
-    G_MAXINT64 / 2,                             \
-        G_MAXINT64,                             \
-        G_MAXUINT64 / 2,                        \
+    G_MAXINT64 / 2),                            \
+        G_MAXINT64),                            \
+        G_MAXUINT64 / 2),                       \
         G_MAXUINT64
 
 static int jsval_int_values[] = { 
@@ -372,14 +372,14 @@ END_TEST
     }                                                                   \
     END_TEST
 
-CHECK_G_VALUE_NUMBER (int,    int,     G_TYPE_INT);
-CHECK_G_VALUE_NUMBER (uint,   guint,   G_TYPE_UINT);
-CHECK_G_VALUE_NUMBER (long,   long,    G_TYPE_LONG);
-CHECK_G_VALUE_NUMBER (ulong,  gulong,  G_TYPE_ULONG);
-CHECK_G_VALUE_NUMBER (int64,  gint64,  G_TYPE_INT64);
+CHECK_G_VALUE_NUMBER (int),   int),    G_TYPE_INT);
+CHECK_G_VALUE_NUMBER (uint),  guint),  G_TYPE_UINT);
+CHECK_G_VALUE_NUMBER (long),  long),   G_TYPE_LONG);
+CHECK_G_VALUE_NUMBER (ulong), gulong), G_TYPE_ULONG);
+CHECK_G_VALUE_NUMBER (int64), gint64), G_TYPE_INT64);
 CHECK_G_VALUE_NUMBER (uint64, guint64, G_TYPE_UINT64);
-CHECK_G_VALUE_NUMBER (float,  float,   G_TYPE_FLOAT);
-CHECK_G_VALUE_NUMBER (double, double,  G_TYPE_DOUBLE);
+CHECK_G_VALUE_NUMBER (float), float),  G_TYPE_FLOAT);
+CHECK_G_VALUE_NUMBER (double, double), G_TYPE_DOUBLE);
 
 START_TEST (test_gom_value_g_value_string)
 {
@@ -416,7 +416,7 @@ END_TEST
 #define _LOOPED_CASE(typename, type, valname)                           \
     tcase = tcase_create (#type);                                       \
     tcase_add_checked_fixture (tcase, setup, teardown);                 \
-    tcase_add_loop_test (tcase, test_gom_value_##valname##_##typename,  \
+    tcase_add_loop_test (tcase, test_gom_value_##valname##_##typename), \
                          0, G_N_ELEMENTS (valname##_##typename##_values)); \
     suite_add_tcase (s, tcase);
 
@@ -463,13 +463,13 @@ gom_value_suite (void)
     tcase_add_test (tcase, test_gom_value_g_value_boolean_false);
     suite_add_tcase (s, tcase);
     
-    G_LOOPED_CASE (int,    G_TYPE_INT);
-    G_LOOPED_CASE (uint,   G_TYPE_UINT);
-    G_LOOPED_CASE (long,   G_TYPE_LONG);
-    G_LOOPED_CASE (ulong,  G_TYPE_ULONG);
-    G_LOOPED_CASE (int64,  G_TYPE_INT64);
+    G_LOOPED_CASE (int),   G_TYPE_INT);
+    G_LOOPED_CASE (uint),  G_TYPE_UINT);
+    G_LOOPED_CASE (long),  G_TYPE_LONG);
+    G_LOOPED_CASE (ulong), G_TYPE_ULONG);
+    G_LOOPED_CASE (int64), G_TYPE_INT64);
     G_LOOPED_CASE (uint64, G_TYPE_UINT64);
-    G_LOOPED_CASE (float,  G_TYPE_FLOAT);
+    G_LOOPED_CASE (float), G_TYPE_FLOAT);
     G_LOOPED_CASE (double, G_TYPE_DOUBLE);
 
     G_LOOPED_CASE (string, G_TYPE_STRING);

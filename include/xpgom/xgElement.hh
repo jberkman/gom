@@ -21,26 +21,27 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_NODE_HH
-#define XG_NODE_HH
+#ifndef XG_ELEMENT_HH
+#define XG_ELEMENT_HH
 
-#include "xpgom/xgWrapped.hh"
-#include "gom/dom/gomnode.h"
+#include "xpgom/xgNode.hh"
+#include "gom/dom/gomelement.h"
 
-#include <nsIDOMNode.h>
+#include <nsIDOMElement.h>
 
-class xgNode : protected xgWrapped,
-	       public nsIDOMNode
+class xgElement : protected xgNode,
+		  public nsIDOMElement
 {
     NS_DECL_ISUPPORTS_INHERITED
-    NS_DECL_NSIDOMNODE
+    NS_FORWARD_NSIDOMNODE(xgNode::)
+    NS_DECL_NSIDOMELEMENT
     
-    xgNode ();
-    nsresult Init (GObject *aNode = NULL);
+    xgElement ();
+    nsresult Init (GObject *aElement = NULL);
 
 protected:
-    xgNode (GType aType);
-    ~xgNode ();
+    xgElement (GType aType);
+    ~xgElement ();
 };
 
-#endif /* XG_NODE_HH */
+#endif /* XG_ELEMENT_HH */

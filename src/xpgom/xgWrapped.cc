@@ -21,26 +21,56 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_NODE_HH
-#define XG_NODE_HH
+#include "config.h"
 
 #include "xpgom/xgWrapped.hh"
-#include "gom/dom/gomnode.h"
 
-#include <nsIDOMNode.h>
+NS_IMPL_ISUPPORTS1 (xgWrapped, xgPIWrapped)
 
-class xgNode : protected xgWrapped,
-	       public nsIDOMNode
+xgWrapped::xgWrapped (GType aType) 
+    : mWrapped (NULL),
+      mType (aType)
 {
-    NS_DECL_ISUPPORTS_INHERITED
-    NS_DECL_NSIDOMNODE
-    
-    xgNode ();
-    nsresult Init (GObject *aNode = NULL);
+}
 
-protected:
-    xgNode (GType aType);
-    ~xgNode ();
-};
+xgWrapped::~xgWrapped ()
+{
+    if (mWrapped) {
+	g_object_unref (mWrapped);
+    }
+}
 
-#endif /* XG_NODE_HH */
+nsresult
+xgWrapped::Init (GType *ifaces, GObject *aObject)
+{
+    if (mWrapped) {
+	return NS_ERROR_ALREADY_INITIALIZED;
+    }
+    if (!aObject) {
+	if (mType) {
+	    aObject = (GObject *)g_object_new (mType, NULL);
+	    if (!aObject) {
+		return NS_ERROR_OUT_OF_MEMORY;
+	    }
+	} else {
+	    return NS_ERROR_NOT_IMPLEMENTED;
+	}
+    }
+    for (GType t = G_OBJECT_TYPE (aObject);
+	 *ifaces;
+	 ++ifaces) {
+	if (!g_type_is_a (t, *ifaces)) {
+	    return NS_ERROR_NO_INTERFACE;
+	}
+    }
+    mWrapped = G_OBJECT (g_object_ref (aObject));
+    return NS_OK;
+}
+
+/* xgNativeGObject getWrappedGObject (); */
+NS_IMETHODIMP
+xgWrapped::GetWrappedGObject (GObject **_retval)
+{
+    *_retval = mWrapped ? G_OBJECT (g_object_ref (mWrapped)) : NULL;
+    return NS_OK;
+}

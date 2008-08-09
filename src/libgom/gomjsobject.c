@@ -68,7 +68,7 @@ gom_js_object_register_js_class (JSContext *cx, GType objtype, JSClass *jsclass)
     ClassMap *map = g_new (ClassMap, 1);
 
     if (objtype != G_TYPE_OBJECT && !G_TYPE_IS_INTERFACE (objtype)) {
-        g_warning (G_STRLOC": registering non-interface %s", g_type_name (objtype));
+        g_warning (GOM_LOC ("registering non-interface %s"), g_type_name (objtype));
     }
 
     map->type    = objtype;
@@ -89,12 +89,12 @@ gom_js_object_get_js_class (JSContext *cx, gpointer gobj)
         map = li->data;
         if (g_type_is_a (type, map->type)) {
 #if 0
-            g_print (G_STRLOC": %s -> %s\n", g_type_name (type), map->jsclass->name);
+            g_print (GOM_LOC ("%s -> %s\n"), g_type_name (type), map->jsclass->name);
 #endif
             return map->jsclass;
         }
 #if 0
-        g_print (G_STRLOC": %s !> %s\n", g_type_name (type), map->jsclass->name);
+        g_print (GOM_LOC ("%s !> %s\n"), g_type_name (type), map->jsclass->name);
 #endif
     }
 
@@ -113,7 +113,7 @@ static void
 gom_js_closure_finalize (gpointer data, GClosure *closure)
 {
     GomJSClosure *jsclosure = (GomJSClosure *)closure;
-    g_message(G_STRLOC": finalizing a closure");
+    g_message(GOM_LOC ("finalizing a closure"));
     JS_RemoveRoot (jsclosure->cx, &jsclosure->obj);
     JS_RemoveRoot (jsclosure->cx, &jsclosure->fun_obj);
 }
@@ -275,7 +275,7 @@ gom_js_object_get_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     }
 
 #if 0
-    g_print (G_STRLOC": ");
+    g_print (GOM_LOC (""));
 #endif
     name = JSVAL_CHARS (id);
     if (!gom_js_object_resolve (cx, obj, name, &gobj, &spec, &signal_id)) {
@@ -321,7 +321,7 @@ gom_js_object_set_prop (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     }
 
 #if 0
-    g_print (G_STRLOC": ");
+    g_print (GOM_LOC (""));
 #endif
     name = JSVAL_CHARS (id);
     if (!gom_js_object_resolve (cx, obj, name, &gobj, &spec, &signal_id)) {
@@ -381,7 +381,7 @@ gom_js_object_resolve_priv (JSContext *cx, JSObject *obj, jsval id, uintN flags,
     name = JSVAL_CHARS (id);
 
 #if 0
-    g_print (G_STRLOC": ");
+    g_print (GOM_LOC (""));
 #endif
     if (!gom_js_object_resolve (cx, *objp, name, &gobj, &spec, &signal_id)) {
         *objp = NULL;
@@ -396,8 +396,8 @@ gom_js_object_resolve_priv (JSContext *cx, JSObject *obj, jsval id, uintN flags,
     }
 
 #if 0
-    g_print (G_STRLOC": defined new property: %s.%s (%s)\n", 
-             JS_GET_CLASS (cx, *objp)->name, name, JS_GET_CLASS (cx, obj)->name);
+    g_print (GOM_LOC ("defined new property: %s.%s (%s)\n"), 
+              JS_GET_CLASS (cx, *objp)->name, name, JS_GET_CLASS (cx, obj)->name);
 #endif
     
     return JS_TRUE;
@@ -440,8 +440,8 @@ gom_js_object_enumerate (JSContext *cx, JSObject *obj, JSIterateOp enum_op, jsva
     
     gobj = gom_js_object_get_g_object (cx, obj);
 #if 0
-    g_print (G_STRLOC": %s %d -> %p\n",
-             JS_GET_CLASS (cx, obj)->name, enum_op, gobj);
+    g_print (GOM_LOC ("%s %d -> %p\n"),
+              JS_GET_CLASS (cx, obj)->name, enum_op, gobj);
 #endif
     switch (enum_op) {
     case JSENUMERATE_INIT:
@@ -543,8 +543,8 @@ static void
 g2js_free (gpointer data)
 {
     GHashTable *g2js = data;
-    g_message (G_STRLOC": GObject to JSObject table leaked %d objects",
-	       g_hash_table_size (g2js));
+    g_message (GOM_LOC ("GObject to JSObject table leaked %d objects"),
+	        g_hash_table_size (g2js));
     g_hash_table_foreach (g2js, g2js_warn, NULL);
     g_hash_table_destroy (g2js);
 }
@@ -562,8 +562,8 @@ static void
 js2g_free (gpointer data)
 {
     GHashTable *js2g = data;
-    g_message (G_STRLOC": JSObject to GObject table leaked %d objects",
-	       g_hash_table_size (js2g));
+    g_message (GOM_LOC ("JSObject to GObject table leaked %d objects"),
+	        g_hash_table_size (js2g));
     g_hash_table_foreach (js2g, js2g_warn, NULL);
     g_hash_table_destroy (js2g);
 }

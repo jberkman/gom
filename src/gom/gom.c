@@ -75,7 +75,7 @@ XPCOMGlueStartup(const char* xpcomFile);
 static void
 gom_error_reporter (JSContext *cx, const char *message, JSErrorReport *report)
 {
-    g_warning (G_STRLOC": %s:%d: Unhandled JavaScript exception: %s (%d)\n",
+    g_warning (GOM_LOC ("%s:%d: Unhandled JavaScript exception: %s (%d)\n"),
                report->filename, report->lineno,
                message, report->errorNumber);
 }
@@ -97,7 +97,7 @@ static gboolean
 gc_cb (gpointer data)
 {
     MainData *d = data;
-    g_print (G_STRLOC": running GC()...\n");
+    g_print (GOM_LOC ("running GC()...\n"));
     JS_DumpNamedRoots(JS_GetRuntime (d->cx), dump_root, NULL);
     JS_GC (d->cx);
     return TRUE;

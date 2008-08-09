@@ -52,7 +52,7 @@ GOM_DEFINE_QUARK (js_window_sources);
 static void
 gom_js_window_finalize (JSContext *cx, JSObject *obj)
 {
-    g_message (G_STRLOC": Finalizing a Window.");
+    g_message (GOM_LOC ("Finalizing a Window."));
 }
 
 JSClass GomJSWindowClass = {
@@ -223,7 +223,7 @@ _gom_js_window_clear_interval (JSContext *cx, JSObject *obj, uintN argc, jsval *
     }
 
     if (jsid >= a->len) {
-        g_printerr (G_STRLOC": invalid interval id: %u\n", jsid);
+        g_printerr (GOM_LOC ("invalid interval id: %u\n"), jsid);
         return JS_FALSE;
     }
 
@@ -346,13 +346,13 @@ push_scope (ParserData   *data,
                                                g_free, g_free);
     for (name = attribute_names, value = attribute_values; *name; name++, value++) {
         if (!strcmp (*name, "xmlns")) {
-            g_print (G_STRLOC": default namespace: %s\n", *value);
+            g_print (GOM_LOC ("default namespace: %s\n"), *value);
             g_hash_table_replace (scope->namespaces, 
                                   g_strdup (""),
                                   g_strdup (*value));
         } else if (!strncmp (*name, "xmlns:", XMLNS_LEN+1)) {
-            g_print (G_STRLOC": found prefix: %s -> %s\n",
-                     *name+XMLNS_LEN+1,
+            g_print (GOM_LOC ("found prefix: %s -> %s\n"),
+                      *name+XMLNS_LEN+1,
                      *value);
             g_hash_table_replace (scope->namespaces,
                                   g_strdup (*name + XMLNS_LEN + 1),
@@ -549,14 +549,14 @@ gom_js_window_parser_end_element (GMarkupParseContext *context,
         file = gom_element_get_attribute (data->scope->elem, "src");
         if (file) {
             if (!gom_uri_get_contents (file, data->filename, &script, &script_len, &err)) {
-                g_printerr (G_STRLOC": could not load %s: %s\n",
-                            filename, err->message);
+                g_printerr (GOM_LOC ("could not load %s: %s\n"),
+                             filename, err->message);
                 g_error_free (err);
             } else {
                 char *uri = gom_uri_join (file, data->filename, &err);
                 if (!uri) {
-                    g_printerr (G_STRLOC": could not build uri %s: %s\n",
-                                file, err->message);
+                    g_printerr (GOM_LOC ("could not build uri %s: %s\n"),
+                                 file, err->message);
                     g_error_free (err);
                 }
                 g_free (file);
@@ -600,12 +600,12 @@ gom_js_window_parser_end_element (GMarkupParseContext *context,
                                  "Unknown error encountered while running script at %s:%d\n",
                                  data->filename, lineno);
                 }
-                g_printerr (G_STRLOC": error running script: %s\n", err->message);
+                g_printerr (GOM_LOC ("error running script: %s\n"), err->message);
                 g_error_free (err);
             } else {
                 str = JS_ValueToString(data->cx, rval); 
-                g_print (G_STRLOC": script result: %s\n", 
-                         JS_GetStringBytes(str));
+                g_print (GOM_LOC ("script result: %s\n"), 
+                          JS_GetStringBytes(str));
             }
         }
         g_free (script);
@@ -620,7 +620,7 @@ gom_js_window_parser_end_element (GMarkupParseContext *context,
 static void
 gom_js_window_parser_text (GMarkupParseContext *context,
                            const gchar         *text,
-                           gsize                text_len,  
+                           gsize                text_len, 
                            gpointer             user_data,
                            GError             **error)
 {
@@ -629,7 +629,7 @@ gom_js_window_parser_text (GMarkupParseContext *context,
     char *txt;
 
     if (!data->doc || !data->scope) {
-        g_print (G_STRLOC": dropping some text...\n");
+        g_print (GOM_LOC ("dropping some text...\n"));
         return;
     }
 

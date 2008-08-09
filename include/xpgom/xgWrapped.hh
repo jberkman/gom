@@ -21,44 +21,30 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#include "config.h"
+#ifndef XG_WRAPPED_HH
+#define XG_WRAPPED_HH
 
-#include "xpgom/xgObject.hh"
+#include "xgPIWrapped.hh"
 
-xgObject::xgObject (GObject *aObject, GType aType) 
-  : mObject (aObject ? (GObject *)g_object_ref (aObject) : aObject)
-  , mType(aType)
+#include <nscore.h>
+#include <nsISupports.h>
+
+#include <glib-object.h>
+
+class xgWrapped : public xgPIWrapped
 {
-}
+    NS_DECL_ISUPPORTS
+    NS_DECL_XGPIWRAPPED
+protected:
+    xgWrapped (GType aType = 0);
+    ~xgWrapped ();
 
-xgObject::~xgObject ()
-{
-    if (mObject) {
-	g_object_unref (mObject);
-    }
-}
+    nsresult Init (GType *ifaces, GObject *aObject = NULL);
 
-nsresult
-xgObject::Init (GType *ifaces)
-{
-    if (!mObject) {
-	if (mType) {
-	    mObject = (GObject *)g_object_new (mType, NULL);
-	    if (!mObject) {
-		return NS_ERROR_OUT_OF_MEMORY;
-	    }
-	} else {
-	    return NS_ERROR_NOT_IMPLEMENTED;
-	}
-    }
-    for (GType t = G_OBJECT_TYPE (mObject);
-	 *ifaces;
-	 ++ifaces) {
-	if (!g_type_is_a (t, *ifaces)) {
-	    g_object_unref (mObject);
-	    mObject = NULL;
-	    return NS_ERROR_NO_INTERFACE;
-	}
-    }
-    return NS_OK;
-}
+    GObject *mWrapped;
+
+private:
+    GType mType;
+};
+
+#endif /* XG_WRAPPED_HH */

@@ -61,7 +61,8 @@ typedef enum {
     /* Gom-specific exceptions */
     GOM_UNKNOWN_TAG_NAME_ERR        = 87001,
     GOM_INVALID_ATTRIBUTE_TYPE_ERR  = 87002,
-    GOM_NOT_IMPLEMENTED_ERR         = 87003
+    GOM_NOT_IMPLEMENTED_ERR         = 87003,
+    GOM_NO_INTERFACE_ERR            = 87004
 } GomExceptionCode;
 
 GQuark gom_dom_exception_error_quark (void);

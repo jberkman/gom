@@ -23,12 +23,11 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include "xpgom/xgDOMImplementation.hh"
-#include "gom/gomdom.h"
-
-#include "xpgom/xgDocument.hh"
-
 #include "gom/dom/gomdomexception.h"
+#include "gom/gomdom.h"
+#include "xpgom/gomwrapped.hh"
+#include "xpgom/xgDOMImplementation.hh"
+#include "xpgom/xgDocument.hh"
 
 #include <nsCOMPtr.h>
 #include <nsEmbedString.h>
@@ -37,12 +36,20 @@ THE SOFTWARE.
 
 #include "gommacros.h"
 
-#define CHECK_INITIALIZED GOM_XGO_CHECK_INIALIZED (GOM_TYPE_DOM_IMPLEMENTATION)
+#define CHECK_INITIALIZED GOM_XG_WRAPPED_CHECK_INIALIZED (GOM_TYPE_DOM_IMPLEMENTATION)
 
-NS_IMPL_ISUPPORTS1_CI(xgDOMImplementation, nsIDOMDOMImplementation)
+NS_IMPL_ADDREF_INHERITED(xgDOMImplementation, xgWrapped)
+NS_IMPL_RELEASE_INHERITED(xgDOMImplementation, xgWrapped)
 
-xgDOMImplementation::xgDOMImplementation (GomDOMImplementation *aDom)
-    : xgObject (aDom ? G_OBJECT (aDom) : NULL, GOM_TYPE_DOM)
+NS_INTERFACE_MAP_BEGIN(xgDOMImplementation)
+NS_INTERFACE_MAP_ENTRY(nsIDOMDOMImplementation)
+NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMDOMImplementation)
+NS_IMPL_QUERY_CLASSINFO(xgDOMImplementation)
+NS_INTERFACE_MAP_END_INHERITING(xgWrapped)
+
+NS_IMPL_CI_INTERFACE_GETTER1(xgDOMImplementation, nsIDOMDOMImplementation)
+
+xgDOMImplementation::xgDOMImplementation () : xgWrapped (GOM_TYPE_DOM)
 {
 }
 
@@ -51,12 +58,12 @@ xgDOMImplementation::~xgDOMImplementation ()
 }
 
 nsresult
-xgDOMImplementation::Init ()
+xgDOMImplementation::Init (GObject *aDom)
 {
     GType ifaces[2];
     ifaces[0] = GOM_TYPE_DOM_IMPLEMENTATION;
     ifaces[1] = 0;
-    return xgObject::Init (ifaces);
+    return xgWrapped::Init (ifaces, aDom);
 }    
 
 /* boolean hasFeature (in DOMString feature, in DOMString version); */
@@ -66,10 +73,10 @@ xgDOMImplementation::HasFeature (const nsAString &feature,
 				 PRBool          *_retval)
 {
     CHECK_INITIALIZED;
-    GOM_ASTRING_TO_GSTRING (feat, feature, NS_ERROR_INVALID_ARG);
-    GOM_ASTRING_TO_GSTRING (ver, version, NS_ERROR_INVALID_ARG);
+    GOM_ASTRING_TO_GSTRING_RETURN (feat, feature, NS_ERROR_INVALID_ARG);
+    GOM_ASTRING_TO_GSTRING_RETURN (ver, version, NS_ERROR_INVALID_ARG);
 
-    *_retval = gom_dom_implementation_has_feature (GOM_DOM_IMPLEMENTATION (mObject),
+    *_retval = gom_dom_implementation_has_feature (GOM_DOM_IMPLEMENTATION (mWrapped),
 						   feat, ver);
 
     return NS_OK;
@@ -94,25 +101,19 @@ xgDOMImplementation::CreateDocument (const nsAString    &namespaceURI,
 				     nsIDOMDocument    **_retval)
 {
     CHECK_INITIALIZED;
-    GOM_ASTRING_TO_GSTRING (nspace, namespaceURI, NS_ERROR_INVALID_ARG);
-    GOM_ASTRING_TO_GSTRING (qname, qualifiedName, NS_ERROR_INVALID_ARG);
+    GOM_ASTRING_TO_GSTRING_RETURN (nspace, namespaceURI, NS_ERROR_INVALID_ARG);
+    GOM_ASTRING_TO_GSTRING_RETURN (qname, qualifiedName, NS_ERROR_INVALID_ARG);
     g_return_val_if_fail (doctype == NULL, NS_ERROR_INVALID_ARG);
 
     GError *error = NULL;
-    GomDocument *doc = gom_dom_implementation_create_document (GOM_DOM_IMPLEMENTATION (mObject),
+    GomDocument *doc = gom_dom_implementation_create_document (GOM_DOM_IMPLEMENTATION (mWrapped),
 							       nspace, qname, NULL, &error);
     if (!doc) {
 	// frees error
 	GOM_RETURN_NSRESULT_FROM_GERROR (error);
     }
 
-    xgDocument *xDoc = new xgDocument (doc);
-    if (!xDoc) {
-	return NS_ERROR_OUT_OF_MEMORY;
-    }
-    nsresult rv = xDoc->Init();
-    if (NS_SUCCEEDED (rv)) {
-	rv = CallQueryInterface (xDoc, _retval);
-    }
+    nsresult rv = gom_wrap_g_object (doc, NS_GET_IID (nsIDOMDocument), (gpointer *)_retval);
+    g_object_unref (doc);
     return rv;
 }

@@ -26,11 +26,20 @@ THE SOFTWARE.
 
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
 
-#define GOM_NOT_IMPLEMENTED (g_message (G_STRLOC": Not implemented yet."))
+#ifdef __cplusplus
+#define GOM_LOC(s) G_STRLOC":%s: "s, G_STRFUNC
+#else
+#define GOM_LOC(s) G_STRLOC":%s(): "s, G_STRFUNC
+#endif
+
+#define GOM_NOT_IMPLEMENTED (g_message (GOM_LOC("Not implemented yet.")))
 
 #define GOM_NOT_IMPLEMENTED_ERROR(error)                                \
-    (g_set_error (error, GOM_DOM_EXCEPTION_ERROR, GOM_NOT_IMPLEMENTED_ERR, \
-                  G_STRLOC": Not implemented yet"))
+    G_STMT_START {                                                      \
+        GOM_NOT_IMPLEMENTED;                                            \
+        g_set_error (error, GOM_DOM_EXCEPTION_ERROR, GOM_NOT_IMPLEMENTED_ERR, \
+                     GOM_LOC ("Not implemented yet"));                  \
+    } G_STMT_END
 
 #define GOM_JS_NOT_IMPLEMENTED(cx)                                      \
     G_STMT_START {                                                      \
@@ -40,6 +49,11 @@ THE SOFTWARE.
             gom_js_exception_set_error (cx, &error);                    \
         }                                                               \
     } G_STMT_END
+
+#define GOM_PROPERTY_NOT_IMPLEMENTED(pspec)                     \
+    (g_message (GOM_LOC ("%s.%s not implemented"),              \
+                g_type_name (pspec->owner_type), pspec->name))
+
 
 #define GOM_DEFINE_QUARK(n)                                             \
     static gpointer                                                     \
@@ -159,28 +173,53 @@ THE SOFTWARE.
 
 #define GOM_UNSET_WEAK(p) GOM_SET_WEAK(p, NULL)
 
-#define GOM_ASTRING_TO_GSTRING(_aCString, _aString, _errval)            \
+#define GOM_ASTRING_TO_GSTRING_RETURN(_aCString, _aString, _errval)     \
     nsCAutoString _aCString##String;                                    \
     if (NS_FAILED (NS_UTF16ToCString (_aString, NS_CSTRING_ENCODING_UTF8, _aCString##String))) { \
         return _errval;                                                 \
     }                                                                   \
     const char *_aCString = _aCString##String.get();
 
-#define GOM_GERROR_TO_NSRESULT(_err)                    \
-    (_err->domain == GOM_DOM_EXCEPTION_ERROR) ? NS_ERROR_GENERATE_FAILURE (NS_ERROR_MODULE_DOM, _err->code) : NS_ERROR_UNEXPECTED;
+#define GOM_ASTRING_TO_GSTRING(_aCString, _aString)                     \
+    nsCAutoString _aCString##String;                                    \
+    NS_UTF16ToCString (_aString, NS_CSTRING_ENCODING_UTF8, _aCString##String); \
+    const char *_aCString = _aCString##String.get();
 
-#define GOM_RETURN_NSRESULT_FROM_GERROR(_err)           \
-    G_STMT_START {                                      \
-        nsresult _rv = GOM_GERROR_TO_NSRESULT(_err);    \
-        g_error_free (_err);                            \
-        return _rv;                                     \
+#define GOM_RETURN_NSRESULT_FROM_GERROR(_err)                           \
+    G_STMT_START {                                                      \
+        nsresult _rv = NS_ERROR_UNEXPECTED;                             \
+        if (_err->domain == GOM_DOM_EXCEPTION_ERROR) {                  \
+            if (_err->code < 87000) {                                   \
+                _rv = NS_ERROR_GENERATE_FAILURE (NS_ERROR_MODULE_DOM, _err->code); \
+            } else {                                                    \
+                switch (_err->code) {                                   \
+                case GOM_NO_INTERFACE_ERR:                              \
+                    _rv = NS_ERROR_NOT_INITIALIZED;                     \
+                    break;                                              \
+                case GOM_NOT_IMPLEMENTED_ERR:                           \
+                    _rv = NS_ERROR_NOT_IMPLEMENTED;                     \
+                    break;                                              \
+                }                                                       \
+            }                                                           \
+        }                                                               \
+        g_error_free (_err);                                            \
+        return _rv;                                                     \
     } G_STMT_END
 
-#define GOM_XGO_CHECK_INIALIZED(t)                                      \
+#define GOM_XG_WRAPPED_CHECK_INIALIZED(t)                               \
     G_STMT_START {                                                      \
-        if (!mObject || !g_type_is_a (G_OBJECT_TYPE (mObject), t)) {    \
+        if (!mWrapped || !g_type_is_a (G_OBJECT_TYPE (mWrapped), t)) {  \
             return NS_ERROR_NOT_INITIALIZED;                            \
         }                                                               \
     } G_STMT_END
+
+#define GOM_WRAPPED_GET(_obj, _iface, _var)                     \
+    nsCOMPtr<_iface> _var;                                      \
+    {								\
+	nsISupports *raw;					\
+	g_object_get (_obj, "wrapped-object", &raw, NULL);      \
+	nsCOMPtr<nsISupports> tmp = dont_AddRef (raw);          \
+	_var = do_QueryInterface (tmp);                         \
+    }
     
 #endif /* GOM_MACROS_H */

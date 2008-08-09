@@ -33,12 +33,15 @@ THE SOFTWARE.
 #include "gom/dom/gomdomexception.h"
 #include "gom/dom/gomkeyboardevent.h"
 #include "gom/dom/gommouseevent.h"
+#include "gom/gomcdata.h"
+#include "gom/gomcmt.h"
 #include "gom/gomelem.h"
 #include "gom/gomglist.h"
 #include "gom/gomkeyboardevt.h"
 #include "gom/gommouseevt.h"
 #include "gom/gomobject.h"
 #include "gom/gomtxt.h"
+#include "gom/gomunknown.h"
 
 #include "gommacros.h"
 
@@ -73,6 +76,7 @@ gom_doc_get_property (GObject    *object,
                       GParamSpec *pspec)
 {
     GomDocPrivate *priv = PRIV (object);
+    gpointer elemp;
     GomElement *elem;
     switch (property_id) {
     case PROP_DOCTYPE:
@@ -82,12 +86,16 @@ gom_doc_get_property (GObject    *object,
         g_value_set_object (value, priv->implementation);
         break;
     case PROP_DOCUMENT_ELEMENT:
-        g_object_get (object, "first-child", &elem, NULL);
-        if (GOM_IS_ELEMENT (elem)) {
-            g_value_set_object (value, elem);
+        g_object_get (object, "first-child", &elemp, NULL);
+        if (G_IS_OBJECT (elemp)) {
+            elem = gom_unknown_query_interface (elemp, GOM_TYPE_ELEMENT, NULL);
+            if (elem) {
+                g_value_set_object (value, elem);
+                g_object_unref (elem);
+            }
         }
-        if (G_IS_OBJECT (elem)) {
-            g_object_unref (elem);
+        if (G_IS_OBJECT (elemp)) {
+            g_object_unref (elemp);
         }
         break;
     case PROP_NODE_NAME:
@@ -140,7 +148,7 @@ delete_window (GtkWidget *w)
 
     unload = gom_document_event_create_event (doc, "Event", &err);
     if (err) {
-        g_error (G_STRLOC": Could not create an unload event: %s", err->message);
+        g_error (GOM_LOC ("Could not create an unload event: %s"), err->message);
         g_assert_not_reached ();
         return TRUE;
     }
@@ -148,7 +156,7 @@ delete_window (GtkWidget *w)
     gom_event_init_event (unload, "unload", FALSE, FALSE);
     gom_event_target_dispatch_event (GOM_EVENT_TARGET (doc), unload, &err);
     if (err) {
-        g_error (G_STRLOC": Error dispatching unload event: %s", err->message);
+        g_error (GOM_LOC ("Error dispatching unload event: %s"), err->message);
         g_assert_not_reached ();
         return TRUE;
     }
@@ -205,6 +213,9 @@ gom_doc_create_element_ns (GomDocument *doc,
     if (!type || !g_type_is_a (type, GOM_TYPE_ELEMENT)) {
         type = GOM_TYPE_ELEM;
     }
+    g_print (GOM_LOC ("<%s:%s xmlns='%s'> (%s)\n"),
+                      prefix, local_name, namespace_uri,
+                      g_type_name (type));
     obj = g_object_new (type, 
                         "owner-document",  doc,
                         "namespace-u-r-i", namespace_uri,
@@ -289,8 +300,10 @@ static GomComment *
 gom_doc_create_comment (GomDocument *doc,
                         const char  *data)
 {
-    GOM_NOT_IMPLEMENTED;
-    return NULL;
+    return g_object_new (GOM_TYPE_CMT,
+                         "owner-document", doc,
+                         "data", data,
+                         NULL);
 }
 
 static GomCDATASection *
@@ -298,8 +311,10 @@ gom_doc_create_cdata_section (GomDocument *doc,
                               const char  *data,
                               GError     **error)
 {
-    GOM_NOT_IMPLEMENTED_ERROR (error);
-    return NULL;
+    return g_object_new (GOM_TYPE_CDATA,
+                         "owner-document", doc,
+                         "data", data,
+                         NULL);
 }
 
 static GomProcessingInstruction *
@@ -378,6 +393,7 @@ get_elements_by_tag_name (GList      *li,
                           const char *namespace_uri,
                           const char *qualified_name)
 {
+    GomElement *elem;
     GomNode *old_node;
     
     if (matches_by_tag_name (node, namespace_uri, qualified_name)) {
@@ -389,8 +405,10 @@ get_elements_by_tag_name (GList      *li,
          old_node = node,
              g_object_get (old_node, "next-sibling", &node, NULL),
              g_object_unref (old_node)) {
-        if (GOM_IS_ELEMENT (node)) {
-            li = get_elements_by_tag_name (li, node, namespace_uri, qualified_name);
+        elem = gom_unknown_query_interface (node, GOM_TYPE_ELEMENT, NULL);
+        if (elem) {
+            li = get_elements_by_tag_name (li, GOM_NODE (elem), namespace_uri, qualified_name);
+            g_object_unref (elem);
         }
     }
 
@@ -433,34 +451,106 @@ gom_doc_import_node (GomDocument *doc,
                      gboolean     deep,
                      GError     **error)
 {
-    GOM_NOT_IMPLEMENTED_ERROR (error);
+    GomNodeType node_type;
+    char *namespace_uri;
+    char *qualified_name;
+    GomElement *elem;
+    GomNode *ret;
+    char *data;
+    GomNode *child;
+    GomNode *old_child;
+    GomNode *imported_child;
+    GomText *text;
+    GomComment *comment;
+    GomCDATASection *cdata;
+
+    g_object_get (node, "node-type", &node_type, NULL);
+    switch (node_type) {
+    case GOM_ELEMENT_NODE:
+        g_object_get (node,
+                      "namespace-u-r-i", &namespace_uri,
+                      "node-name", &qualified_name,
+                      NULL);
+        elem = gom_document_create_element_ns (doc, namespace_uri, qualified_name, error);
+        g_free (namespace_uri);
+        g_free (qualified_name);
+        if (!elem) {
+            return NULL;
+        }
+        ret = GOM_NODE (elem);
+        if (!deep) {
+            return ret;
+        }
+        for (g_object_get (node, "first-child", &child, NULL);
+             child;
+             old_child = child,
+                 g_object_get (old_child, "next-sibling", &child, NULL),
+                 g_object_unref (old_child)) {
+            imported_child = gom_document_import_node (doc, child, deep, error);
+            if (!imported_child) {
+                g_object_unref (ret);
+                g_object_unref (child);
+                return NULL;
+            }
+            if (!gom_node_append_child (ret, imported_child, error)) {
+                g_object_unref (ret);
+                g_object_unref (child);
+                return NULL;
+            }
+        }
+        return ret;
+    case GOM_TEXT_NODE:
+        g_object_get (node, "node-value", &data, NULL);
+        text = gom_document_create_text_node (doc, data);
+        g_free (data);
+        return text ? GOM_NODE (text) : NULL;
+    case GOM_CDATA_SECTION_NODE:
+        g_object_get (node, "node-value", &data, NULL);
+        cdata = gom_document_create_cdata_section (doc, data, error);
+        g_free (data);
+        return cdata ? GOM_NODE (cdata) : NULL;
+    case GOM_COMMENT_NODE:
+        g_object_get (node, "node-value", &data, NULL);
+        comment = gom_document_create_comment (doc, data);
+        g_free (data);
+        return comment ? GOM_NODE (comment) : NULL;
+    default:
+        g_print ("Unimplemnted type: %d\n", node_type);
+        GOM_NOT_IMPLEMENTED_ERROR (error);
+        return NULL;
+    }
     return NULL;
 }
 
 static GomElement *
-get_element_by_id (GomNode    *node,
+get_element_by_id (GomElement *node,
                    const char *element_id)
 {
     const GValue *gval;
-    GomNode *old_node;
+    GomElement *old_node;
     GomElement *ret;
+    GomElement *elem;
 
     for (g_object_get (node, "first-child", &node, NULL);
          node;
          old_node = node,
              g_object_get (old_node, "next-sibling", &node, NULL),
              g_object_unref (old_node)) {
-        if (GOM_IS_ELEMENT (node)) {
-            gval = gom_object_get_attribute (G_OBJECT (node), "id");
-            if (gval && G_VALUE_HOLDS_STRING (gval) && !strcmp (g_value_get_string (gval), element_id)) {
-                return GOM_ELEMENT (node);
-            }
+        elem = gom_unknown_query_interface (node, GOM_TYPE_ELEMENT, NULL);
+        if (!elem) {
+            continue;
+        }
+        gval = gom_object_get_attribute (G_OBJECT (elem), "id");
+        if (gval && G_VALUE_HOLDS_STRING (gval) && !strcmp (g_value_get_string (gval), element_id)) {
+            g_object_unref (node);
+            return elem;
+        }
 
-            ret = get_element_by_id (node, element_id);
-            if (ret) {
-                g_object_unref (node);
-                return ret;
-            }
+        ret = get_element_by_id (elem, element_id);
+        g_object_unref (elem);
+        if (ret) {
+            g_object_unref (node);
+            return ret;
         }
     }
 
@@ -473,11 +563,11 @@ gom_doc_get_element_by_id (GomDocument *doc,
                            const char  *element_id)
 {
     GomElement *elem;
-    GomNode    *node;
+    GomElement *root;
 
-    g_object_get (doc, "document-element", &node, NULL);
-    elem = get_element_by_id (node, element_id);
-    g_object_unref (node);
+    g_object_get (doc, "document-element", &root, NULL);
+    elem = get_element_by_id (root, element_id);
+    g_object_unref (root);
 
     return elem;
 }
@@ -584,8 +674,8 @@ static void
 gom_doc_dispose (GObject *object)
 {
     GomDocPrivate *priv = PRIV (object);
-    g_print (G_STRLOC": %s %p\n",
-             g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
+    g_print (GOM_LOC ("%s %p\n"),
+              g_type_name (G_TYPE_FROM_INSTANCE (object)), object);
     if (priv->doctype) {
         g_object_unref (priv->doctype);
         priv->doctype = NULL;
