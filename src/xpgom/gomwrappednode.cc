@@ -27,11 +27,14 @@ THE SOFTWARE.
 #include "gom/dom/gomnode.h"
 #include "xpgom/xgNode.hh"
 #include "gom/dom/gomdomexception.h"
+#include "gom/dom/gomnamednodemap.h"
 
 #include <nsIDOMNode.h>
 #include <nsCOMPtr.h>
 #include <nsIDOMDocument.h>
+#include <nsIDOMNamedNodeMap.h>
 #include <nsStringAPI.h>
+#include <nsIDOMNodeList.h>
 
 #include "gommacros.h"
 
@@ -60,74 +63,50 @@ gom_wrapped_node_get_property (GObject    *object,
 			       GValue     *value,
 			       GParamSpec *pspec)
 {
-    gpointer doc = NULL;
-    nsCOMPtr<nsIDOMDocument> aDoc;
-    nsAutoString aString;
-    nsCOMPtr<nsIDOMNode> aNode;
-    GomNode *node = NULL;
-
     GET_NODE (object);
 
     switch (property_id) {
     case PROP_OWNER_DOCUMENT:
-	if (NS_SUCCEEDED (mNode->GetOwnerDocument (getter_AddRefs (aDoc)))) {
-	    doc = gom_wrap_xpcom (aDoc, GOM_TYPE_DOCUMENT, NULL);
-	}
-	if (GOM_IS_DOCUMENT (doc)) {
-	    g_value_set_object (value, doc);
-	    g_object_unref (doc);
-	}
+	GOM_WRAPPED_GET_OBJECT (mNode, GetOwnerDocument, nsIDOMDocument, GOM_TYPE_DOCUMENT, GomDocument);
 	break;
     case PROP_NODE_TYPE:
-	PRUint16 aNodeType;
-	if (NS_SUCCEEDED (mNode->GetNodeType (&aNodeType))) {
-	    g_value_set_enum (value, aNodeType);
-	}
+	GOM_WRAPPED_GET_ENUM (mNode, GetNodeType);
 	break;
     case PROP_NAMESPACE_URI:
-	if (NS_SUCCEEDED (mNode->GetNamespaceURI (aString))) {
-	    GOM_ASTRING_TO_GSTRING (namespace_uri, aString);
-	    g_value_set_string (value, namespace_uri);
-	}
+	GOM_WRAPPED_GET_STRING (mNode, GetNamespaceURI);
 	break;
     case PROP_NODE_NAME:
-	if (NS_SUCCEEDED (mNode->GetNodeName (aString))) {
-	    GOM_ASTRING_TO_GSTRING (node_name, aString);
-	    g_value_set_string (value, node_name);
-	}
+	GOM_WRAPPED_GET_STRING (mNode, GetNodeName);
 	break;
     case PROP_FIRST_CHILD:
-	if (NS_SUCCEEDED (mNode->GetFirstChild (getter_AddRefs (aNode))) && aNode) {
-	    node = (GomNode *)gom_wrap_xpcom (aNode, GOM_TYPE_NODE, NULL);
-	}
-	if (GOM_IS_NODE (node)) {
-	    g_value_set_object (value, node);
-	    g_object_unref (node);
-	}
+	GOM_WRAPPED_GET_OBJECT (mNode, GetFirstChild, nsIDOMNode, GOM_TYPE_NODE, GomNode);
 	break;
     case PROP_NEXT_SIBLING:
-	if (NS_SUCCEEDED (mNode->GetNextSibling (getter_AddRefs (aNode))) && aNode) {
-	    node = (GomNode *)gom_wrap_xpcom (aNode, GOM_TYPE_NODE, NULL);
-	}
-	if (GOM_IS_NODE (node)) {
-	    g_value_set_object (value, node);
-	    g_object_unref (node);
-	}
+	GOM_WRAPPED_GET_OBJECT (mNode, GetNextSibling, nsIDOMNode, GOM_TYPE_NODE, GomNode);
 	break;
     case PROP_NODE_VALUE:
-	if (NS_SUCCEEDED (mNode->GetNodeValue (aString))) {
-	    GOM_ASTRING_TO_GSTRING (node_value, aString);
-	    g_value_set_string (value, node_value);
-	}
+	GOM_WRAPPED_GET_STRING (mNode, GetNodeValue);
+	break;
+    case PROP_ATTRIBUTES:
+	GOM_WRAPPED_GET_OBJECT (mNode, GetAttributes, nsIDOMNamedNodeMap, GOM_TYPE_NAMED_NODE_MAP, GomNamedNodeMap);
 	break;
     case PROP_PREVIOUS_SIBLING:
+	GOM_WRAPPED_GET_OBJECT (mNode, GetPreviousSibling, nsIDOMNode, GOM_TYPE_NODE, GomNode);
+	break;
     case PROP_PARENT_NODE:
+	GOM_WRAPPED_GET_OBJECT (mNode, GetParentNode, nsIDOMNode, GOM_TYPE_NODE, GomNode);
+	break;
     case PROP_CHILD_NODES:
+	GOM_WRAPPED_GET_OBJECT (mNode, GetChildNodes, nsIDOMNodeList, GOM_TYPE_NODE_LIST, GomNodeList);
+	break;
     case PROP_LAST_CHILD:
+	GOM_WRAPPED_GET_OBJECT (mNode, GetLastChild, nsIDOMNode, GOM_TYPE_NODE, GomNode);
+	break;
     case PROP_PREFIX:
+	GOM_WRAPPED_GET_STRING (mNode, GetPrefix);
+	break;
     case PROP_LOCAL_NAME:
-    case PROP_ATTRIBUTES:
-	GOM_PROPERTY_NOT_IMPLEMENTED (pspec);
+	GOM_WRAPPED_GET_STRING (mNode, GetLocalName);
 	break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);

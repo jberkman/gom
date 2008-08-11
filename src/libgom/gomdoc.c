@@ -452,74 +452,106 @@ gom_doc_import_node (GomDocument *doc,
                      GError     **error)
 {
     GomNodeType node_type;
-    char *namespace_uri;
-    char *qualified_name;
-    GomElement *elem;
-    GomNode *ret;
+    GomNode *ret = NULL;
     char *data;
-    GomNode *child;
-    GomNode *old_child;
-    GomNode *imported_child;
-    GomText *text;
-    GomComment *comment;
-    GomCDATASection *cdata;
 
     g_object_get (node, "node-type", &node_type, NULL);
     switch (node_type) {
     case GOM_ELEMENT_NODE:
-        g_object_get (node,
-                      "namespace-u-r-i", &namespace_uri,
-                      "node-name", &qualified_name,
-                      NULL);
-        elem = gom_document_create_element_ns (doc, namespace_uri, qualified_name, error);
-        g_free (namespace_uri);
-        g_free (qualified_name);
-        if (!elem) {
-            return NULL;
+        {
+            char *namespace_uri;
+            char *qualified_name;
+            g_object_get (node,
+                          "namespace-u-r-i", &namespace_uri,
+                          "node-name", &qualified_name,
+                          NULL);
+            ret = (GomNode *)gom_document_create_element_ns (doc, namespace_uri, qualified_name, error);
+            g_free (namespace_uri);
+            g_free (qualified_name);
         }
-        ret = GOM_NODE (elem);
+        if (!ret) {
+            break;
+        }
+        {
+            GomNamedNodeMap *attrs;
+            gulong i, len;
+            char *name, *value;
+            gboolean specified;
+            GomNode *attr;
+            GError *error = NULL;
+            g_object_get (node, "attributes", &attrs, NULL);
+            if (attrs) {
+                g_object_get (attrs, "length", &len, NULL);
+                for (i = 0; i < len; i++) {
+                    attr = gom_named_node_map_item (attrs, i);
+                    g_object_get (attr, "specified", &specified, NULL);
+                    if (specified) {
+                        g_object_get (attr, "name", &name, "value", &value, NULL);
+                        gom_element_set_attribute (GOM_ELEMENT (ret), name, value, &error);
+                        if (error) {
+                            g_warning (GOM_LOC ("setting attribute <%s %s=\"%s\"> failed: %s"),
+                                       G_OBJECT_TYPE_NAME (ret), name, value,
+                                       error->message);
+                            g_error_free (error);
+                        }
+                        g_free (name);
+                        g_free (value);
+                    }
+                    g_object_unref (attr);
+                }
+                g_object_unref (attrs);
+            }
+        }
         if (!deep) {
-            return ret;
+            break;
         }
-        for (g_object_get (node, "first-child", &child, NULL);
-             child;
-             old_child = child,
-                 g_object_get (old_child, "next-sibling", &child, NULL),
-                 g_object_unref (old_child)) {
-            imported_child = gom_document_import_node (doc, child, deep, error);
-            if (!imported_child) {
-                g_object_unref (ret);
-                g_object_unref (child);
-                return NULL;
-            }
-            if (!gom_node_append_child (ret, imported_child, error)) {
-                g_object_unref (ret);
-                g_object_unref (child);
-                return NULL;
+        {
+            GomNode *child, *old_child, *imported_child;
+            for (g_object_get (node, "first-child", &child, NULL);
+                 child;
+                 old_child = child,
+                     g_object_get (old_child, "next-sibling", &child, NULL),
+                     g_object_unref (old_child)) {
+                imported_child = gom_document_import_node (doc, child, deep, error);
+                if (!imported_child) {
+                    g_object_unref (ret);
+                    g_object_unref (child);
+                    return NULL;
+                }
+                if (!gom_node_append_child (ret, imported_child, error)) {
+                    g_object_unref (ret);
+                    g_object_unref (child);
+                    return NULL;
+                }
             }
         }
-        return ret;
+        break;
     case GOM_TEXT_NODE:
         g_object_get (node, "node-value", &data, NULL);
-        text = gom_document_create_text_node (doc, data);
+        ret = (GomNode *)gom_document_create_text_node (doc, data);
         g_free (data);
-        return text ? GOM_NODE (text) : NULL;
+        break;
     case GOM_CDATA_SECTION_NODE:
         g_object_get (node, "node-value", &data, NULL);
-        cdata = gom_document_create_cdata_section (doc, data, error);
+        ret = (GomNode *)gom_document_create_cdata_section (doc, data, error);
         g_free (data);
-        return cdata ? GOM_NODE (cdata) : NULL;
+        break;
     case GOM_COMMENT_NODE:
         g_object_get (node, "node-value", &data, NULL);
-        comment = gom_document_create_comment (doc, data);
+        ret = (GomNode *)gom_document_create_comment (doc, data);
         g_free (data);
-        return comment ? GOM_NODE (comment) : NULL;
+        break;
+    case GOM_DOCUMENT_NODE:
+    case GOM_DOCUMENT_TYPE_NODE:
+        g_set_error (error, GOM_DOM_EXCEPTION_ERROR, GOM_NOT_SUPPORTED_ERR,
+                     GOM_LOC ("import not supported for type: %d"), node_type);
+        break;
     default:
-        g_print ("Unimplemnted type: %d\n", node_type);
+        g_print ("Unimplemented type: %d\n", node_type);
         GOM_NOT_IMPLEMENTED_ERROR (error);
-        return NULL;
+        break;
     }
-    return NULL;
+    return ret;
 }
 
 static GomElement *

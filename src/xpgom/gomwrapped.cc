@@ -167,29 +167,38 @@ gom_wrap_xpcom (nsISupports *object,
 		GType        requested_interface,
 		GError     **error)
 {
-    GSList *li;
-    WrapMapEntry *ent;
-
-    nsCOMPtr<xgPIWrapped> wrapped = do_QueryInterface (object);
-    if (wrapped) {
-	GObject *nugget;
-	wrapped->GetWrappedGObject (&nugget);
-	GObject *ret = G_OBJECT (gom_unknown_query_interface ((gpointer)nugget, requested_interface, error));
-	g_object_unref (nugget);
-	g_message ("Returning a GObject nugget %s for %s",
-		   G_OBJECT_TYPE_NAME (ret),
-		   g_type_name (requested_interface));
-	return ret;
+    if (!object) {
+	return NULL;
     }
-    for (li = wrap_map; li; li = li->next) {
+    {
+	nsCOMPtr<xgPIWrapped> wrapped = do_QueryInterface (object);
+	if (wrapped) {
+	    GObject *nugget;
+	    wrapped->GetWrappedGObject (&nugget);
+	    GObject *ret = G_OBJECT (gom_unknown_query_interface ((gpointer)nugget, requested_interface, error));
+	    g_object_unref (nugget);
+	    g_message ("Returning a GObject nugget %p %s for %s",
+		       ret, G_OBJECT_TYPE_NAME (ret),
+		       g_type_name (requested_interface));
+	    return ret;
+	}
+    }
+    WrapMapEntry *ent;
+    for (GSList *li = wrap_map; li; li = li->next) {
 	ent = (WrapMapEntry *)li->data;
-	g_print (GOM_LOC ("%s is_a %s: %d\n"),
-		 g_type_name (requested_interface),
-		 g_type_name (ent->mInterfaceType),
-		 g_type_is_a (requested_interface, ent->mInterfaceType));
-	if (g_type_is_a (requested_interface, ent->mInterfaceType)) {
-	    g_print (GOM_LOC ("Creating %s\n"), g_type_name (ent->mWrapperType));
-	    return g_object_new (ent->mWrapperType, "wrapped-object", object, NULL);
+	//g_print (GOM_LOC ("%s?\n"), g_type_name (ent->mInterfaceType));
+	if (g_type_is_a (ent->mInterfaceType, requested_interface)) {
+	    //g_print (GOM_LOC ("maybe %s...\n"), g_type_name (ent->mInterfaceType));
+	    nsCOMPtr<nsISupports> queried;
+	    if (NS_SUCCEEDED (object->QueryInterface (ent->mIid, getter_AddRefs (queried)))) {
+		char nsid[NSID_LENGTH];
+		ent->mIid.ToProvidedString (nsid);
+		g_print (GOM_LOC ("%s %p is_a %s (%s)\n"),
+			 nsid, object,
+			 g_type_name (requested_interface),
+			 g_type_name (ent->mWrapperType));
+		return g_object_new (ent->mWrapperType, "wrapped-object", object, NULL);
+	    }
 	}
     }
     g_set_error (error, GOM_DOM_EXCEPTION_ERROR, GOM_NO_INTERFACE_ERR,
@@ -205,6 +214,10 @@ gom_wrap_g_object (gpointer      object,
 {
     GSList *li;
     WrapMapEntry *ent;
+    if (!object) {
+	*retval = NULL;
+	return NS_OK;
+    }
     if (GOM_IS_WRAPPED (object)) {
 	nsISupports *wrappedp;
 	g_object_get (object, "wrapped-object", &wrappedp, NULL);
@@ -213,22 +226,15 @@ gom_wrap_g_object (gpointer      object,
     }
     for (li = wrap_map; li; li = li->next) {
 	ent = (WrapMapEntry *)li->data;
-	if (!iid.Equals (ent->mIid)) {
-	    continue;
-	}
-	break;
-    }
-    if (li) {
-	GType interface_type = ent->mInterfaceType;
-	for (li = wrap_map; li; li = li->next) {
-	    ent = (WrapMapEntry *)li->data;
-	    g_print (GOM_LOC ("%s is_a %s: %d\n"),
-		     g_type_name (interface_type),
-		     g_type_name (ent->mInterfaceType),
-		     g_type_is_a (interface_type, ent->mInterfaceType));
-	    if (g_type_is_a (interface_type, ent->mInterfaceType)) {
-		return ent->mConstructor (G_OBJECT (object), iid, retval);
-	    }
+	if (iid.Equals (ent->mIid)) {
+	    char nsid[NSID_LENGTH];
+	    iid.ToProvidedString (nsid);
+	    g_print (GOM_LOC ("%s %p is_a %s (%s)\n"),
+		     G_OBJECT_TYPE_NAME (object),
+		     object,
+		     nsid,
+		     g_type_name (ent->mInterfaceType));
+	    return ent->mConstructor (G_OBJECT (object), iid, retval);
 	}
     }
     return NS_ERROR_NO_INTERFACE;

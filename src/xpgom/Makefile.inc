@@ -4,9 +4,11 @@ lib_LTLIBRARIES += libxpgom.la
 
 libxpgom_la_SOURCES :=
 libxpgom_la_SOURCES += src/xpgom/gomwrapped.cc
+libxpgom_la_SOURCES += src/xpgom/gomwrappedattr.cc
 libxpgom_la_SOURCES += src/xpgom/gomwrappeddocument.cc
 libxpgom_la_SOURCES += src/xpgom/gomwrappeddomimplementation.cc
 libxpgom_la_SOURCES += src/xpgom/gomwrappedelement.cc
+libxpgom_la_SOURCES += src/xpgom/gomwrappednamednodemap.cc
 libxpgom_la_SOURCES += src/xpgom/gomwrappednode.cc
 libxpgom_la_SOURCES += src/xpgom/xgDocument.cc
 libxpgom_la_SOURCES += src/xpgom/xgDOMImplementation.cc

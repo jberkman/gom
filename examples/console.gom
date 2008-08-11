@@ -20,9 +20,6 @@
 	  <GtkEntry id="entry" expand="true" fill="true"/>
           <GtkLabel id="x" expand="false" fill="false"/>
           <GtkLabel id="y" expand="false" fill="false"/>
-<!--
-          <GtkButton id="go" label="Go" expand="false" fill="false"/>
- -->
         </GtkHBox>
       </GtkVBox>
     </GtkWindow>

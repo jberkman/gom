@@ -29,10 +29,14 @@ THE SOFTWARE.
 #include "xpgom/xgDocument.hh"
 
 #include <nsIDOMElement.h>
+#include <nsIDOMDOMImplementation.h>
+#include <nsIDOMDocumentType.h>
 
 #include "gommacros.h"
 
-#define CHECK_INITIALIZED GOM_XG_WRAPPED_CHECK_INIALIZED (GOM_TYPE_DOCUMENT)
+#define CHECK_INITIALIZED XG_WRAPPED_CHECK_INIALIZED (GOM_TYPE_DOCUMENT)
+#define IMPL_GET_OBJECT(_func, _iface, _prop_name, _prop_gtype, _prop_class) \
+    XG_WRAPPED_IMPL_GET_OBJECT (xgDocument, GOM_TYPE_DOCUMENT, _func, _iface, _prop_name, _prop_gtype, _prop_class);
 
 NS_IMPL_ISUPPORTS_INHERITED1(xgDocument, xgNode, nsIDOMDocument)
 
@@ -54,97 +58,68 @@ xgDocument::Init (GObject *aDoc)
 }
 
 /* readonly attribute nsIDOMDocumentType doctype; */
-NS_IMETHODIMP xgDocument::GetDoctype(nsIDOMDocumentType * *aDoctype)
-{
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
-}
+IMPL_GET_OBJECT(GetDoctype, nsIDOMDocumentType, "doctype", GOM_TYPE_DOCUMENT_TYPE, GomDocumentType)
 
 /* readonly attribute nsIDOMDOMImplementation implementation; */
-NS_IMETHODIMP xgDocument::GetImplementation(nsIDOMDOMImplementation * *aImplementation)
-{
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
-}
+IMPL_GET_OBJECT (GetImplementation, nsIDOMDOMImplementation, "implementation",
+		 GOM_TYPE_DOM_IMPLEMENTATION, GomDOMImplementation)
+		 
 
 /* readonly attribute nsIDOMElement documentElement; */
-NS_IMETHODIMP
-xgDocument::GetDocumentElement (nsIDOMElement **aDocumentElement)
-{
-    CHECK_INITIALIZED;
-    GomElement *elem;
-    g_object_get (mWrapped, "document-element", &elem, NULL);
-    if (!GOM_IS_ELEMENT (elem)) {
-	g_message (GOM_LOC ("got document element: %s"),
-		   elem ? G_OBJECT_TYPE_NAME (elem) : "NULL");
-	return NS_ERROR_UNEXPECTED;
-    }
-    nsresult rv = gom_wrap_g_object (elem, NS_GET_IID (nsIDOMElement), (gpointer *)aDocumentElement);
-    g_object_unref (elem);
-    return rv;
-}
+IMPL_GET_OBJECT (GetDocumentElement, nsIDOMElement, "document-element", GOM_TYPE_ELEMENT, GomElement)
 
 /* nsIDOMElement createElement (in DOMString tagName)  raises (DOMException); */
 NS_IMETHODIMP xgDocument::CreateElement(const nsAString & tagName, nsIDOMElement **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMDocumentFragment createDocumentFragment (); */
 NS_IMETHODIMP xgDocument::CreateDocumentFragment(nsIDOMDocumentFragment **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMText createTextNode (in DOMString data); */
 NS_IMETHODIMP xgDocument::CreateTextNode(const nsAString & data, nsIDOMText **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMComment createComment (in DOMString data); */
 NS_IMETHODIMP xgDocument::CreateComment(const nsAString & data, nsIDOMComment **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMCDATASection createCDATASection (in DOMString data)  raises (DOMException); */
 NS_IMETHODIMP xgDocument::CreateCDATASection(const nsAString & data, nsIDOMCDATASection **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMProcessingInstruction createProcessingInstruction (in DOMString target, in DOMString data)  raises (DOMException); */
 NS_IMETHODIMP xgDocument::CreateProcessingInstruction(const nsAString & target, const nsAString & data, nsIDOMProcessingInstruction **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMAttr createAttribute (in DOMString name)  raises (DOMException); */
 NS_IMETHODIMP xgDocument::CreateAttribute(const nsAString & name, nsIDOMAttr **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMEntityReference createEntityReference (in DOMString name)  raises (DOMException); */
 NS_IMETHODIMP xgDocument::CreateEntityReference(const nsAString & name, nsIDOMEntityReference **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMNodeList getElementsByTagName (in DOMString tagname); */
 NS_IMETHODIMP xgDocument::GetElementsByTagName(const nsAString & tagname, nsIDOMNodeList **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMNode importNode (in nsIDOMNode importedNode, in boolean deep)  raises (DOMException); */
@@ -156,43 +131,41 @@ xgDocument::ImportNode (nsIDOMNode  *importedNode,
     CHECK_INITIALIZED;
     GError *error = NULL;
     GomNode *node = (GomNode *)gom_wrap_xpcom (importedNode, GOM_TYPE_NODE, &error);
-    if (!node) {
-	GOM_RETURN_NSRESULT_FROM_GERROR (error);
-    }
+    GOM_RETURN_NSRESULT_FROM_GERROR (error);
+
     GomNode *ret = gom_document_import_node (GOM_DOCUMENT (mWrapped), node, deep, &error);
-    g_object_unref (node);
-    if (!ret) {
-	GOM_RETURN_NSRESULT_FROM_GERROR (error);
+    if (node) {
+	g_object_unref (node);
     }
+    GOM_RETURN_NSRESULT_FROM_GERROR (error);
+
     nsresult rv = gom_wrap_g_object (ret, NS_GET_IID (nsIDOMNode), (gpointer *)_retval);
-    g_object_unref (ret);
+    if (ret) {
+	g_object_unref (ret);
+    }
     return rv;
 }
 
 /* nsIDOMElement createElementNS (in DOMString namespaceURI, in DOMString qualifiedName)  raises (DOMException); */
 NS_IMETHODIMP xgDocument::CreateElementNS(const nsAString & namespaceURI, const nsAString & qualifiedName, nsIDOMElement **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMAttr createAttributeNS (in DOMString namespaceURI, in DOMString qualifiedName)  raises (DOMException); */
 NS_IMETHODIMP xgDocument::CreateAttributeNS(const nsAString & namespaceURI, const nsAString & qualifiedName, nsIDOMAttr **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMNodeList getElementsByTagNameNS (in DOMString namespaceURI, in DOMString localName); */
 NS_IMETHODIMP xgDocument::GetElementsByTagNameNS(const nsAString & namespaceURI, const nsAString & localName, nsIDOMNodeList **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMElement getElementById (in DOMString elementId); */
 NS_IMETHODIMP xgDocument::GetElementById(const nsAString & elementId, nsIDOMElement **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }

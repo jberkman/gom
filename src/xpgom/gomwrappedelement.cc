@@ -30,6 +30,7 @@ THE SOFTWARE.
 
 #include <nsIDOMElement.h>
 #include <nsCOMPtr.h>
+#include <nsStringAPI.h>
 
 #include "gommacros.h"
 
@@ -53,7 +54,7 @@ gom_wrapped_element_get_property (GObject    *object,
 
     switch (property_id) {
     case PROP_TAG_NAME:
-	GOM_NOT_IMPLEMENTED;
+	GOM_WRAPPED_GET_STRING (mElement, GetTagName);
 	break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);

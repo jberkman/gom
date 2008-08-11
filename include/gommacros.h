@@ -54,6 +54,11 @@ THE SOFTWARE.
     (g_message (GOM_LOC ("%s.%s not implemented"),              \
                 g_type_name (pspec->owner_type), pspec->name))
 
+#define XG_RETURN_NOT_IMPLEMENTED               \
+    G_STMT_START {                              \
+        GOM_NOT_IMPLEMENTED;                    \
+        return NS_ERROR_NOT_IMPLEMENTED;        \
+    } G_STMT_END
 
 #define GOM_DEFINE_QUARK(n)                                             \
     static gpointer                                                     \
@@ -185,33 +190,91 @@ THE SOFTWARE.
     NS_UTF16ToCString (_aString, NS_CSTRING_ENCODING_UTF8, _aCString##String); \
     const char *_aCString = _aCString##String.get();
 
-#define GOM_RETURN_NSRESULT_FROM_GERROR(_err)                           \
+#define GOM_GSTRING_TO_ASTRING_RETURN(_aString, _aCString, _errval)     \
     G_STMT_START {                                                      \
-        nsresult _rv = NS_ERROR_UNEXPECTED;                             \
-        if (_err->domain == GOM_DOM_EXCEPTION_ERROR) {                  \
-            if (_err->code < 87000) {                                   \
-                _rv = NS_ERROR_GENERATE_FAILURE (NS_ERROR_MODULE_DOM, _err->code); \
-            } else {                                                    \
-                switch (_err->code) {                                   \
-                case GOM_NO_INTERFACE_ERR:                              \
-                    _rv = NS_ERROR_NOT_INITIALIZED;                     \
-                    break;                                              \
-                case GOM_NOT_IMPLEMENTED_ERR:                           \
-                    _rv = NS_ERROR_NOT_IMPLEMENTED;                     \
-                    break;                                              \
-                }                                                       \
-            }                                                           \
+        nsCAutoString _aCString##String (_aCString);                    \
+        if (NS_FAILED (NS_CStringToUTF16 (_aCString##String, NS_CSTRING_ENCODING_UTF8, _aString))) { \
+            g_free (_aCString);                                         \
+            return _errval;                                             \
         }                                                               \
-        g_error_free (_err);                                            \
-        return _rv;                                                     \
+        g_free (_aCString);                                             \
     } G_STMT_END
 
-#define GOM_XG_WRAPPED_CHECK_INIALIZED(t)                               \
+#define GOM_RETURN_NSRESULT_FROM_GERROR(_err)                           \
+    G_STMT_START {                                                      \
+        if (_err) {                                                     \
+            nsresult _rv = NS_ERROR_UNEXPECTED;                         \
+            if (_err->domain == GOM_DOM_EXCEPTION_ERROR) {              \
+                if (_err->code < 87000) {                               \
+                    _rv = NS_ERROR_GENERATE_FAILURE (NS_ERROR_MODULE_DOM, _err->code); \
+                } else {                                                \
+                    switch (_err->code) {                               \
+                    case GOM_NO_INTERFACE_ERR:                          \
+                        _rv = NS_ERROR_NOT_INITIALIZED;                 \
+                    break;                                              \
+                    case GOM_NOT_IMPLEMENTED_ERR:                       \
+                        _rv = NS_ERROR_NOT_IMPLEMENTED;                 \
+                        break;                                          \
+                    }                                                   \
+                }                                                       \
+            }                                                           \
+            g_error_free (_err);                                        \
+            return _rv;                                                 \
+        }                                                               \
+    } G_STMT_END
+
+#define XG_WRAPPED_CHECK_INIALIZED(t)                                   \
     G_STMT_START {                                                      \
         if (!mWrapped || !g_type_is_a (G_OBJECT_TYPE (mWrapped), t)) {  \
             return NS_ERROR_NOT_INITIALIZED;                            \
         }                                                               \
     } G_STMT_END
+
+#define XG_WRAPPED_IMPL_GET_OBJECT(_class, _gtype, _func, _iface, _prop_name, _prop_gtype, _prop_class) \
+    NS_IMETHODIMP                                                       \
+    _class::_func (_iface **_retval)                                    \
+    {                                                                   \
+        XG_WRAPPED_CHECK_INIALIZED (_gtype);                            \
+        _prop_class *prop = NULL;                                       \
+        g_object_get (mWrapped, _prop_name, &prop, NULL);               \
+        nsresult rv;                                                    \
+        rv = gom_wrap_g_object (prop, NS_GET_IID (_iface), (gpointer *)_retval); \
+        if (prop) {                                                     \
+            g_object_unref (prop);                                      \
+        }                                                               \
+        return rv;                                                      \
+    }
+
+#define XG_WRAPPED_IMPL_GET_STRING(_class, _gtype, _func, _prop_name)   \
+    NS_IMETHODIMP                                                       \
+    _class::_func (nsAString &aProp)                                    \
+    {                                                                   \
+        XG_WRAPPED_CHECK_INIALIZED (_gtype);                            \
+        char *prop;                                                     \
+        g_object_get (mWrapped, _prop_name, &prop, NULL);               \
+        GOM_GSTRING_TO_ASTRING_RETURN (aProp, prop, NS_ERROR_UNEXPECTED); \
+        return NS_OK;                                                   \
+    }
+
+#define XG_WRAPPED_IMPL_GET_SIMPLE(_class, _gtype, _func, _prop_name, _prop_prtype, _prop_gtype) \
+    NS_IMETHODIMP                                                       \
+    _class::_func (_prop_prtype *aProp)                                 \
+    {                                                                   \
+        XG_WRAPPED_CHECK_INIALIZED (_gtype);                            \
+        _prop_gtype prop;                                               \
+        g_object_get (mWrapped, _prop_name, &prop, NULL);               \
+        *aProp = prop;                                                  \
+        return NS_OK;                                                   \
+    }
+
+#define XG_WRAPPED_IMPL_GET_ENUM(_class, _gtype, _func, _prop_name, _prop_class) \
+    XG_WRAPPED_IMPL_GET_SIMPLE(_class, _gtype, _func, _prop_name, PRUint16, _prop_class)
+
+#define XG_WRAPPED_IMPL_GET_BOOL(_class, _gtype, _func, _prop_name)     \
+    XG_WRAPPED_IMPL_GET_SIMPLE(_class, _gtype, _func, _prop_name, PRBool, gboolean)
+
+#define XG_WRAPPED_IMPL_GET_ULONG(_class, _gtype, _func, _prop_name)    \
+    XG_WRAPPED_IMPL_GET_SIMPLE(_class, _gtype, _func, _prop_name, PRUint32, gulong)
 
 #define GOM_WRAPPED_GET(_obj, _iface, _var)                     \
     nsCOMPtr<_iface> _var;                                      \
@@ -221,5 +284,51 @@ THE SOFTWARE.
 	nsCOMPtr<nsISupports> tmp = dont_AddRef (raw);          \
 	_var = do_QueryInterface (tmp);                         \
     }
+
+#define GOM_WRAPPED_GET_OBJECT(_wrapped, _func, _iface, _gtype, _klass) \
+    G_STMT_START {                                                      \
+        nsCOMPtr<_iface> aProp;                                         \
+        _klass *prop = NULL;                                            \
+        if (NS_SUCCEEDED (_wrapped->_func (getter_AddRefs (aProp))) && aProp) { \
+            prop = (_klass *)gom_wrap_xpcom (aProp, _gtype, NULL);      \
+        }                                                               \
+        if (prop && g_type_is_a (G_OBJECT_TYPE (prop), _gtype)) {       \
+            g_value_set_object (value, prop);                           \
+            g_object_unref (prop);                                      \
+        }                                                               \
+    } G_STMT_END
+
+#define GOM_WRAPPED_GET_ENUM(_wrapped, _func)           \
+    G_STMT_START {                                      \
+        PRUint16 aProp;                                 \
+        if (NS_SUCCEEDED (_wrapped->_func (&aProp))) {  \
+            g_value_set_enum (value, aProp);            \
+        }                                               \
+    } G_STMT_END
     
+#define GOM_WRAPPED_GET_STRING(_wrapped, _func)         \
+    G_STMT_START {                                      \
+        nsAutoString aProp;                             \
+        if (NS_SUCCEEDED (_wrapped->_func (aProp))) {   \
+            GOM_ASTRING_TO_GSTRING (prop, aProp);       \
+            g_value_set_string (value, prop);           \
+        }                                               \
+    } G_STMT_END
+
+#define GOM_WRAPPED_GET_BOOL(_wrapped, _func)           \
+    G_STMT_START {                                      \
+        PRBool aProp;                                   \
+        if (NS_SUCCEEDED (_wrapped->_func (&aProp))) {  \
+            g_value_set_boolean (value, aProp);         \
+        }                                               \
+    } G_STMT_END
+
+#define GOM_WRAPPED_GET_ULONG(_wrapped, _func)          \
+    G_STMT_START {                                      \
+        PRUint32 aProp;                                 \
+        if (NS_SUCCEEDED (_wrapped->_func (&aProp))) {  \
+            g_value_set_ulong (value, aProp);           \
+        }                                               \
+    } G_STMT_END
+
 #endif /* GOM_MACROS_H */

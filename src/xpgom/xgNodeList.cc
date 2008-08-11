@@ -23,62 +23,53 @@ THE SOFTWARE.
 */
 #include "config.h"
 
-#include "xpgom/xgWrapped.hh"
+#include "xpgom/xgNodeList.hh"
+#include "gom/gomglist.h"
 #include "gom/dom/gomdomexception.h"
+#include "xpgom/gomwrapped.hh"
+
+#include <nsStringAPI.h>
+#include <nsIDOMNodeList.h>
 
 #include "gommacros.h"
 
-NS_IMPL_ISUPPORTS1 (xgWrapped, xgPIWrapped)
+#define CHECK_INITIALIZED XG_WRAPPED_CHECK_INIALIZED (GOM_TYPE_NODE_LIST)
 
-xgWrapped::xgWrapped (GType aType) 
-    : mWrapped (NULL),
-      mType (aType)
+NS_IMPL_ISUPPORTS_INHERITED1 (xgNodeList, xgWrapped, nsIDOMNodeList)
+
+xgNodeList::xgNodeList () : xgWrapped (GOM_TYPE_NOODLE)
 {
 }
 
-xgWrapped::~xgWrapped ()
+xgNodeList::xgNodeList (GType aType) : xgWrapped (aType)
 {
-    if (mWrapped) {
-	g_object_remove_weak_pointer (mWrapped, (gpointer *)&mWrapped);
-	g_object_unref (mWrapped);
-    } else if (mTypeName) {
-	g_warning (GOM_LOC ("We had a %s, but now it's gone..."), mTypeName);
-    }
+}
+
+xgNodeList::~xgNodeList ()
+{
 }
 
 nsresult
-xgWrapped::Init (GType *ifaces, GObject *aObject)
+xgNodeList::Init (GObject *aNodeList)
 {
-    if (mWrapped) {
-	return NS_ERROR_ALREADY_INITIALIZED;
-    }
-    if (!aObject) {
-	if (mType) {
-	    aObject = (GObject *)g_object_new (mType, NULL);
-	    if (!aObject) {
-		return NS_ERROR_OUT_OF_MEMORY;
-	    }
-	} else {
-	    XG_RETURN_NOT_IMPLEMENTED;
-	}
-    }
-    for (GType t = G_OBJECT_TYPE (aObject);
-	 *ifaces;
-	 ++ifaces) {
-	if (!g_type_is_a (t, *ifaces)) {
-	    return NS_ERROR_NO_INTERFACE;
-	}
-    }
-    mWrapped = G_OBJECT (g_object_ref (aObject));
-    g_object_add_weak_pointer (mWrapped, (gpointer *)&mWrapped);
-    mTypeName = G_OBJECT_TYPE_NAME (mWrapped);
-    return NS_OK;
+    GType ifaces[2];
+    ifaces[0] = GOM_TYPE_NODE_LIST;
+    ifaces[1] = 0;
+    return xgWrapped::Init (ifaces, aNodeList);
 }
 
-/* xgNativeGObject getWrappedGObject (); */
+/* nsIDOMNode item (in unsigned long index); */
 NS_IMETHODIMP
-xgWrapped::GetWrappedGObject (GObject **_retval)
+xgNodeList::Item (PRUint32 index, nsIDOMNode **_retval)
 {
-    *_retval = mWrapped ? G_OBJECT (g_object_ref (mWrapped)) : NULL;
-    return NS_OK;
+    CHECK_INITIALIZED;
+    GomNode *node = gom_node_list_item (GOM_NODE_LIST (mWrapped), index);
+    nsresult rv = gom_wrap_g_object (node, NS_GET_IID (nsIDOMNode), (gpointer *)_retval);
+    if (node) {
+	g_object_unref (node);
+    }
+    return rv;
 }
+
+/* readonly attribute unsigned long length; */
+XG_WRAPPED_IMPL_GET_ULONG (xgNodeList, GOM_TYPE_NODE_LIST, GetLength, "length")

@@ -21,31 +21,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_WRAPPED_HH
-#define XG_WRAPPED_HH
+#ifndef XG_NODE_LIST_HH
+#define XG_NODE_LIST_HH
 
-#include "xgPIWrapped.hh"
+#include "xpgom/xgWrapped.hh"
+#include "gom/dom/gomnodelist.h"
 
-#include <nscore.h>
-#include <nsISupports.h>
+#include <nsIDOMNodeList.h>
 
-#include <glib-object.h>
-
-class xgWrapped : public xgPIWrapped
+class xgNodeList : protected xgWrapped,
+	       public nsIDOMNodeList
 {
-    NS_DECL_ISUPPORTS
-    NS_DECL_XGPIWRAPPED
+    NS_DECL_ISUPPORTS_INHERITED
+    NS_DECL_NSIDOMNODELIST
+    
+    xgNodeList ();
+    nsresult Init (GObject *aNodeList = NULL);
+
 protected:
-    xgWrapped (GType aType = 0);
-    ~xgWrapped ();
-
-    nsresult Init (GType *ifaces, GObject *aObject = NULL);
-
-    GObject *mWrapped;
-
-private:
-    GType mType;
-    const char *mTypeName;
+    xgNodeList (GType aType);
+    ~xgNodeList ();
 };
 
-#endif /* XG_WRAPPED_HH */
+#endif /* XG_NODE_LIST_HH */

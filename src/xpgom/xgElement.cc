@@ -29,10 +29,11 @@ THE SOFTWARE.
 #include "xpgom/xgElement.hh"
 
 #include <nsIDOMElement.h>
+#include <nsStringAPI.h>
 
 #include "gommacros.h"
 
-#define CHECK_INITIALIZED GOM_XG_WRAPPED_CHECK_INIALIZED (GOM_TYPE_ELEMENT)
+#define CHECK_INITIALIZED XG_WRAPPED_CHECK_INIALIZED (GOM_TYPE_ELEMENT)
 
 NS_IMPL_ISUPPORTS_INHERITED1(xgElement, xgNode, nsIDOMElement)
 
@@ -54,97 +55,94 @@ xgElement::Init(GObject *aDoc)
 }
 
 /* readonly attribute DOMString tagName; */
-NS_IMETHODIMP xgElement::GetTagName(nsAString & aTagName)
-{
-    return NS_ERROR_NOT_IMPLEMENTED;
-}
+XG_WRAPPED_IMPL_GET_STRING (xgElement, GOM_TYPE_ELEMENT, GetTagName, "tag-name")
 
 /* DOMString getAttribute (in DOMString name); */
 NS_IMETHODIMP xgElement::GetAttribute(const nsAString & name, nsAString & _retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* void setAttribute (in DOMString name, in DOMString value)  raises (DOMException); */
 NS_IMETHODIMP xgElement::SetAttribute(const nsAString & name, const nsAString & value)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* void removeAttribute (in DOMString name)  raises (DOMException); */
 NS_IMETHODIMP xgElement::RemoveAttribute(const nsAString & name)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMAttr getAttributeNode (in DOMString name); */
 NS_IMETHODIMP xgElement::GetAttributeNode(const nsAString & name, nsIDOMAttr **_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMAttr setAttributeNode (in nsIDOMAttr newAttr)  raises (DOMException); */
 NS_IMETHODIMP xgElement::SetAttributeNode(nsIDOMAttr *newAttr, nsIDOMAttr **_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMAttr removeAttributeNode (in nsIDOMAttr oldAttr)  raises (DOMException); */
 NS_IMETHODIMP xgElement::RemoveAttributeNode(nsIDOMAttr *oldAttr, nsIDOMAttr **_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMNodeList getElementsByTagName (in DOMString name); */
 NS_IMETHODIMP xgElement::GetElementsByTagName(const nsAString & name, nsIDOMNodeList **_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* DOMString getAttributeNS (in DOMString namespaceURI, in DOMString localName); */
 NS_IMETHODIMP xgElement::GetAttributeNS(const nsAString & namespaceURI, const nsAString & localName, nsAString & _retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* void setAttributeNS (in DOMString namespaceURI, in DOMString qualifiedName, in DOMString value)  raises (DOMException); */
 NS_IMETHODIMP xgElement::SetAttributeNS(const nsAString & namespaceURI, const nsAString & qualifiedName, const nsAString & value)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* void removeAttributeNS (in DOMString namespaceURI, in DOMString localName)  raises (DOMException); */
 NS_IMETHODIMP xgElement::RemoveAttributeNS(const nsAString & namespaceURI, const nsAString & localName)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMAttr getAttributeNodeNS (in DOMString namespaceURI, in DOMString localName); */
 NS_IMETHODIMP xgElement::GetAttributeNodeNS(const nsAString & namespaceURI, const nsAString & localName, nsIDOMAttr **_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMAttr setAttributeNodeNS (in nsIDOMAttr newAttr)  raises (DOMException); */
 NS_IMETHODIMP xgElement::SetAttributeNodeNS(nsIDOMAttr *newAttr, nsIDOMAttr **_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMNodeList getElementsByTagNameNS (in DOMString namespaceURI, in DOMString localName); */
 NS_IMETHODIMP xgElement::GetElementsByTagNameNS(const nsAString & namespaceURI, const nsAString & localName, nsIDOMNodeList **_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* boolean hasAttribute (in DOMString name); */
 NS_IMETHODIMP xgElement::HasAttribute(const nsAString & name, PRBool *_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* boolean hasAttributeNS (in DOMString namespaceURI, in DOMString localName); */
 NS_IMETHODIMP xgElement::HasAttributeNS(const nsAString & namespaceURI, const nsAString & localName, PRBool *_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }

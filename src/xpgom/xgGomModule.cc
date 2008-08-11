@@ -27,6 +27,9 @@ THE SOFTWARE.
 #include "xpgom/gomwrappeddomimplementation.hh"
 #include "xpgom/gomwrappeddocument.hh"
 #include "xpgom/gomwrappedelement.hh"
+#include "xpgom/gomwrappednamednodemap.hh"
+#include "xpgom/gomwrappedattr.hh"
+
 #include "gom/gomwidget.h"
 
 #include <gtk/gtkmain.h>
@@ -61,6 +64,8 @@ nsGomModuleConstructor (nsIModule *self)
     }
     gom_widget_init ();
     g_type_class_ref (GOM_TYPE_WRAPPED_DOM_IMPLEMENTATION);
+    g_type_class_ref (GOM_TYPE_WRAPPED_NAMED_NODE_MAP);
+    g_type_class_ref (GOM_TYPE_WRAPPED_ATTR);
     g_type_class_ref (GOM_TYPE_WRAPPED_ELEMENT);
     g_type_class_ref (GOM_TYPE_WRAPPED_DOCUMENT);
     return NS_OK;

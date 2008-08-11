@@ -1,3 +1,57 @@
+2008-08-11  jacob berkman  <jacob@ilovegom.org>
+
+	* include/gommacros.h (XG_RETURN_NOT_IMPLEMENTED): macro to
+	return not implemented for xpcom funcs
+	(GOM_RETURN_NSRESULT_FROM_GERROR): now only executes if error
+	is set
+	(XG_WRAPPED_IMPL_GET_OBJECT): implement an attribute getter
+	for objects
+	(XG_WRAPPED_IMPL_GET_STRING): ditto for strings
+	(XG_WRAPPED_IMPL_GET_SIMPLE, XG_WRAPPED_IMPL_GET_ENUM)
+	(XG_WRAPPED_IMPL_GET_BOOL, XG_WRAPPED_IMPL_GET_ULONG): etc
+	(GOM_WRAPPED_GET_OBJECT): set a GValue based on an xpcom
+	getter function
+	(GOM_WRAPPED_GET_ENUM, GOM_WRAPPED_GET_STRING)
+	(GOM_WRAPPED_GET_BOOL, GOM_WRAPPED_GET_ULONG): ditto
+
+	* src/xpgom/xgGomModule.cc (nsGomModuleConstructor): add new
+	wrapper types
+
+	* src/xpgom/xgNode.cc: implement attribute getters
+
+	* src/xpgom/xgNodeList.cc: xpcom wrapper for GomNodeList
+
+	* src/xpgom/gomwrappedelement.cc
+	(gom_wrapped_element_get_property): implement attribute getter
+
+	* src/xpgom/gomwrappednamednodemap.cc: GObject
+	nsIDOMNamedNodeMap wrapper
+
+	* src/xpgom/xgDocument.cc: implement all attribute getters
+
+	* src/xpgom/gomwrappednode.cc (gom_wrapped_node_get_property):
+	implement all properties
+
+	* src/xpgom/gomwrapped.cc (gom_wrap_xpcom): use
+	QueryInterface() to find the most highly specific interface
+	this object supports
+	(gom_wrap_g_object): we don't need to do that here, since com
+	objects will be using query interface itself (although perhaps
+	we need to do a custom implementation of that...)
+
+	* src/xpgom/gomwrappeddocument.cc
+	(gom_wrapped_document_get_property): implement more properties
+
+	* src/xpgom/xgWrapped.cc (~xgWrapped): warn if we had an
+	object, but it was destroyed
+	(Init): also grab a weak ref of our object to catch destroyed
+	objects
+
+	* src/xpgom/gomwrappedattr.cc: GObject nsIDOMAttr wrapper
+
+	* src/libgom/gomdoc.c (gom_doc_import_node): apply specified
+	attrs when importing elements
+
 2008-08-09  jacob berkman  <jacob@ilovegom.org>
 
 	* src/xpgom/xgElement.cc: an nsIElement wrapper of a

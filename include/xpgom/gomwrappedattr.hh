@@ -21,31 +21,40 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_WRAPPED_HH
-#define XG_WRAPPED_HH
+#ifndef GOM_WRAPPED_ATTR_HH
+#define GOM_WRAPPED_ATTR_HH
 
-#include "xgPIWrapped.hh"
+#include <glib/gmacros.h>
 
-#include <nscore.h>
-#include <nsISupports.h>
+G_BEGIN_DECLS
 
-#include <glib-object.h>
+typedef struct _GomWrappedAttr      GomWrappedAttr;
+typedef struct _GomWrappedAttrClass GomWrappedAttrClass;
 
-class xgWrapped : public xgPIWrapped
-{
-    NS_DECL_ISUPPORTS
-    NS_DECL_XGPIWRAPPED
-protected:
-    xgWrapped (GType aType = 0);
-    ~xgWrapped ();
+G_END_DECLS
 
-    nsresult Init (GType *ifaces, GObject *aObject = NULL);
+#include <xpgom/gomwrappednode.hh>
 
-    GObject *mWrapped;
+G_BEGIN_DECLS
 
-private:
-    GType mType;
-    const char *mTypeName;
+#define GOM_TYPE_WRAPPED_ATTR         (gom_wrapped_attr_get_type ())
+#define GOM_WRAPPED_ATTR(i)           (G_TYPE_CHECK_INSTANCE_CAST ((i), GOM_TYPE_WRAPPED_ATTR, GomWrappedAttr))
+#define GOM_WRAPPED_ATTR_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST    ((k), GOM_TYPE_WRAPPED_ATTR, GomWrappedAttrClass))
+#define GOM_IS_WRAPPED_ATTR(i)        (G_TYPE_CHECK_INSTANCE_TYPE ((i), GOM_TYPE_WRAPPED_ATTR))
+#define GOM_IS_WRAPPED_ATTR_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE    ((k), GOM_TYPE_WRAPPED_ATTR))
+#define GOM_WRAPPED_ATTR_GET_CLASS(i) (G_TYPE_INSTANCE_GET_CLASS  ((i), GOM_TYPE_WRAPPED_ATTR, GomWrappedAttrClass))
+
+struct _GomWrappedAttr {
+    GomWrappedNode parent;
 };
 
-#endif /* XG_WRAPPED_HH */
+struct _GomWrappedAttrClass {
+    GomWrappedNodeClass parent_class;
+};
+
+GType gom_wrapped_attr_get_type (void);
+
+G_END_DECLS
+
+#endif /* GOM_WRAPPED_ATTR_HH */
+

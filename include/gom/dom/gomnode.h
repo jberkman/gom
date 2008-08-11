@@ -79,22 +79,22 @@ struct _GomNodeInterface {
     GTypeInterface parent;
     
     GomNode   *(*insert_before)        (GomNode  *node,
-                                         GomNode  *new_child,
-                                         GomNode  *ref_child,
-                                         GError   **error);
+                                        GomNode  *new_child,
+                                        GomNode  *ref_child,
+                                        GError   **error);
 
     GomNode   *(*replace_child)        (GomNode  *node,
-                                         GomNode  *new_child,
-                                         GomNode  *ref_child,
-                                         GError   **error);
+                                        GomNode  *new_child,
+                                        GomNode  *ref_child,
+                                        GError   **error);
 
     GomNode   *(*remove_child)         (GomNode  *node,
-                                         GomNode  *old_child,
-                                         GError   **error);
+                                        GomNode  *old_child,
+                                        GError   **error);
 
     GomNode   *(*append_child)         (GomNode  *node,
-                                         GomNode  *new_child,
-                                         GError   **error);
+                                        GomNode  *new_child,
+                                        GError   **error);
 
     gboolean   (*has_child_nodes)      (GomNode *node);
 
@@ -115,9 +115,9 @@ GType gom_node_get_type (void);
 GomNode *gom_node_insert_before (GomNode *node, GomNode *new_child, GomNode *ref_child, GError **error);
 GomNode *gom_node_replace_child (GomNode *node, GomNode *new_child, GomNode *ref_child, GError **error);
 GomNode *gom_node_remove_child  (GomNode *node, GomNode *old_child, GError **error);
-GomNode *gom_node_append_child  (GomNode  *node, GomNode  *new_child, GError   **error);
+GomNode *gom_node_append_child  (GomNode *node, GomNode *new_child, GError **error);
 
-gboolean  gom_node_has_child_nodes (GomNode *node);
+gboolean gom_node_has_child_nodes (GomNode *node);
 
 GomNode *gom_node_clone_node (GomNode *node, gboolean deep);
 

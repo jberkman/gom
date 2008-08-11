@@ -30,6 +30,9 @@ THE SOFTWARE.
 
 #include <nsIDOMDocument.h>
 #include <nsCOMPtr.h>
+#include <nsIDOMElement.h>
+#include <nsIDOMDocumentType.h>
+#include <nsIDOMDOMImplementation.h>
 
 #include "gommacros.h"
 
@@ -54,13 +57,19 @@ gom_wrapped_document_get_property (GObject    *object,
 
     switch (property_id) {
     case PROP_DOCUMENT_ELEMENT:
-    case PROP_DOCTYPE:
-    case PROP_IMPLEMENTATION:
-    case PROP_NODE_NAME:
-    case PROP_NODE_TYPE:
-    case PROP_DOCUMENT_URI:
-	GOM_NOT_IMPLEMENTED;
+	GOM_WRAPPED_GET_OBJECT (mDoc, GetDocumentElement, nsIDOMElement, GOM_TYPE_ELEMENT, GomElement);
 	break;
+    case PROP_DOCTYPE:
+	GOM_WRAPPED_GET_OBJECT (mDoc, GetDoctype, nsIDOMDocumentType, GOM_TYPE_DOCUMENT_TYPE, GomDocumentType);
+	break;
+    case PROP_IMPLEMENTATION:
+	GOM_WRAPPED_GET_OBJECT (mDoc, GetImplementation, nsIDOMDOMImplementation, GOM_TYPE_DOM_IMPLEMENTATION, GomDOMImplementation);
+	break;
+#if 0
+    case PROP_DOCUMENT_URI:
+	GOM_WRAPPED_GET_STRING (mDoc, GetDocumentURI);
+	break;
+#endif
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
         break;

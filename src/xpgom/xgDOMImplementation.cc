@@ -36,7 +36,7 @@ THE SOFTWARE.
 
 #include "gommacros.h"
 
-#define CHECK_INITIALIZED GOM_XG_WRAPPED_CHECK_INIALIZED (GOM_TYPE_DOM_IMPLEMENTATION)
+#define CHECK_INITIALIZED XG_WRAPPED_CHECK_INIALIZED (GOM_TYPE_DOM_IMPLEMENTATION)
 
 NS_IMPL_ADDREF_INHERITED(xgDOMImplementation, xgWrapped)
 NS_IMPL_RELEASE_INHERITED(xgDOMImplementation, xgWrapped)
@@ -89,8 +89,7 @@ xgDOMImplementation::CreateDocumentType (const nsAString     &qualifiedName,
 					 const nsAString     &systemId,
 					 nsIDOMDocumentType **_retval)
 {
-    CHECK_INITIALIZED;
-    return NS_ERROR_NOT_IMPLEMENTED;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIDOMDocument createDocument (in DOMString namespaceURI, in DOMString qualifiedName, in nsIDOMDocumentType doctype)  raises (DOMException); */
@@ -108,12 +107,11 @@ xgDOMImplementation::CreateDocument (const nsAString    &namespaceURI,
     GError *error = NULL;
     GomDocument *doc = gom_dom_implementation_create_document (GOM_DOM_IMPLEMENTATION (mWrapped),
 							       nspace, qname, NULL, &error);
-    if (!doc) {
-	// frees error
-	GOM_RETURN_NSRESULT_FROM_GERROR (error);
-    }
+    GOM_RETURN_NSRESULT_FROM_GERROR (error);
 
     nsresult rv = gom_wrap_g_object (doc, NS_GET_IID (nsIDOMDocument), (gpointer *)_retval);
-    g_object_unref (doc);
+    if (doc) {
+	g_object_unref (doc);
+    }
     return rv;
 }
