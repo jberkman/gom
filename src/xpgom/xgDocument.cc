@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include <nsIDOMElement.h>
 #include <nsIDOMDOMImplementation.h>
 #include <nsIDOMDocumentType.h>
+#include <nsStringAPI.h>
 
 #include "gommacros.h"
 
@@ -147,9 +148,25 @@ xgDocument::ImportNode (nsIDOMNode  *importedNode,
 }
 
 /* nsIDOMElement createElementNS (in DOMString namespaceURI, in DOMString qualifiedName)  raises (DOMException); */
-NS_IMETHODIMP xgDocument::CreateElementNS(const nsAString & namespaceURI, const nsAString & qualifiedName, nsIDOMElement **_retval)
+NS_IMETHODIMP
+xgDocument::CreateElementNS (const nsAString &namespaceURI,
+			     const nsAString &qualifiedName,
+			     nsIDOMElement **_retval)
 {
-    XG_RETURN_NOT_IMPLEMENTED;
+    CHECK_INITIALIZED;
+    GOM_ASTRING_TO_GSTRING_RETURN (nspace, namespaceURI, NS_ERROR_INVALID_ARG);
+    GOM_ASTRING_TO_GSTRING_RETURN (qname, qualifiedName, NS_ERROR_INVALID_ARG);
+
+    GError *error = NULL;
+    GomElement *elem = gom_document_create_element_ns (GOM_DOCUMENT (mWrapped),
+						       nspace, qname, &error);
+    GOM_RETURN_NSRESULT_FROM_GERROR (error);
+
+    nsresult rv = gom_wrap_g_object (elem, NS_GET_IID (nsIDOMElement), (gpointer *)_retval);
+    if (elem)  {
+	g_object_unref (elem);
+    }
+    return rv;
 }
 
 /* nsIDOMAttr createAttributeNS (in DOMString namespaceURI, in DOMString qualifiedName)  raises (DOMException); */

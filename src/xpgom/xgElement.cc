@@ -64,9 +64,16 @@ NS_IMETHODIMP xgElement::GetAttribute(const nsAString & name, nsAString & _retva
 }
 
 /* void setAttribute (in DOMString name, in DOMString value)  raises (DOMException); */
-NS_IMETHODIMP xgElement::SetAttribute(const nsAString & name, const nsAString & value)
+NS_IMETHODIMP
+xgElement::SetAttribute (const nsAString &name, const nsAString &value)
 {
-    XG_RETURN_NOT_IMPLEMENTED;
+    CHECK_INITIALIZED;
+    GOM_ASTRING_TO_GSTRING_RETURN (gname, name, NS_ERROR_INVALID_ARG);
+    GOM_ASTRING_TO_GSTRING_RETURN (gvalue, value, NS_ERROR_INVALID_ARG);
+    GError *error = NULL;
+    gom_element_set_attribute (GOM_ELEMENT (mWrapped), gname, gvalue, &error);
+    GOM_RETURN_NSRESULT_FROM_GERROR (error);
+    return NS_OK;
 }
 
 /* void removeAttribute (in DOMString name)  raises (DOMException); */

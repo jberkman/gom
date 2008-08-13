@@ -1,3 +1,22 @@
+2008-08-12  jacob berkman  <jacob@ilovegom.org>
+
+	* src/xpgom/xpgom.js: use an io stream and
+	nsISAXXMLReader-based parser instead of XHR so that we can
+	load scripts etc. correctly
+
+	* src/xpgom/xgElement.cc (SetAttribute): implement
+
+	* src/xpgom/xgNode.cc (AppendChild): implement
+
+	* src/xpgom/xgDocument.cc (CreateElementNS): implement
+
+	* src/xpgom/gomwrapped.cc (gom_wrap_g_object): here is a
+	thought: check to make sure that the object we are wrapping
+	actually supports the interface we're looking for
+
+	* src/xpgom/xgWrapped.cc (QueryInterface): fallback to
+	re-wrapping our GObject if we haven't found a type yet
+
 2008-08-11  jacob berkman  <jacob@ilovegom.org>
 
 	* include/gommacros.h (XG_RETURN_NOT_IMPLEMENTED): macro to

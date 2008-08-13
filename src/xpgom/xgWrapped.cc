@@ -23,12 +23,24 @@ THE SOFTWARE.
 */
 #include "config.h"
 
+#include "xpgom/gomwrapped.hh"
 #include "xpgom/xgWrapped.hh"
 #include "gom/dom/gomdomexception.h"
 
 #include "gommacros.h"
 
-NS_IMPL_ISUPPORTS1 (xgWrapped, xgPIWrapped)
+NS_IMPL_ADDREF (xgWrapped)
+NS_IMPL_RELEASE (xgWrapped)
+
+NS_INTERFACE_TABLE_HEAD(xgWrapped)
+NS_INTERFACE_TABLE1(xgWrapped, xgPIWrapped)
+if (NS_SUCCEEDED (gom_wrap_g_object (mWrapped, aIID, aInstancePtr))) {
+    char nsid[NSID_LENGTH];
+    aIID.ToProvidedString (nsid);
+    g_print (GOM_LOC ("%s -> %s\n"), mTypeName, nsid);
+    return NS_OK;
+ } else
+NS_INTERFACE_TABLE_TAIL
 
 xgWrapped::xgWrapped (GType aType) 
     : mWrapped (NULL),
@@ -41,6 +53,7 @@ xgWrapped::~xgWrapped ()
     if (mWrapped) {
 	g_object_remove_weak_pointer (mWrapped, (gpointer *)&mWrapped);
 	g_object_unref (mWrapped);
+	mWrapped = NULL;
     } else if (mTypeName) {
 	g_warning (GOM_LOC ("We had a %s, but now it's gone..."), mTypeName);
     }

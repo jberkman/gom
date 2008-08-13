@@ -226,15 +226,19 @@ gom_wrap_g_object (gpointer      object,
     }
     for (li = wrap_map; li; li = li->next) {
 	ent = (WrapMapEntry *)li->data;
-	if (iid.Equals (ent->mIid)) {
-	    char nsid[NSID_LENGTH];
-	    iid.ToProvidedString (nsid);
-	    g_print (GOM_LOC ("%s %p is_a %s (%s)\n"),
-		     G_OBJECT_TYPE_NAME (object),
-		     object,
-		     nsid,
-		     g_type_name (ent->mInterfaceType));
-	    return ent->mConstructor (G_OBJECT (object), iid, retval);
+	//g_print (GOM_LOC ("%s?\n"), g_type_name (ent->mInterfaceType));
+	if (g_type_is_a (G_OBJECT_TYPE (object), ent->mInterfaceType)) {
+	    //g_print (GOM_LOC ("maybe %s...\n"), g_type_name (ent->mInterfaceType));
+	    if (iid.Equals (ent->mIid)) {
+		char nsid[NSID_LENGTH];
+		iid.ToProvidedString (nsid);
+		g_print (GOM_LOC ("%s %p is_a %s (%s)\n"),
+			 G_OBJECT_TYPE_NAME (object),
+			 object,
+			 nsid,
+			 g_type_name (ent->mInterfaceType));
+		return ent->mConstructor (G_OBJECT (object), iid, retval);
+	    }
 	}
     }
     return NS_ERROR_NO_INTERFACE;

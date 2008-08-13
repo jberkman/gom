@@ -150,9 +150,25 @@ NS_IMETHODIMP xgNode::RemoveChild(nsIDOMNode *oldChild, nsIDOMNode **_retval)
 }
 
 /* nsIDOMNode appendChild (in nsIDOMNode newChild)  raises (DOMException); */
-NS_IMETHODIMP xgNode::AppendChild(nsIDOMNode *newChild, nsIDOMNode **_retval)
+NS_IMETHODIMP
+xgNode::AppendChild (nsIDOMNode *newChild, nsIDOMNode **_retval)
 {
-    XG_RETURN_NOT_IMPLEMENTED;
+    CHECK_INITIALIZED;
+    GError *error = NULL;
+    GomNode *new_child = (GomNode *)gom_wrap_xpcom (newChild, GOM_TYPE_NODE, &error);
+    GOM_RETURN_NSRESULT_FROM_GERROR (error);
+
+    GomNode *ret = gom_node_append_child (GOM_NODE (mWrapped), new_child, &error);
+    if (new_child) {
+	g_object_unref (new_child);
+    }
+    GOM_RETURN_NSRESULT_FROM_GERROR (error);
+
+    nsresult rv = gom_wrap_g_object (ret, NS_GET_IID (nsIDOMNode), (gpointer *)_retval);
+    if (ret) {
+	g_object_unref (ret);
+    }
+    return rv;
 }
 
 /* boolean hasChildNodes (); */
