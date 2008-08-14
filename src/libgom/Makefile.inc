@@ -43,7 +43,7 @@ libgom_a_SOURCES :=				\
 	src/libgom/gomobject.c			\
 	src/libgom/gomtxt.c			\
 	src/libgom/gomuievt.c			\
-	src/libgom/gomuriutils.cc		\
+	src/libgom/gomuriutils.c		\
 	src/libgom/gomvalue.c			\
 	src/libgom/gomwidget.c			\
 	src/libgom/gomxhr.c

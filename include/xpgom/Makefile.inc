@@ -3,7 +3,7 @@
 # xpgomincludedir := $(includedir)/gom-0/xpgom
 # xpgominclude_HEADERS :=
 noinst_HEADERS += include/xpgom/gomwrapped.hh
-noinst_HEADERS += include/xpgom/gomwrappedattr.h
+noinst_HEADERS += include/xpgom/gomwrappedattr.hh
 noinst_HEADERS += include/xpgom/gomwrappeddocument.hh
 noinst_HEADERS += include/xpgom/gomwrappeddomimplementation.hh
 noinst_HEADERS += include/xpgom/gomwrappedelement.hh

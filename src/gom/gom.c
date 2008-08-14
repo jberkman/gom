@@ -31,6 +31,9 @@ THE SOFTWARE.
 #include "gom/gomjsobject.h"
 #include "gom/gomwidget.h"
 
+#include "gommacros.h"
+
+#ifdef GOM_USE_XPCOM
 #include <nsXPCOM.h>
 
 #if 0
@@ -66,6 +69,7 @@ GRE_GetGREPathWithProperties(const GREVersionRange *versions,
 
 NS_HIDDEN_(nsresult)
 XPCOMGlueStartup(const char* xpcomFile);
+#endif
 #endif
 
 #include <gtk/gtk.h>
@@ -129,9 +133,11 @@ main (int argc, char *argv[])
     MainData d = { NULL };
     GObject *cxpriv;
     JSRuntime *rt; 
+#ifdef GOM_USE_XPCOM
     nsresult rv;
     char xpcom_path[PATH_MAX];
     GREVersionRange gre_version = { "1.9", PR_TRUE, "2", PR_TRUE };
+#endif
 
     gtk_init (&argc, &argv);
 
@@ -139,7 +145,7 @@ main (int argc, char *argv[])
         g_printerr ("Usage: gom <file.gom>\n");
         return 1;
     }
-
+#ifdef GOM_USE_XPCOM
     rv = GRE_GetGREPathWithProperties (&gre_version, 1, nsnull, 0,
 					xpcom_path, sizeof (xpcom_path));
     if (NS_FAILED (rv)) {
@@ -152,7 +158,7 @@ main (int argc, char *argv[])
 	g_printerr ("Could not start up xpcom glue.\n");
 	return 1;
     }
-
+#endif
     d.filename = argv[1];
 
     gom_widget_init ();

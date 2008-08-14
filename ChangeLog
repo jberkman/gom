@@ -1,3 +1,10 @@
+2008-08-13  jacob berkman  <jacob@ilovegom.org>
+
+	* src/gom/gom.c (main): disable xpcom initialization
+
+	* src/libgom/gomuriutils.c (gom_uri_join)
+	(gom_uri_get_contents): implement using gio
+
 2008-08-12  jacob berkman  <jacob@ilovegom.org>
 
 	* src/xpgom/xpgom.js: use an io stream and
