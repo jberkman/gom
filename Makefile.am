@@ -74,11 +74,11 @@ gomwidgets.c: gomwidgets.in Makefile
 
 include examples/Makefile.inc
 include idl/Makefile.inc
-include include/gom/Makefile.inc
-include include/gom/dom/Makefile.inc
+#include include/gom/Makefile.inc
+#include include/gom/dom/Makefile.inc
 include include/xpgom/Makefile.inc
-include src/gom/Makefile.inc
-include src/libgom/Makefile.inc
+#include src/gom/Makefile.inc
+#include src/libgom/Makefile.inc
 include src/schema/Makefile.inc
 include src/xpgom/Makefile.inc
 include tests/Makefile.inc
@@ -91,3 +91,6 @@ update-makefiles:
 
 .idl.hh:
 	$(XPIDL) $(XPIDL_FLAGS) -m header -e $@ $<
+
+.idl.xpt:
+	$(XPIDL) $(XPIDL_FLAGS) -m typelib -e $@ $<

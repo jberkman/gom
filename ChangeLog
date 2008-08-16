@@ -1,3 +1,27 @@
+2008-08-16  jacob berkman  <jacob@ilovegom.org>
+
+	* src/xpgom/xgGomModule.cc (nsGomModuleConstructor):
+	initialize the gtk widget types here for now, instead of using
+	the defunct libgom
+
+	* src/xpgom/xgGomContext.cc: beginnings of the XTF-based
+	runtime
+
+	* src/xpgom/xgGtkElementFactory.cc (CreateElement): factory
+	for creating gtk elements
+
+	* src/xpgom/xgGomParser.js: load a url using the sax parser,
+	and give notice when the document is created
+
+	* src/xpgom/xgGomElementFactory.cc (CreateElement): stub for
+	handling non-gtk gom elements
+
+	* src/xpgom/xpgom.js: use our custom interface for loading
+	gom apps
+
+	* src/xpgom/xgGtkElement.cc: beginnings of an XTF-based gom
+	implementation
+
 2008-08-13  jacob berkman  <jacob@ilovegom.org>
 
 	* src/gom/gom.c (main): disable xpcom initialization

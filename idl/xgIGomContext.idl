@@ -1,0 +1,12 @@
+#include "nsISupports.idl"
+
+interface nsIDOMDocument;
+
+[scriptable, uuid(B6A5927E-44A3-4626-A71E-08575B367349)]
+interface xgIGomContext : nsISupports
+{
+    readonly attribute nsIDOMDocument document;
+
+    void init (in string uri);
+    void run ();
+};

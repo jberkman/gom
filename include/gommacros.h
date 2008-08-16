@@ -190,6 +190,12 @@ THE SOFTWARE.
     NS_UTF16ToCString (_aString, NS_CSTRING_ENCODING_UTF8, _aCString##String); \
     const char *_aCString = _aCString##String.get();
 
+#define GOM_ATOM_TO_GSTRING_RETURN(_aCString, _aAtom, _errval) \
+    const char *_aCString;                                     \
+    if (NS_FAILED (_aAtom->GetUTF8String (&_aCString))) {      \
+        return _errval;                                        \
+    }
+
 #define GOM_GSTRING_TO_ASTRING_RETURN(_aString, _aCString, _errval)     \
     G_STMT_START {                                                      \
         nsCAutoString _aCString##String (_aCString);                    \

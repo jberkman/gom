@@ -77,10 +77,11 @@ AC_CHECK_HEADERS([jsapi.h],[],[
 ])
 GOM_CFLAGS="$GOM_CFLAGS $js_cppflags"
 
-xulrunner_cppflags="-I$xulrunnersdk/sdk/include -DMOZILLA_STRICT_API"
+xulrunner_cppflags="-I$xulrunnersdk/sdk/include -I$xulrunnersdk/include/content -I$xulrunnersdk/include/xpcom -DMOZILLA_STRICT_API"
 CPPFLAGS="$CPPFLAGS_save $xulrunner_cppflags"
+CXXFLAGS="$CXXFLAGS -fshort-wchar"
 AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([nsXPCOM.h nsIIOService.h],[],[
+AC_CHECK_HEADERS([nsXPCOM.h nsIIOService.h nsIXTFElementFactory.h nsIAtom.h],[],[
 	AC_MSG_ERROR([$xulrunnersdk is missing XPCOM headers.])
 ])
 AC_LANG_POP([C++])
