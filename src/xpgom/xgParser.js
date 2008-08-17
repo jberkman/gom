@@ -1,5 +1,28 @@
-var xgGomParserModule = { };
-function NSGetModule (aCompMgr, aFileSpec) { return xgGomParserModule; }
+/*
+The MIT License
+
+Copyright (c) 2008 jacob berkman <jacob@ilovegom.org>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+var xgParserModule = { };
+function NSGetModule (aCompMgr, aFileSpec) { return xgParserModule; }
 
 (function () {
 
@@ -10,7 +33,7 @@ const CLASS_ID = Components.ID("{E643FF76-1F9C-452A-A0A6-421B1AA1AFE5}");
 const CLASS_NAME = "An XML Parser for Gom";
 const CONTRACT_ID = "@ilovegom.org/parser;1";
 
-function xgGomParser() {
+function xgParser() {
     this.wrappedJSObject = this;
 };
 
@@ -21,7 +44,7 @@ function getDOMImplementation() {
     return document.implementation;
 };
 
-xgGomParser.prototype = {
+xgParser.prototype = {
     // xgIGomParser
     parseURI: function (uri, listener) {
 	var io = Cc['@mozilla.org/network/io-service;1'].getService (Ci.nsIIOService);
@@ -80,46 +103,46 @@ xgGomParser.prototype = {
     },
     // nsISupports
     QueryInterface: function (aIID) {
-	if (!aIID.equals(Ci.xgIGomParser) &&
+	if (!aIID.equals(Ci.xgIParser) &&
 	    !aIID.equals(Ci.nsISupports))
 	    throw Components.results.NS_ERROR_NO_INTERFACE;
 	return this;
     }
 };
 
-var xgGomParserFactory = {
+var xgParserFactory = {
     createInstance: function (aOuter, aIID) {
 	if (aOuter != null) {
 	    throw Components.results.NS_ERROR_NO_AGGREGATION;
 	}
-	return (new xgGomParser).QueryInterface (aIID);
+	return (new xgParser).QueryInterface (aIID);
     }
 };
 
-xgGomParserModule.registerSelf = function(aCompMgr, aFileSpec, aLocation, aType)
+xgParserModule.registerSelf = function(aCompMgr, aFileSpec, aLocation, aType)
 {
     aCompMgr = aCompMgr.QueryInterface (Components.interfaces.nsIComponentRegistrar);
     aCompMgr.registerFactoryLocation (CLASS_ID, CLASS_NAME, CONTRACT_ID,
 				      aFileSpec, aLocation, aType);
 };
 
-xgGomParserModule.unregisterSelf = function (aCompMgr, aLocation, aType)
+xgParserModule.unregisterSelf = function (aCompMgr, aLocation, aType)
 {
     aCompMgr = aCompMgr.QueryInterface (Components.interfaces.nsIComponentRegistrar);
     aCompMgr.unregisterFactoryLocation(CLASS_ID, aLocation);
 };
 
-xgGomParserModule.getClassObject = function(aCompMgr, aCID, aIID)
+xgParserModule.getClassObject = function(aCompMgr, aCID, aIID)
 {
     if (!aIID.equals(Ci.nsIFactory)) {
 	throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
     }
     if (aCID.equals(CLASS_ID))
-	return xgGomParserFactory;
+	return xgParserFactory;
 
     throw Components.results.NS_ERROR_NO_INTERFACE;
 };
 
-xgGomParserModule.canUnload = function(aCompMgr) { return true; }
+xgParserModule.canUnload = function(aCompMgr) { return true; }
 
 })();

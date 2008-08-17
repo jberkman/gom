@@ -25,8 +25,6 @@ THE SOFTWARE.
 
 #include "xpgom/xgGtkElement.hh"
 
-#include "xpgom/xgObjectUtils.hh"
-
 #include <nsIAtom.h>
 #include <nsIDOMNode.h>
 #include <nsIDOMElement.h>

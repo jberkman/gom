@@ -1,5 +1,17 @@
 2008-08-16  jacob berkman  <jacob@ilovegom.org>
 
+	* src/xpgom/xgGomModule.cc: update for xgWindow
+
+	* src/xpgom/xgNavigator.js.in: an implementation of
+	nsIDOMNavigator
+
+	* src/xpgom/xgParser.js: rename xgGomParser.js
+
+	* src/xpgom/xpgom.js: use a window object instead of the
+	defunct context
+
+	* src/xpgom/xgWindow.cc: an xpcom-based window object
+
 	* src/xpgom/xgGomModule.cc (nsGomModuleConstructor):
 	initialize the gtk widget types here for now, instead of using
 	the defunct libgom

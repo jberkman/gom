@@ -34,7 +34,7 @@ THE SOFTWARE.
 #include "xpgom/gomwrappedattr.hh"
 #endif
 
-#include "xpgom/xgGomContext.hh"
+#include "xpgom/xgWindow.hh"
 #include "xpgom/xgGomElementFactory.hh"
 #include "xpgom/xgGtkElementFactory.hh"
 
@@ -51,10 +51,10 @@ THE SOFTWARE.
 NS_GENERIC_FACTORY_CONSTRUCTOR(xgGomElementFactory);
 NS_GENERIC_FACTORY_CONSTRUCTOR(xgGtkElementFactory);
 //NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(xgDOMImplementation, Init);
-NS_GENERIC_FACTORY_CONSTRUCTOR (xgGomContext);
+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT (xgWindow, Init);
 
 //NS_DECL_CLASSINFO(xgDOMImplementation)
-NS_DECL_CLASSINFO (xgGomContext)
+NS_DECL_CLASSINFO (xgWindow)
 
 static const nsModuleComponentInfo components[] = {
     {
@@ -68,13 +68,13 @@ static const nsModuleComponentInfo components[] = {
 	xgGtkElementFactoryConstructor
     },
     {
-	"Gom Application Context",
-	XG_GOMCONTEXT_CID, XG_GOMCONTEXT_CONTRACTID,
-	xgGomContextConstructor,
+	"Gom Global Window Object",
+	XG_WINDOW_CID, XG_WINDOW_CONTRACTID,
+	xgWindowConstructor,
 	NULL, NULL, NULL,
-	NS_CI_INTERFACE_GETTER_NAME (xgGomContext),
+	NS_CI_INTERFACE_GETTER_NAME (xgWindow),
 	NULL,
-	&NS_CLASSINFO_NAME (xgGomContext)
+	&NS_CLASSINFO_NAME (xgWindow)
 
 #if 0
     },

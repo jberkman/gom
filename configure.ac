@@ -24,7 +24,7 @@ GLIB_REQVER="2.6.0"
 GTK_REQVER="2.6.0"
 CURL_REQVER="0"
 
-GOM_MODULES="gtk+-2.0 >= $GTK_REQVER gthread-2.0 gio-2.0"
+GOM_MODULES="gtk+-2.0 >= $GTK_REQVER gthread-2.0"
 PKG_CHECK_MODULES(GOM, [$GOM_MODULES])
 AC_SUBST(GOM_CFLAGS)
 AC_SUBST(GOM_LIBS)
@@ -60,7 +60,6 @@ AC_SUBST(XPIDL_FLAGS)
 # 
 
 GLIB_PACKAGES="gobject-2.0 gmodule-no-export-2.0"
-
 AM_PATH_GLIB_2_0(["$GLIB_REQVER"], :,
   AC_MSG_ERROR([
 *** GLIB ["$GLIB_REQVER"] or better is required. The latest version of 
@@ -70,24 +69,19 @@ AM_PATH_GLIB_2_0(["$GLIB_REQVER"], :,
 # Checks for header files.
 CPPFLAGS_save=$CPPFLAGS
 
-js_cppflags="-I$xulrunnersdk/include/js -DXP_UNIX"
-CPPFLAGS="$CPPFLAGS_save $js_cppflags"
-AC_CHECK_HEADERS([jsapi.h],[],[
-	AC_MSG_ERROR([$xulrunnersdk is missing Spidermonkey headers.])
-])
-GOM_CFLAGS="$GOM_CFLAGS $js_cppflags"
-
-xulrunner_cppflags="-I$xulrunnersdk/sdk/include -I$xulrunnersdk/include/content -I$xulrunnersdk/include/xpcom -DMOZILLA_STRICT_API"
-CPPFLAGS="$CPPFLAGS_save $xulrunner_cppflags"
+xulrunner_cppflags="-I$xulrunnersdk/sdk/include"
+for subdir in content dom js widget xpcom xpconnect ; do
+    xulrunner_cppflags="$xulrunner_cppflags -I$xulrunnersdk/include/$subdir"
+done
+CPPFLAGS="$CPPFLAGS_save -include xpcom-config.h $xulrunner_cppflags"
 CXXFLAGS="$CXXFLAGS -fshort-wchar"
 AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([nsXPCOM.h nsIIOService.h nsIXTFElementFactory.h nsIAtom.h],[],[
+AC_CHECK_HEADERS([nsXPCOM.h nsIIOService.h nsIXTFElementFactory.h nsIAtom.h nsIDOMNavigator.h nsIXPConnect.h nsEvent.h],[],[
 	AC_MSG_ERROR([$xulrunnersdk is missing XPCOM headers.])
 ])
 AC_LANG_POP([C++])
 XPGOM_CFLAGS="$GOM_CFLAGS $xulrunner_cppflags"
-GOM_CFLAGS="$GOM_CFLAGS $xulrunner_cppflags -DXPCOMGLUE=1"
-			 
+
 CPPFLAGS=$CPPFLAGS_save
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -97,12 +91,6 @@ LIBS_save=$LIBS
 
 xulrunner_libs="-L$xulrunnersdk/sdk/lib"
 LIBS="$LIBS_save $xulrunner_libs"
-AC_CHECK_LIB([mozjs],[JS_Init],[],[
-	AC_MSG_ERROR([$xulrunner is missing Spidermonkey libraries.])
-])
-AC_CHECK_LIB([xpcomglue],[XPCOMGlueStartup],[],[
-	AC_MSG_ERROR([$xulrunnersdk is missing XPCOM libraries.])
-])
 case $host_os in
      darwin*)
 	xplibpath="-Wl,-executable_path,$xulrunnersdk/bin"
@@ -114,8 +102,7 @@ case $host_os in
 	AC_MSG_ERROR([I don't know how to link components on $host_os])
 	;;
 esac
-XPGOM_LIBS="$GOM_LIBS $xulrunner_libs -L$xulrunnersdk/bin $xplibpath -lxpcomglue_s -lmozjs -lxpcom -lnspr4"
-GOM_LIBS="$GOM_LIBS $xulrunner_libs -lxpcomglue -lmozjs"
+XPGOM_LIBS="$GOM_LIBS $xulrunner_libs -L$xulrunnersdk/bin $xplibpath -lxpcomglue_s -lxpcom -lnspr4"
 
 LIBS=$LIBS_save
 
@@ -127,5 +114,6 @@ AC_SUBST(XPGOM_LIBS)
 AC_CONFIG_FILES([
 gom-0.pc
 Makefile
+src/xpgom/xgNavigator.js
 ])
 AC_OUTPUT

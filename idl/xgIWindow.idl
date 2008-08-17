@@ -1,0 +1,64 @@
+/*
+The MIT License
+
+Copyright (c) 2008 jacob berkman <jacob@ilovegom.org>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+#include "nsISupports.idl"
+
+interface nsIDOMDocument;
+interface nsIDOMNavigator;
+interface nsIDOMLocation;
+
+[scriptable, uuid(3F6DF635-B4FB-4145-A43F-2110FDDE6BBF)]
+interface xgIWindow : nsISupports
+{
+    // cutom stuff
+    void run ();
+
+    // from nsIDOMWindowInternal.idl:
+    readonly attribute xgIWindow window;
+    readonly attribute nsIDOMDocument document;
+    readonly attribute nsIDOMNavigator navigator;
+    readonly attribute nsIDOMLocation location;
+
+    void alert (in DOMString text);
+    void close ();
+
+    // from nsIDOMJSWindow.idl:
+    void                      dump(in DOMString str);
+
+    /**
+     * These methods take typeless arguments and optional arguments, the
+     * first argument is either a function or a string, the second
+     * argument must be a number (ms) and the rest of the arguments (2
+     * ... n) are passed to the callback function
+     */
+    long                      setTimeout();
+    long                      setInterval();
+
+    /**
+     * These methods take one optional argument that's the timer ID to
+     * clear. Often in existing code these methods are passed undefined,
+     * which is a nop so we need to support that as well.
+     */
+    void                      clearTimeout();
+    void                      clearInterval();
+};
