@@ -23,42 +23,9 @@ THE SOFTWARE.
 */
 #include "nsISupports.idl"
 
-interface nsIDOMDocument;
-interface nsIDOMNavigator;
-interface nsIDOMLocation;
-
 [scriptable, uuid(3F6DF635-B4FB-4145-A43F-2110FDDE6BBF)]
 interface xgIWindow : nsISupports
 {
-    // cutom stuff
-    void run ();
-
-    // from nsIDOMWindowInternal.idl:
-    readonly attribute xgIWindow window;
-    readonly attribute nsIDOMDocument document;
-    readonly attribute nsIDOMNavigator navigator;
-    readonly attribute nsIDOMLocation location;
-
-    void alert (in DOMString text);
-    void close ();
-
-    // from nsIDOMJSWindow.idl:
-    void                      dump(in DOMString str);
-
-    /**
-     * These methods take typeless arguments and optional arguments, the
-     * first argument is either a function or a string, the second
-     * argument must be a number (ms) and the rest of the arguments (2
-     * ... n) are passed to the callback function
-     */
-    long                      setTimeout();
-    long                      setInterval();
-
-    /**
-     * These methods take one optional argument that's the timer ID to
-     * clear. Often in existing code these methods are passed undefined,
-     * which is a nop so we need to support that as well.
-     */
-    void                      clearTimeout();
-    void                      clearInterval();
+    // gtk_main
+    void main ();
 };

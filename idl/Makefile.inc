@@ -1,9 +1,8 @@
 # -*- Makefile -*-
 
-dist_noinst_DATA += idl/xgPIWrapped.idl
-dist_noinst_DATA += idl/xgIParser.idl
-dist_noinst_DATA += idl/xgIWindow.idl
+idl_headers += idl/xgIParser.hh
+idl_headers += idl/xgIWindow.hh
+idl_headers += idl/xgPIWrapped.hh
 
-noinst_DATA += idl/xgPIWrapped.xpt
-noinst_DATA += idl/xgIParser.xpt
-noinst_DATA += idl/xgIWindow.xpt
+dist_noinst_DATA += $(idl_headers)
+noinst_DATA += $(idl_headers:.idl=.xpt)

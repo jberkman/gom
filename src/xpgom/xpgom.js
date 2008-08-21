@@ -30,10 +30,19 @@ if (args.length == 0) {
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
+var io = Cc['@mozilla.org/network/io-service;1'].getService (Ci.nsIIOService);
 
-var gom = Cc['@ilovegom.org/window;1'].createInstance (Ci.xgIWindow);
-gom.dump ('userAgent: ' + gom.navigator.userAgent);
-gom.location.assign (args[0]);
-gom.run ();
+var gom = Cc['@ilovegom.org/shell;1'].createInstance (Ci.nsIDocShell);
+var uri = io.newURI (args[0], null, null);
+
+gom.setCurrentURI (uri);
+
+//gom.dump ('userAgent: ' + gom.navigator.userAgent);
+//gom.dump ('Location: ' + gom.location);
+//gom.dump ('XHR: ' + gom.XMLHttpRequest);
+//gom.dump (gom.document.documentURI);
+//gom.dump (gom.document.documentElement.tagName);
+
+//gom.run ();
 
 //})(arguments);

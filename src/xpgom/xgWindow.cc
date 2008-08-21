@@ -23,13 +23,17 @@ THE SOFTWARE.
 */
 #include "config.h"
 
+#define NS_HandleScriptError XG_HandleScriptError
+
 #include "xpgom/xgWindow.hh"
 #include "xgIParser.hh"
 
 #include <nsComponentManagerUtils.h>
 #include <nsDOMCID.h>
 #include <nsIClassInfoImpl.h>
+#include <nsIDocument.h>
 #include <nsIDOMDocument.h>
+#include <nsIDOMElement.h>
 #include <nsIDOMLocation.h>
 #include <nsIDOMNavigator.h>
 #include <nsIDOMScriptObjectFactory.h>
@@ -38,6 +42,8 @@ THE SOFTWARE.
 #include <nsMemory.h>
 #include <nsServiceManagerUtils.h>
 #include <nsStringAPI.h>
+#include <nsIURL.h>
+#include <nsIIOService.h>
 
 #include <glib/gmacros.h>
 #include <glib/gmessages.h>
@@ -47,31 +53,34 @@ THE SOFTWARE.
 #include "gommacros.h"
 
 static NS_DEFINE_CID (kDOMScriptObjectFactoryCID, NS_DOM_SCRIPT_OBJECT_FACTORY_CID);
+
 class xgLocation : public nsIDOMLocation
 {
+    friend class xgWindow;
 public:
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSIDOMLOCATION
+    NS_DECL_ISUPPORTS
+    NS_DECL_NSIDOMLOCATION
 
-  xgLocation (xgWindow *aWindow);
+    xgLocation (xgWindow *aWindow);
 
 private:
-  ~xgLocation();
+    ~xgLocation();
 
 protected:
     xgWindow *mWindow;
+    nsCOMPtr<nsIURI> mUri;
 };
 
 class xgWindowParserListener : public xgIParserListener
 {
 public:
-  NS_DECL_ISUPPORTS
-  NS_DECL_XGIPARSERLISTENER
+    NS_DECL_ISUPPORTS
+    NS_DECL_XGIPARSERLISTENER
 
-  xgWindowParserListener(xgWindow *aWindow);
+    xgWindowParserListener(xgWindow *aWindow);
 
 private:
-  ~xgWindowParserListener();
+    ~xgWindowParserListener();
 
 protected:
     xgWindow *mWindow;
@@ -87,7 +96,14 @@ xgWindow::~xgWindow ()
     /* destructor code */
 }
 
-NS_IMPL_ISUPPORTS2_CI (xgWindow, xgIWindow, nsIScriptGlobalObject)
+NS_IMPL_ISUPPORTS7_CI (xgWindow,
+		       nsIScriptGlobalObject,
+		       nsIDOMWindow,
+		       nsIDOMWindow2,
+		       nsIDOMJSWindow,
+		       nsIDOMWindowInternal,
+		       nsISupportsWeakReference,
+		       xgIWindow)
 
 nsresult
 xgWindow::Init ()
@@ -98,46 +114,30 @@ xgWindow::Init ()
 
     mLocation = new xgLocation (this);
     NS_ENSURE_TRUE (mLocation, NS_ERROR_OUT_OF_MEMORY);
-    return NS_OK;
+
+    mParser = do_CreateInstance ("@ilovegom.org/parser;1", &rv);
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    mListener = new xgWindowParserListener (this);
+    NS_ENSURE_TRUE (mListener, NS_ERROR_OUT_OF_MEMORY);
+
+    return mLocation->Assign (NS_LITERAL_STRING ("about:blank"));
 }
 
-/* readonly attribute xgIWindow window; */
+// nsIDOMWindowInternal
+/* readonly attribute nsIDOMWindowInternal window; */
 NS_IMETHODIMP
-xgWindow::GetWindow (xgIWindow **aWindow)
+xgWindow::GetWindow (nsIDOMWindowInternal **aWindow)
 {
     NS_ADDREF (*aWindow = this);
     return NS_OK;
 }
 
-/* readonly attribute nsIDOMDocument document; */
+/* readonly attribute nsIDOMWindowInternal self; */
 NS_IMETHODIMP
-xgWindow::GetDocument (nsIDOMDocument **aDocument)
+xgWindow::GetSelf (nsIDOMWindowInternal **aSelf)
 {
-    NS_IF_ADDREF (*aDocument = mDocument);
-    return NS_OK;
-}
-
-nsresult
-xgWindow::SetDocument (nsIDOMDocument *aDocument)
-{
-    NS_ENSURE_TRUE (aDocument, NS_ERROR_INVALID_ARG);
-
-    nsresult rv = Init ();
-    NS_ENSURE_SUCCESS (rv, rv);
-
-    mDocument = aDocument;
-
-    PRUint32 lang;
-    NS_STID_FOR_INDEX (lang) {
-	nsIScriptContext *cx = mContext[lang];
-	if (cx) {
-	    cx->WillInitializeContext ();
-	    cx->InitClasses (mGlobal[lang]);
-	    cx->DidInitializeContext ();
-	    cx->DidSetDocument (aDocument, mGlobal[lang]);
-	}
-    }
-
+    NS_ADDREF (*aSelf = this);
     return NS_OK;
 }
 
@@ -157,64 +157,39 @@ xgWindow::GetLocation (nsIDOMLocation **aLocation)
     return NS_OK;
 }
 
-/* void alert (in DOMString text); */
+/* readonly attribute nsIDOMDocument document; */
 NS_IMETHODIMP
-xgWindow::Alert (const nsAString &text)
+xgWindow::GetDocument (nsIDOMDocument **aDocument)
 {
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* void run (); */
-NS_IMETHODIMP
-xgWindow::Run ()
-{
-    gtk_main ();
+    NS_IF_ADDREF (*aDocument = mDocument);
     return NS_OK;
 }
 
 /* void close (); */
 NS_IMETHODIMP
-xgWindow::Close ()
+xgWindow::Close()
 {
     gtk_main_quit ();
+    mDocument = NULL;
     return NS_OK;
 }
 
+// nsIDOMJSWindow
 /* void dump (in DOMString str); */
-NS_IMETHODIMP
-xgWindow::Dump (const nsAString &str)
+NS_IMETHODIMP xgWindow::Dump(const nsAString &str)
 {
     GOM_ASTRING_TO_GSTRING_RETURN (gstr, str, NS_ERROR_INVALID_ARG);
     g_message ("JAVASCRIPT: %s\n", gstr);
     return NS_OK;
 }
 
-/* long setTimeout (); */
+/* xgIWindow */
+/* void main (); */
 NS_IMETHODIMP
-xgWindow::SetTimeout (PRInt32 *_retval)
+xgWindow::Main ()
 {
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* long setInterval (); */
-NS_IMETHODIMP
-xgWindow::SetInterval (PRInt32 *_retval)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* void clearTimeout (); */
-NS_IMETHODIMP
-xgWindow::ClearTimeout ()
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* void clearInterval (); */
-NS_IMETHODIMP
-xgWindow::ClearInterval ()
-{
-    XG_RETURN_NOT_IMPLEMENTED;
+    gtk_main ();
+    return NS_OK;
 }
 
 nsresult
@@ -259,12 +234,28 @@ nsresult
 xgWindow::SetScriptContext (PRUint32 lang, nsIScriptContext *aContext)
 {
     NS_ENSURE_TRUE (NS_STID_VALID (lang), NULL);
-
-    mContext[NS_STID_INDEX (lang)] = aContext;
+    nsresult rv;
+    void * global = NULL;
     if (aContext) {
-	aContext->DidInitializeContext ();
+	aContext->WillInitializeContext ();
+	rv = aContext->InitContext (this);
+	NS_ENSURE_TRUE (rv, rv);
+
+	aContext->DidInitializeContext ();	
+
+	global = aContext->GetNativeGlobal ();
+	NS_ENSURE_TRUE (global, NS_ERROR_FAILURE);
+
+	rv = aContext->InitClasses (global);
+	NS_ENSURE_TRUE (rv, rv);
     }
-    mGlobal[NS_STID_INDEX (lang)] = aContext ? aContext->GetNativeGlobal () : NULL;
+    PRUint32 lang_idx = NS_STID_INDEX (lang);
+    mContext[lang_idx] = aContext;
+    mGlobal[lang_idx] = global;
+
+    if (aContext && mDocument) {
+	aContext->DidSetDocument (mDocument, global);
+    }
 
     return NS_OK;
 }
@@ -272,31 +263,40 @@ xgWindow::SetScriptContext (PRUint32 lang, nsIScriptContext *aContext)
 void
 xgWindow::OnFinalize (PRUint32 aLangID, void *aScriptGlobal)
 {
-    if (!NS_STID_VALID (aLangID)) {
+    if (!NS_STID_VALID (aLangID) ||
+	mGlobal[NS_STID_INDEX (aLangID)] != aScriptGlobal) {
 	return;
     }
     mGlobal[NS_STID_INDEX (aLangID)] = NULL;
 }
 
-void
-xgWindow::SetScriptsEnabled (PRBool aEnabled, PRBool aFireTimeouts)
-{
-    GOM_NOT_IMPLEMENTED;
-}
-
 nsresult
-xgWindow::SetNewArguments (nsIArray *aArguments)
+xgWindow::DidSetDocument ()
 {
-    XG_RETURN_NOT_IMPLEMENTED;
-}
+    NS_ENSURE_TRUE (mDocument, NS_ERROR_INVALID_ARG);
 
-nsresult
-xgWindow::HandleScriptError (nsScriptErrorEvent *aErrorEvent,
-			     nsEventStatus *aEventStatus)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
+    nsCOMPtr<nsIDocument> doc = do_QueryInterface (mDocument);
+    if (doc) {
+	doc->SetScriptGlobalObject (this);
+	doc->SetDocumentURI (mLocation->mUri);
+    } else {
+	g_warning (GOM_LOC ("mDocument does not support nsIDocument; things will likely go awry"));
+    }
 
+    PRUint32 lang;
+    nsresult rv;
+    NS_STID_FOR_INDEX (lang) {
+	nsIScriptContext *cx = mContext[lang];
+	if (cx) {
+	    rv = cx->InitClasses (mGlobal[lang]);
+	    if (NS_SUCCEEDED (rv)) {
+		cx->DidSetDocument (mDocument, mGlobal[lang]);
+	    }
+	}
+    }
+
+    return NS_OK;
+}
 
 /*
  * nsILocation implementation
@@ -314,160 +314,74 @@ xgLocation::~xgLocation ()
 
 NS_IMPL_ISUPPORTS1 (xgLocation, nsIDOMLocation)
 
-/* attribute DOMString hash; */
-NS_IMETHODIMP
-xgLocation::GetHash (nsAString &aHash)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-NS_IMETHODIMP
-xgLocation::SetHash (const nsAString &aHash)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* attribute DOMString host; */
-NS_IMETHODIMP
-xgLocation::GetHost (nsAString &aHost)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-NS_IMETHODIMP
-xgLocation::SetHost (const nsAString &aHost)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* attribute DOMString hostname; */
-NS_IMETHODIMP
-xgLocation::GetHostname (nsAString &aHostname)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-NS_IMETHODIMP
-xgLocation::SetHostname (const nsAString &aHostname)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* attribute DOMString href; */
-NS_IMETHODIMP
-xgLocation::GetHref (nsAString &aHref)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-NS_IMETHODIMP
-xgLocation::SetHref (const nsAString &aHref)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* attribute DOMString pathname; */
-NS_IMETHODIMP
-xgLocation::GetPathname (nsAString &aPathname)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-NS_IMETHODIMP
-xgLocation::SetPathname (const nsAString &aPathname)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* attribute DOMString port; */
-NS_IMETHODIMP
-xgLocation::GetPort (nsAString &aPort)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-NS_IMETHODIMP
-xgLocation::SetPort (const nsAString &aPort)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* attribute DOMString protocol; */
-NS_IMETHODIMP
-xgLocation::GetProtocol (nsAString &aProtocol)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-NS_IMETHODIMP
-xgLocation::SetProtocol (const nsAString &aProtocol)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* attribute DOMString search; */
-NS_IMETHODIMP
-xgLocation::GetSearch (nsAString &aSearch)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-NS_IMETHODIMP
-xgLocation::SetSearch (const nsAString &aSearch)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* [noscript] void reload (in boolean forceget); */
-NS_IMETHODIMP
-xgLocation::Reload (PRBool forceget)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
-/* void replace (in DOMString url); */
-NS_IMETHODIMP
-xgLocation::Replace (const nsAString &url)
-{
-    XG_RETURN_NOT_IMPLEMENTED;
-}
-
 /* void assign (in DOMString url); */
 NS_IMETHODIMP
 xgLocation::Assign (const nsAString &url)
 {
-    nsCOMPtr<xgIParserListener> listener (new xgWindowParserListener (mWindow));
-    NS_ENSURE_TRUE (listener, NS_ERROR_OUT_OF_MEMORY);
-
     nsresult rv;
-    nsCOMPtr<xgIParser> parser (do_CreateInstance ("@ilovegom.org/parser;1", &rv));
+    nsCOMPtr<nsIIOService> io (do_GetService ("@mozilla.org/network/io-service;1", &rv));
     NS_ENSURE_SUCCESS (rv, rv);
 
+    g_message (GOM_LOC ("Setting URI to: %s"), NS_ConvertUTF16toUTF8 (url).get ());
+
+    nsCOMPtr<nsIURI> uri;
+    rv = io->NewURI (NS_ConvertUTF16toUTF8 (url), "UTF-8", mUri, getter_AddRefs (uri));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    mUri = uri;
+
+    g_message (GOM_LOC ("mUri is now: %p"), mUri.get());
+
     nsCOMPtr<nsIDOMDocument> doc;
-    return parser->ParseURI (url, listener, getter_AddRefs (doc));
+    return mWindow->mParser->ParseURI (url, mWindow->mListener, getter_AddRefs (doc));
 }
 
 /* DOMString toString (); */
 NS_IMETHODIMP
 xgLocation::ToString (nsAString &_retval)
 {
-    XG_RETURN_NOT_IMPLEMENTED;
+    NS_ENSURE_TRUE (mUri, NS_ERROR_FAILURE);
+
+    g_message (GOM_LOC ("mUri is: %p"), mUri.get());
+
+    nsCAutoString s;
+    nsresult rv = mUri->GetSpec (s);
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    return NS_CStringToUTF16 (s, NS_CSTRING_ENCODING_UTF8, _retval);
 }
 
 /*
  * an xgParserListener
  */
 
-xgWindowParserListener::xgWindowParserListener(xgWindow *aWindow)
+xgWindowParserListener::xgWindowParserListener (xgWindow *aWindow)
     : mWindow (aWindow)
 {
-    NS_IF_ADDREF (mWindow);
 }
 
-xgWindowParserListener::~xgWindowParserListener()
+xgWindowParserListener::~xgWindowParserListener ()
 {
-    NS_IF_RELEASE (mWindow);
 }
 
 /* Implementation file */
-NS_IMPL_ISUPPORTS1(xgWindowParserListener, xgIParserListener)
+NS_IMPL_ISUPPORTS1 (xgWindowParserListener, xgIParserListener)
 
 /* void documentCreated (in nsIDOMDocument document); */
 NS_IMETHODIMP
 xgWindowParserListener::DocumentCreated (nsIDOMDocument *aDocument)
 {
     // friend access!
-    return mWindow->SetDocument (aDocument);
+    mWindow->mDocument = aDocument;
+    return mWindow->DidSetDocument ();
 }
+
+PRBool
+XG_HandleScriptError (nsIScriptGlobalObject *aScriptGlobal,
+		      nsScriptErrorEvent *aErrorEvent,
+		      nsEventStatus *aEventStatus)
+{
+    return PR_FALSE;
+}
+
+#include "xgWindowUnimplemented.cc"

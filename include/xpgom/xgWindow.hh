@@ -25,21 +25,35 @@ THE SOFTWARE.
 #define XG_WINDOW_HH
 
 #include <xgIWindow.hh>
+#include <xgIParser.hh>
 
+#include <nsIDOMJSWindow.h>
+#include <nsIDOMWindowInternal.h>
 #include <nsIScriptGlobalObject.h>
+#include <nsWeakReference.h>
+
 #include <nsCOMPtr.h>
-#include <jsapi.h>
 
 #define XG_WINDOW_CID_STR "86BACE85-5414-4A67-A5E2-825EAE4169CB"
 #define XG_WINDOW_CID \
     { 0x86BACE85, 0x5414, 0x4A67, { 0xA5, 0xE2, 0x82, 0x5E, 0xAE, 0x41, 0x69, 0xCB } }
 #define XG_WINDOW_CONTRACTID "@ilovegom.org/window;1"
 
-class xgWindow : public nsIScriptGlobalObject,
-		 public xgIWindow
+class xgWindow : public xgIWindow,
+		 public nsIDOMWindowInternal,
+		 public nsIDOMJSWindow,
+		 public nsIScriptGlobalObject,
+		 public nsSupportsWeakReference
 {
+    friend class xgLocation;
+    friend class xgWindowParserListener;
+
 public:
     NS_DECL_ISUPPORTS
+    NS_DECL_NSIDOMWINDOW
+    NS_DECL_NSIDOMWINDOW2
+    NS_DECL_NSIDOMWINDOWINTERNAL
+    NS_DECL_NSIDOMJSWINDOW
     NS_DECL_XGIWINDOW
 
     // nsIScriptGlobalObject
@@ -56,23 +70,22 @@ public:
     xgWindow();
     nsresult Init ();
 
-    // oh well
-    nsresult SetDocument (nsIDOMDocument *aDocument);
-
 private:
     ~xgWindow();
 
 protected:
+    nsresult DidSetDocument ();
 
     // xgIWindow
     nsCOMPtr<nsIDOMDocument> mDocument;
     nsCOMPtr<nsIDOMNavigator> mNavigator;
-    nsCOMPtr<nsIDOMLocation> mLocation;
+    nsCOMPtr<xgLocation> mLocation;
+    nsCOMPtr<xgIParserListener> mListener;
+    nsCOMPtr<xgIParser> mParser;
 
     // nsIScriptGlobalObject
     nsCOMPtr<nsIScriptContext> mContext[NS_STID_ARRAY_UBOUND];
     void *mGlobal[NS_STID_ARRAY_UBOUND];
 };
-
 
 #endif // XG_WINDOW_HH

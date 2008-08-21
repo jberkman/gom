@@ -24,6 +24,8 @@ THE SOFTWARE.
 #include "nsISupports.idl"
 
 interface nsIDOMDocument;
+interface nsIURI;
+interface nsIInputStream;
 
 [scriptable, uuid(194C04B0-62FD-4594-822D-1CDB3596BB7C)]
 interface xgIParserListener : nsISupports
@@ -34,5 +36,7 @@ interface xgIParserListener : nsISupports
 [scriptable, uuid(5B251DFE-C380-4298-B547-11A006AB4784)]
 interface xgIParser : nsISupports
 {
-    nsIDOMDocument parseURI (in DOMString aUri, in xgIParserListener aListener);
+    nsIDOMDocument parse (in DOMString aUri, in xgIParserListener aListener);
+    nsIDOMDocument parseStream (in nsIInputStream aStream, in xgiparserlistener aListener);
+    nsIDOMDocument parseURI (in nsIURI aUri, in xgIParserListener aListener);
 };

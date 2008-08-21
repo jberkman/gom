@@ -46,13 +46,17 @@ function getDOMImplementation() {
 
 xgParser.prototype = {
     // xgIGomParser
+    parse: function (uri, listener) {
+	var io = Cc['@mozilla.org/network/io-service;1'].getService (Ci.nsIIOService);
+	return this.parseURI (io.newURI (uri, NULL, NULL), listener);
+    },
+
     parseURI: function (uri, listener) {
 	var io = Cc['@mozilla.org/network/io-service;1'].getService (Ci.nsIIOService);
-	var uri = io.newURI (uri, null, null);
+	return this.parseStream (io.newChannelFromURI (uri).open (), listener);
+    },
 
-	var chan = io.newChannelFromURI (uri);
-	var stream = chan.open();
-
+    parseStream: function (stream, listener) {
 	var reader = Cc['@mozilla.org/saxparser/xmlreader;1'].createInstance (Ci.nsISAXXMLReader);
 	var document = null;
 	reader.contentHandler = {
@@ -78,13 +82,23 @@ xgParser.prototype = {
 		    attributes.getValue (i));
 		}
 		this.elem = this.elem ? this.elem.appendChild (elem) : elem;
+		try {
+		    this.elem.beginAddingChildren ();
+		} catch (e) { }
 	    },
 
 	    endElement: function(uri, localName, qName) {
+		try {
+		    this.elem.doneAddingChildren ();
+		} catch (e) { }
 		this.elem = this.elem.parentNode;
 	    },
 
-	    characters: function(value) { },
+	    characters: function(value) {
+		if (this.elem) {
+		    this.elem.appendChild (document.createTextNode (value));
+		}
+	    },
 	    processingInstruction: function(target, data) { },
 	    ignorableWhitespace: function(whitespace) { },
 	    startPrefixMapping: function(prefix, uri) { },
