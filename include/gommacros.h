@@ -179,15 +179,10 @@ THE SOFTWARE.
 #define GOM_UNSET_WEAK(p) GOM_SET_WEAK(p, NULL)
 
 #define GOM_ASTRING_TO_GSTRING_RETURN(_aCString, _aString, _errval)     \
-    nsCAutoString _aCString##String;                                    \
-    if (NS_FAILED (NS_UTF16ToCString (_aString, NS_CSTRING_ENCODING_UTF8, _aCString##String))) { \
-        return _errval;                                                 \
-    }                                                                   \
-    const char *_aCString = _aCString##String.get();
+    GOM_ASTRING_TO_GSTRING(_aCString, _aString)
 
 #define GOM_ASTRING_TO_GSTRING(_aCString, _aString)                     \
-    nsCAutoString _aCString##String;                                    \
-    NS_UTF16ToCString (_aString, NS_CSTRING_ENCODING_UTF8, _aCString##String); \
+    NS_ConvertUTF16toUTF8 _aCString##String (_aString);                 \
     const char *_aCString = _aCString##String.get();
 
 #define GOM_ATOM_TO_GSTRING_RETURN(_aCString, _aAtom, _errval) \
@@ -197,14 +192,7 @@ THE SOFTWARE.
     }
 
 #define GOM_GSTRING_TO_ASTRING_RETURN(_aString, _aCString, _errval)     \
-    G_STMT_START {                                                      \
-        nsCAutoString _aCString##String (_aCString);                    \
-        if (NS_FAILED (NS_CStringToUTF16 (_aCString##String, NS_CSTRING_ENCODING_UTF8, _aString))) { \
-            g_free (_aCString);                                         \
-            return _errval;                                             \
-        }                                                               \
-        g_free (_aCString);                                             \
-    } G_STMT_END
+    NS_ConvertUTF8toUTF16 _aString (_aCString)
 
 #define GOM_RETURN_NSRESULT_FROM_GERROR(_err)                           \
     G_STMT_START {                                                      \

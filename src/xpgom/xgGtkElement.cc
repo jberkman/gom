@@ -414,17 +414,17 @@ xgGtkElement::GetAttribute (nsIAtom *name, nsAString &_retval)
         g_value_init (&gval, G_TYPE_STRING);
         g_object_get_property (G_OBJECT (mObject), prop, &gval);
         if (G_VALUE_HOLDS (&gval, G_TYPE_STRING)) {
-	    nsCAutoString rval (g_value_get_string (&gval));
+	    _retval = NS_ConvertUTF8toUTF16 (nsCAutoString (g_value_get_string (&gval)));	
 	    g_value_unset (&gval);
-	    return NS_CStringToUTF16 (rval, NS_CSTRING_ENCODING_UTF8, _retval);
+	    return NS_OK;
 	}
         g_value_unset (&gval);
     } else {
         const GValue *gvalp = (const GValue *)g_hash_table_lookup (mAttrs, prop);
         if (gvalp) {
             if (G_VALUE_HOLDS_STRING (gvalp)) {
-		nsCAutoString rval (g_value_get_string (gvalp));
-		return NS_CStringToUTF16 (rval, NS_CSTRING_ENCODING_UTF8, _retval);
+		_retval = NS_ConvertUTF8toUTF16 (nsCAutoString (g_value_get_string (gvalp)));
+		return NS_OK;
 	    }
 	}
     }

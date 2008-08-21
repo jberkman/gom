@@ -69,14 +69,15 @@ AM_PATH_GLIB_2_0(["$GLIB_REQVER"], :,
 # Checks for header files.
 CPPFLAGS_save=$CPPFLAGS
 
-xulrunner_cppflags="-I$xulrunnersdk/sdk/include"
-for subdir in content dom js widget xpcom xpconnect ; do
+xulrunner_cppflags="-DDEBUG -include xpcom-config.h -I$xulrunnersdk/sdk/include"
+#xulrunner_cppflags="-DMOZILLA_INTERNAL_API $xulrunner_cppflags"
+for subdir in content xpcom dom xpconnect js widget layout ; do
     xulrunner_cppflags="$xulrunner_cppflags -I$xulrunnersdk/include/$subdir"
 done
-CPPFLAGS="$CPPFLAGS_save -include xpcom-config.h $xulrunner_cppflags"
-CXXFLAGS="$CXXFLAGS -fshort-wchar"
+CPPFLAGS="$CPPFLAGS_save $xulrunner_cppflags"
+CXXFLAGS="$CXXFLAGS -fshort-wchar -fno-rtti -fno-exceptions"
 AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([nsXPCOM.h nsIIOService.h nsIXTFElementFactory.h nsIAtom.h nsIDOMNavigator.h nsIXPConnect.h nsEvent.h],[],[
+AC_CHECK_HEADERS([nsIXTFElement.h nsIAtom.h nsDOMError.h nsIXPCScriptable.h nsEvent.h nsCompatibility.h],[],[
 	AC_MSG_ERROR([$xulrunnersdk is missing XPCOM headers.])
 ])
 AC_LANG_POP([C++])
@@ -89,6 +90,7 @@ CPPFLAGS=$CPPFLAGS_save
 # Checks for library functions.
 LIBS_save=$LIBS
 
+# http://developer.mozilla.org/en/docs/XPCOM_Glue#Sample_Compiler.2FLinker_Flags
 xulrunner_libs="-L$xulrunnersdk/sdk/lib"
 LIBS="$LIBS_save $xulrunner_libs"
 case $host_os in
@@ -102,7 +104,12 @@ case $host_os in
 	AC_MSG_ERROR([I don't know how to link components on $host_os])
 	;;
 esac
+# "Internal Linkage" :(
+#XPGOM_LIBS="$GOM_LIBS $xulrunner_libs -L$xulrunnersdk/lib $xulrunnersdk/../docshell/build/libdocshell.dylib -lxpcom_core -lxpcom -lnspr4"
+# "Dependent Glue"
 XPGOM_LIBS="$GOM_LIBS $xulrunner_libs -L$xulrunnersdk/bin $xplibpath -lxpcomglue_s -lxpcom -lnspr4"
+# "Standalone Glue"
+#XPGOM_LIBS="$GOM_LIBS $xulrunner_libs -lxpcomglue"
 
 LIBS=$LIBS_save
 
@@ -114,6 +121,6 @@ AC_SUBST(XPGOM_LIBS)
 AC_CONFIG_FILES([
 gom-0.pc
 Makefile
-src/xpgom/xgNavigator.js
+src/xulapp/application.ini
 ])
 AC_OUTPUT

@@ -21,50 +21,41 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#include "config.h"
+#ifndef XG_SCRIPT_ELEMENT_HH
+#define XG_SCRIPT_ELEMENT_HH
 
-#include <glib/gmacros.h>
+#include <xpgom/xgString.hh>
 
-#include "xpgom/xgGomElementFactory.hh"
-#include "xpgom/xgGtkElementFactory.hh"
-#include "xpgom/xgString.hh"
+#include <nsCOMPtr.h>
+#include <nsIURI.h>
+#include <nsIXTFElement.h>
+#include <nsIXTFElementWrapper.h>
+#include <nsWeakReference.h>
 
-#include <gtk/gtk.h>
+class xgScriptElement : public nsIXTFElement
+{
+public:
+    NS_DECL_ISUPPORTS
+    NS_DECL_NSIXTFELEMENT
 
-#include <nsIClassInfoImpl.h>
-#include <nsIFile.h>
-#include <nsIGenericFactory.h>
-#include <nsIXTFElementFactory.h>
+    xgScriptElement ();
+    //nsresult Init();
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(xgGomElementFactory);
-NS_GENERIC_FACTORY_CONSTRUCTOR(xgGtkElementFactory);
+private:
+    ~xgScriptElement ();
 
-static const nsModuleComponentInfo components[] = {
-    {
-	"Gom Core Element Factory",
-	XG_GOMELEMENTFACTORY_CID, XG_GOMELEMENTFACTORY_CONTRACTID,
-	xgGomElementFactoryConstructor
-    },
-    {
-	"Gom Gtk Element Factory",
-	XG_GTKELEMENTFACTORY_CID, XG_GTKELEMENTFACTORY_CONTRACTID,
-	xgGtkElementFactoryConstructor
-    },
+protected:
+    nsresult DownloadScript ();
+    nsresult EvaluateScript ();
+    nsresult MaybeEvaluateScript ();
+
+    nsAutoString mScript;
+    nsWeakPtr mGlobal;
+    nsCOMPtr<nsIURI> mDocumentURI;
+    nsWeakPtr mElement;
+    nsCAutoString mSrc;
+    PRUint32 mLangId;
+    bool mActive;
 };
 
-static nsresult
-nsGomModuleConstructor (nsIModule *self)
-{
-    if (!gtk_init_check (NULL, NULL)) {
-	g_warning ("Could not initialize Gtk; Gom module unavailable.");
-	return NS_ERROR_NOT_AVAILABLE;
-    }
-
-#define WIDGET(w) g_type_qname (w);
-#include "gomwidgets.c"
-#undef WIDGET
-
-    return NS_OK;
-}
-
-NS_IMPL_NSGETMODULE_WITH_CTOR(nsGomModule, components, nsGomModuleConstructor)
+#endif // XG_SCRIPT_ELEMENT_HH

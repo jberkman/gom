@@ -21,50 +21,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#include "config.h"
+#ifndef XG_STRING_HH
+#define XG_STRING_HH
 
-#include <glib/gmacros.h>
+#ifdef MOZILLA_INTERNAL_API
+#include <nsString.h>
+#else
+#include <nsStringAPI.h>
+#endif
 
-#include "xpgom/xgGomElementFactory.hh"
-#include "xpgom/xgGtkElementFactory.hh"
-#include "xpgom/xgString.hh"
+#endif // XG_STRING_HH
 
-#include <gtk/gtk.h>
-
-#include <nsIClassInfoImpl.h>
-#include <nsIFile.h>
-#include <nsIGenericFactory.h>
-#include <nsIXTFElementFactory.h>
-
-NS_GENERIC_FACTORY_CONSTRUCTOR(xgGomElementFactory);
-NS_GENERIC_FACTORY_CONSTRUCTOR(xgGtkElementFactory);
-
-static const nsModuleComponentInfo components[] = {
-    {
-	"Gom Core Element Factory",
-	XG_GOMELEMENTFACTORY_CID, XG_GOMELEMENTFACTORY_CONTRACTID,
-	xgGomElementFactoryConstructor
-    },
-    {
-	"Gom Gtk Element Factory",
-	XG_GTKELEMENTFACTORY_CID, XG_GTKELEMENTFACTORY_CONTRACTID,
-	xgGtkElementFactoryConstructor
-    },
-};
-
-static nsresult
-nsGomModuleConstructor (nsIModule *self)
-{
-    if (!gtk_init_check (NULL, NULL)) {
-	g_warning ("Could not initialize Gtk; Gom module unavailable.");
-	return NS_ERROR_NOT_AVAILABLE;
-    }
-
-#define WIDGET(w) g_type_qname (w);
-#include "gomwidgets.c"
-#undef WIDGET
-
-    return NS_OK;
-}
-
-NS_IMPL_NSGETMODULE_WITH_CTOR(nsGomModule, components, nsGomModuleConstructor)

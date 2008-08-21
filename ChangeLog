@@ -1,3 +1,24 @@
+2008-08-21  jacob berkman  <jacob@ilovegom.org>
+
+	* src/xulapp/chrome/content/xpgom/gom.xul: gom as a xulrunner
+	app
+
+	* src/xpgom/xgGomModule.cc: just register our XTF components
+
+	* src/xpgom/xgGomElementFactory.cc (CreateElement): add
+	support for script tags
+
+	* src/xpgom/xgScriptElement.cc: an implementation of <script>
+	elements
+
+	* src/xpgom/xgGtkElement.cc (GetAttribute): use string APIs
+	that work for both frozen and internal linkage
+
+2008-08-17  jacob berkman  <jacob@ilovegom.org>
+
+	* src/xpgom/xgWindow.cc (XG_HandleScriptError): work around
+	NS_HandleScriptError being in headers, but not in xpcom glue
+
 2008-08-16  jacob berkman  <jacob@ilovegom.org>
 
 	* src/xpgom/xgGomModule.cc: update for xgWindow

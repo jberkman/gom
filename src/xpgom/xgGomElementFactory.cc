@@ -24,6 +24,10 @@ THE SOFTWARE.
 #include "config.h"
 
 #include "xpgom/xgGomElementFactory.hh"
+#include "xpgom/xgScriptElement.hh"
+#include "xpgom/xgString.hh"
+
+#include <nsISupportsUtils.h>
 
 /* Implementation file */
 NS_IMPL_ISUPPORTS1(xgGomElementFactory, nsIXTFElementFactory)
@@ -42,5 +46,10 @@ xgGomElementFactory::~xgGomElementFactory()
 NS_IMETHODIMP
 xgGomElementFactory::CreateElement (const nsAString &tagName, nsIXTFElement **_retval)
 {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    *_retval = NULL;
+    if (tagName.EqualsLiteral ("script")) {
+	*_retval = new xgScriptElement;
+    }
+    NS_IF_ADDREF (*_retval);
+    return NS_OK;
 }

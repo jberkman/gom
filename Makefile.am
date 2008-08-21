@@ -40,6 +40,7 @@ dist_noinst_DATA :=
 noinst_DATA :=
 
 noinst_HEADERS :=
+idl_headers :=
 
 BUILT_SOURCES :=
 CLEANFILES :=

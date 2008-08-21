@@ -4,7 +4,7 @@
     <module name="gtk+-2.0"/>
   </config>
   <app>
-    <script contentType="text/javascript" src="jquery-1.2.3.js"></script>
+    <script type="application/javascript" src="jquery-1.2.3.js"></script>
     <GtkWindow id="win" title="Gom Console"
                widthRequest="400" heightRequest="300" borderWidth="6"
                ondeleteEvent="quit();"
@@ -23,7 +23,7 @@
         </GtkHBox>
       </GtkVBox>
     </GtkWindow>
-    <script contentType="text/javascript"><![CDATA[
+    <script type="application/javascript"><![CDATA[
       (function(){
 	  var history = [];
           var histIdx = -1;

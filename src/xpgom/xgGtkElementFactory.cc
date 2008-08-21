@@ -25,9 +25,9 @@ THE SOFTWARE.
 
 #include "xpgom/xgGtkElement.hh"
 #include "xpgom/xgGtkElementFactory.hh"
+#include "xpgom/xgString.hh"
 
 #include <nsCOMPtr.h>
-#include <nsStringAPI.h>
 
 #include <gtk/gtkwidget.h>
 
