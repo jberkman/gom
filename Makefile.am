@@ -31,14 +31,7 @@ include_subdirs :=
 
 DIST_SUBDIRS := $(SUBDIRS) $(include_subdirs)
 
-all: xulapp
-
-xulapp: include/gomwidgets.h
-	@if ! test -L $(MOZILLA)/gom ; then \
-		echo $(LN_S) $(top_srcdir)/xulapp $(MOZILLA)/gom; \
-		$(LN_S) $(PWD)/xulapp $(MOZILLA)/gom; \
-	fi
-	$(MAKE) CPPFLAGS="$(CPPFLAGS) -I$$PWD/$(top_srcdir)/include -I$$PWD/$(top_builddir)/include" -C $(MOZILLA) MOZCONFIG=$(MOZILLA)/gom/gom.mozconfig -f client.mk build
+all:
 
 include/gomwidgets.h: gomwidgets.in Makefile
 	-mkdir -p include
@@ -61,6 +54,7 @@ include examples/Makefile.inc
 #include src/gom/Makefile.inc
 #include src/libgom/Makefile.inc
 include src/schema/Makefile.inc
+include xulapp/Makefile.inc
 #include src/xpgom/Makefile.inc
 #include src/xulapp/Makefile.inc
 #include tests/Makefile.inc
@@ -70,5 +64,8 @@ update-makefiles:
 		echo " cp $(top_srcdir)/Makefile.am.subdir $(top_srcdir)/$$dir/Makefile.am" ; \
 		cp "$(top_srcdir)/Makefile.am.subdir" "$(top_srcdir)/$$dir/Makefile.am" || exit 1 ; \
 	done
+
+clean:
+	-rm -rf mozilla
 
 .PHONY: xulapp

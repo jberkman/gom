@@ -2,8 +2,8 @@
 @HAVE_MOZCONFIG_TRUE@. @MOZCONFIG@
 
 # Options for client.mk.
-mk_add_options MOZ_CO_PROJECTS=xulrunner
-mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-gom
+mk_add_options MOZ_CO_PROJECT=browser
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/gom.obj
 
 # Options for 'configure' (same as command-line options).
 ac_add_options --with-libxul-sdk=@XULSDK@

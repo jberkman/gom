@@ -86,6 +86,11 @@ AC_CONFIG_FILES([
 Makefile
 xulapp/app/application.ini
 xulapp/confvars.sh
-xulapp/gom.mozconfig
+xulapp/mozconfig
 ])
+
+AC_CONFIG_COMMANDS([configure-mozilla],
+	[$ac_top_srcdir/xulapp/configure-mozilla "$MOZILLA" "$ac_top_srcdir"],
+	[MOZILLA=$MOZILLA])
+
 AC_OUTPUT

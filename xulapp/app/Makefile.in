@@ -113,19 +113,19 @@ libs repackage:: application.ini
 
 else
 
-libs::
-	cp $(LIBXUL_DIST)/bin/xulrunner-stub$(BIN_SUFFIX) $(DIST)/bin/$(APP_BINARY)
-	$(NSINSTALL) -D $(DIST)/bin/xulrunner
-	(cd $(LIBXUL_DIST)/bin && tar $(TAR_CREATE_FLAGS) - .) | (cd $(DIST)/bin/xulrunner && tar -xf -)
-	cd $(DIST)/bin/xulrunner && $(RM) -f $(SDK_STRIP)
-	cp $(srcdir)/../chrome/locales/$(MOZ_UI_LOCALE)/updater.ini $(DIST)/bin/xulrunner
-#	$(NSINSTALL) -D $(DIST)/bin/chrome/icons/default
-#ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
-#	cp $(srcdir)/default.png $(DIST)/bin/chrome/icons/default/default.png
+#libs::
+#	cp $(LIBXUL_DIST)/bin/xulrunner-stub$(BIN_SUFFIX) $(DIST)/bin/$(APP_BINARY)
+#	$(NSINSTALL) -D $(DIST)/bin/xulrunner
+#	(cd $(LIBXUL_DIST)/bin && tar $(TAR_CREATE_FLAGS) - .) | (cd $(DIST)/bin/xulrunner && tar -xf -)
+#	cd $(DIST)/bin/xulrunner && $(RM) -f $(SDK_STRIP)
+#	cp $(srcdir)/../chrome/locales/$(MOZ_UI_LOCALE)/updater.ini $(DIST)/bin/xulrunner
+##	$(NSINSTALL) -D $(DIST)/bin/chrome/icons/default
+##ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
+##	cp $(srcdir)/default.png $(DIST)/bin/chrome/icons/default/default.png
+##endif
+#ifeq ($(OS_ARCH),WINNT)
+#	cp $(srcdir)/default.ico $(DIST)/bin/chrome/icons/default/default.ico
+#	$(DIST)/bin/redit $(DIST)/bin/$(APP_BINARY) $(srcdir)/default.ico
 #endif
-ifeq ($(OS_ARCH),WINNT)
-	cp $(srcdir)/default.ico $(DIST)/bin/chrome/icons/default/default.ico
-	$(DIST)/bin/redit $(DIST)/bin/$(APP_BINARY) $(srcdir)/default.ico
-endif
 
 endif #cocoa

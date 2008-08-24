@@ -1,3 +1,16 @@
+2008-08-24  jacob  <jacob@ilovegom.org>
+
+	* xulapp/mozconfig: remove mk_add_options, as we not longer use
+	client.mk
+
+	* xulapp/app/Makefile.in: disable some things for now
+
+	* xulapp/Makefile.inc: just run make in our mozilla objdir
+
+	* Makefile.am: move xulapp's build to xulapp/Makefile.inc
+
+	* configure.ac: run mozilla's configure here
+
 2008-08-23  jacob  <jacob@ilovegom.org>
 
 	* move src/xulapp to xulapp, and build it using the mozilla build
