@@ -21,41 +21,39 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_SCRIPT_ELEMENT_HH
-#define XG_SCRIPT_ELEMENT_HH
+#ifndef XG_GTK_ELEMENT_H
+#define XG_GTK_ELEMENT_H
 
-#include <xpgom/xgString.hh>
+#include "xgIGObjectWrapper.h"
 
-#include <nsCOMPtr.h>
-#include <nsIURI.h>
 #include <nsIXTFElement.h>
 #include <nsIXTFElementWrapper.h>
-#include <nsWeakReference.h>
+#include <nsIXTFAttributeHandler.h>
+#include <nsCOMPtr.h>
 
-class xgScriptElement : public nsIXTFElement
+#include <glib-object.h>
+
+class xgGtkElement : public nsIXTFElement,
+		     public nsIXTFAttributeHandler,
+		     public xgIGObjectWrapper
 {
 public:
     NS_DECL_ISUPPORTS
     NS_DECL_NSIXTFELEMENT
+    NS_DECL_NSIXTFATTRIBUTEHANDLER
+    NS_DECL_XGIGOBJECTWRAPPER
 
-    xgScriptElement ();
-    //nsresult Init();
+    xgGtkElement();
+    nsresult Init(GType type);
 
 private:
-    ~xgScriptElement ();
+    ~xgGtkElement();
 
 protected:
-    nsresult DownloadScript ();
-    nsresult EvaluateScript ();
-    nsresult MaybeEvaluateScript ();
-
-    nsAutoString mScript;
-    nsWeakPtr mGlobal;
-    nsCOMPtr<nsIURI> mDocumentURI;
-    nsWeakPtr mElement;
-    nsCAutoString mSrc;
-    PRUint32 mLangId;
-    bool mActive;
+    GType mType;
+    GObject *mObject;
+    nsCOMPtr<nsIXTFElementWrapper> mWrapper;
+    GHashTable *mAttrs;
 };
 
-#endif // XG_SCRIPT_ELEMENT_HH
+#endif // XG_GTK_ELEMENT_H

@@ -1,3 +1,8 @@
+2008-08-23  jacob  <jacob@ilovegom.org>
+
+	* move src/xulapp to xulapp, and build it using the mozilla build
+	system
+
 2008-08-21  jacob berkman  <jacob@ilovegom.org>
 
 	* src/xulapp/chrome/content/xpgom/gom.xul: gom as a xulrunner

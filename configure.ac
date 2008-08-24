@@ -7,14 +7,34 @@ AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/gom/gom.c])
 AC_CONFIG_HEADER([config.h])
 
-AC_ARG_WITH([xulrunner-sdk],
-	[AS_HELP_STRING([--with-xulrunner-sdk],
-		[path to XulRunner SDK directory])],
-	[xulrunnersdk=$withval])
-if test -z "$xulrunnersdk" ; then
-	AC_MSG_ERROR([You must specify the path to a XulRunner SDK with the --with-xulrunner-sdk option.])
+AC_ARG_WITH([libxul-sdk],
+	[AS_HELP_STRING([--with-libxul-sdk],
+		[path to XULlRunner SDK directory])],
+	[XULSDK=$withval])
+if test -z "$XULSDK" ; then
+	AC_MSG_ERROR([You must specify the path to a XULRunner SDK with the --with-libxul-sdk option.])
 fi
-AC_SUBST(DISTCHECK_CONFIGURE_FLAGS,["--with-xulrunner-sdk=$xulrunnersdk"])
+AC_SUBST(XULSDK)
+
+AC_ARG_WITH([mozilla],
+	[AS_HELP_STRING([--with-mozilla],
+		[path to Mozilla source tree])],
+	[MOZILLA=$withval])
+if test -z "$MOZILLA" ; then
+   	AC_MSG_ERROR([You must specify the path to a Mozilla source tree with the --mozilla option.])
+fi
+AC_SUBST(MOZILLA)
+
+AC_MSG_CHECKING([additional mozconfig])
+if test "$MOZCONFIG" ; then
+   	AC_MSG_RESULT([$MOZCONFIG])
+else
+	AC_MSG_RESULT(none)
+fi
+AC_SUBST(MOZCONFIG)
+AM_CONDITIONAL([HAVE_MOZCONFIG],[test x$MOZCONFIG != x])
+
+AC_SUBST(DISTCHECK_CONFIGURE_FLAGS,["--with-libxul-sdk=$XULSDK --with-mozilla=$MOZILLA MOZCONFIG=$MOZCONFIG"])
 
 # Honor aclocal flags
 ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
@@ -22,12 +42,10 @@ ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 # Checks for packages
 GLIB_REQVER="2.6.0"
 GTK_REQVER="2.6.0"
-CURL_REQVER="0"
 
-GOM_MODULES="gtk+-2.0 >= $GTK_REQVER gthread-2.0"
-PKG_CHECK_MODULES(GOM, [$GOM_MODULES])
-AC_SUBST(GOM_CFLAGS)
-AC_SUBST(GOM_LIBS)
+PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= $GTK_REQVER])
+AC_SUBST(GTK_CFLAGS)
+AC_SUBST(GTK_LIBS)
 
 has_check="false"
 TEST_MODULES="$GOM_MODULES check >= 0.9.5"
@@ -39,20 +57,13 @@ AM_CONDITIONAL([HAVE_CHECK],[test x$has_check = xtrue])
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
-AC_PROG_CXX
+AC_PROG_LN_S
 # AC_PROG_RANLIB
-AC_PROG_LIBTOOL
+# AC_PROG_LIBTOOL
 # Make libtool use --silent when --silent is passed to make
 changequote(,)dnl
 LIBTOOL="${LIBTOOL} \$(shell echo \"\$(MFLAGS)\" | awk '/^[^ ]*s/ { print \"--silent\" }')"
 changequote([,])dnl
-
-AC_CHECK_PROG([XPIDL],[xpidl],[$xulrunnersdk/bin/xpidl],[],[$xulrunnersdk/bin])
-if test -z "$XPIDL" ; then
-   AC_MSG_ERROR([$xuldunnersdk is missing xpidl])
-fi
-XPIDL_FLAGS="-I $xulrunnersdk/idl"
-AC_SUBST(XPIDL_FLAGS)
 
 # Checks for libraries.
 #
@@ -69,58 +80,12 @@ AM_PATH_GLIB_2_0(["$GLIB_REQVER"], :,
 # Checks for header files.
 CPPFLAGS_save=$CPPFLAGS
 
-xulrunner_cppflags="-DDEBUG -include xpcom-config.h -I$xulrunnersdk/sdk/include"
-#xulrunner_cppflags="-DMOZILLA_INTERNAL_API $xulrunner_cppflags"
-for subdir in content xpcom dom xpconnect js widget layout ; do
-    xulrunner_cppflags="$xulrunner_cppflags -I$xulrunnersdk/include/$subdir"
-done
-CPPFLAGS="$CPPFLAGS_save $xulrunner_cppflags"
-CXXFLAGS="$CXXFLAGS -fshort-wchar -fno-rtti -fno-exceptions"
-AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([nsIXTFElement.h nsIAtom.h nsDOMError.h nsIXPCScriptable.h nsEvent.h nsCompatibility.h],[],[
-	AC_MSG_ERROR([$xulrunnersdk is missing XPCOM headers.])
-])
-AC_LANG_POP([C++])
-XPGOM_CFLAGS="$GOM_CFLAGS $xulrunner_cppflags"
-
-CPPFLAGS=$CPPFLAGS_save
-
-# Checks for typedefs, structures, and compiler characteristics.
-
-# Checks for library functions.
-LIBS_save=$LIBS
-
-# http://developer.mozilla.org/en/docs/XPCOM_Glue#Sample_Compiler.2FLinker_Flags
-xulrunner_libs="-L$xulrunnersdk/sdk/lib"
-LIBS="$LIBS_save $xulrunner_libs"
-case $host_os in
-     darwin*)
-	xplibpath="-Wl,-executable_path,$xulrunnersdk/bin"
-	;;
-    linux*)
-	xplibpath="-Wl,-rpath-link,$xulrunnersdk/bin"
-	;;
-    *)
-	AC_MSG_ERROR([I don't know how to link components on $host_os])
-	;;
-esac
-# "Internal Linkage" :(
-#XPGOM_LIBS="$GOM_LIBS $xulrunner_libs -L$xulrunnersdk/lib $xulrunnersdk/../docshell/build/libdocshell.dylib -lxpcom_core -lxpcom -lnspr4"
-# "Dependent Glue"
-XPGOM_LIBS="$GOM_LIBS $xulrunner_libs -L$xulrunnersdk/bin $xplibpath -lxpcomglue_s -lxpcom -lnspr4"
-# "Standalone Glue"
-#XPGOM_LIBS="$GOM_LIBS $xulrunner_libs -lxpcomglue"
-
-LIBS=$LIBS_save
-
 rm -rf a.out.dSYM
 
-AC_SUBST(XPGOM_CFLAGS)
-AC_SUBST(XPGOM_LIBS)
-
 AC_CONFIG_FILES([
-gom-0.pc
 Makefile
-src/xulapp/application.ini
+xulapp/app/application.ini
+xulapp/confvars.sh
+xulapp/gom.mozconfig
 ])
 AC_OUTPUT

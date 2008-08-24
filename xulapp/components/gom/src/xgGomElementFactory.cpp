@@ -21,50 +21,37 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
-#include <glib/gmacros.h>
+#include "xgGomElementFactory.h"
+#include "xgScriptElement.h"
+#include "xgString.h"
 
-#include "xpgom/xgGomElementFactory.hh"
-#include "xpgom/xgGtkElementFactory.hh"
-#include "xpgom/xgString.hh"
+#include <nsISupportsUtils.h>
 
-#include <gtk/gtk.h>
+/* Implementation file */
+NS_IMPL_ISUPPORTS1(xgGomElementFactory, nsIXTFElementFactory)
 
-#include <nsIClassInfoImpl.h>
-#include <nsIFile.h>
-#include <nsIGenericFactory.h>
-#include <nsIXTFElementFactory.h>
-
-NS_GENERIC_FACTORY_CONSTRUCTOR(xgGomElementFactory);
-NS_GENERIC_FACTORY_CONSTRUCTOR(xgGtkElementFactory);
-
-static const nsModuleComponentInfo components[] = {
-    {
-	"Gom Core Element Factory",
-	XG_GOMELEMENTFACTORY_CID, XG_GOMELEMENTFACTORY_CONTRACTID,
-	xgGomElementFactoryConstructor
-    },
-    {
-	"Gom Gtk Element Factory",
-	XG_GTKELEMENTFACTORY_CID, XG_GTKELEMENTFACTORY_CONTRACTID,
-	xgGtkElementFactoryConstructor
-    },
-};
-
-static nsresult
-nsGomModuleConstructor (nsIModule *self)
+xgGomElementFactory::xgGomElementFactory()
 {
-    if (!gtk_init_check (NULL, NULL)) {
-	g_warning ("Could not initialize Gtk; Gom module unavailable.");
-	return NS_ERROR_NOT_AVAILABLE;
-    }
-
-#define WIDGET(w) g_type_qname (w);
-#include "gomwidgets.c"
-#undef WIDGET
-
-    return NS_OK;
+  /* member initializers and constructor code */
 }
 
-NS_IMPL_NSGETMODULE_WITH_CTOR(nsGomModule, components, nsGomModuleConstructor)
+xgGomElementFactory::~xgGomElementFactory()
+{
+  /* destructor code */
+}
+
+/* nsIXTFElement createElement (in AString tagName); */
+NS_IMETHODIMP
+xgGomElementFactory::CreateElement (const nsAString &tagName, nsIXTFElement **_retval)
+{
+    *_retval = NULL;
+    if (tagName.EqualsLiteral ("script")) {
+	*_retval = new xgScriptElement;
+    }
+    NS_IF_ADDREF (*_retval);
+    return NS_OK;
+}

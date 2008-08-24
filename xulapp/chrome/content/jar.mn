@@ -1,0 +1,4 @@
+gom.jar:
+% content gom %content/
+  content/gom.xul
+  content/gom.js

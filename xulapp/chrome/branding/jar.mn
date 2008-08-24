@@ -1,0 +1,6 @@
+#filter substitution
+
+gom.jar:
+% content branding %branding/
+% locale branding @AB_CD@ %branding/
+* branding/brand.properties (brand.properties)

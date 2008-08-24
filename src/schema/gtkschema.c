@@ -287,7 +287,7 @@ main (int argc, char *argv[])
              "widget      = GtkWidget\n\n");
 
 #define WIDGET(w) process_widget (w);
-#include "gomwidgets.c"
+#include "gomwidgets.h"
 #undef WIDGET
 
     if (child_attrs) {

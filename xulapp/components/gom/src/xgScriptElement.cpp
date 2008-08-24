@@ -21,9 +21,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
-#include "xpgom/xgScriptElement.hh"
+#include "xgScriptElement.h"
 
 #include <nsDOMError.h>
 #include <nsIAtom.h>
@@ -42,7 +44,7 @@ THE SOFTWARE.
 #include <nsServiceManagerUtils.h>
 #include <nsIXTFElementWrapper.h>
 
-#include <glib/gmessages.h>
+#include <glib.h>
 
 #include <stdio.h>
 

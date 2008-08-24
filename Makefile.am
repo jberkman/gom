@@ -15,33 +15,6 @@ ACLOCAL_AMFLAGS =
 
 NULL :=
 
-# appsdir := $(datadir)/applications
-
-bin_PROGRAMS := 
-# sbin_PROGRAMS :=
-noinst_PROGRAMS :=
-check_PROGRAMS :=
-
-# sbin_SCRIPTS :=
-
-noinst_LIBRARIES :=
-noinst_LTLIBRARIES :=
-
-# dist_sbin_SCRIPTS :=
-dist_noinst_SCRIPTS :=
-# dist_pkglibexec_SCRIPTS :=
-
-lib_LIBRARIES :=
-lib_LTLIBRARIES :=
-
-# apps_DATA :=
-dist_noinst_DATA := 
-# nobase_dist_pkgdata_DATA :=
-noinst_DATA :=
-
-noinst_HEADERS :=
-idl_headers :=
-
 BUILT_SOURCES :=
 CLEANFILES :=
 
@@ -49,12 +22,8 @@ TESTS :=
 
 AM_CPPFLAGS :=
 
-dist_noinst_DATA += Makefile.am.subdir gomwidgets.in
-
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA := gom-0.pc
-
-# pkglibexecdir = $(libexecdir)/$(PACKAGE)
+dist_noinst_DATA := Makefile.am.subdir gomwidgets.in
+noinst_PROGRAMS :=
 
 SUBDIRS = .
 
@@ -62,7 +31,17 @@ include_subdirs :=
 
 DIST_SUBDIRS := $(SUBDIRS) $(include_subdirs)
 
-gomwidgets.c: gomwidgets.in Makefile
+all: xulapp
+
+xulapp: include/gomwidgets.h
+	@if ! test -L $(MOZILLA)/gom ; then \
+		echo $(LN_S) $(top_srcdir)/xulapp $(MOZILLA)/gom; \
+		$(LN_S) $(PWD)/xulapp $(MOZILLA)/gom; \
+	fi
+	$(MAKE) CPPFLAGS="$(CPPFLAGS) -I$$PWD/$(top_srcdir)/include -I$$PWD/$(top_builddir)/include" -C $(MOZILLA) MOZCONFIG=$(MOZILLA)/gom/gom.mozconfig -f client.mk build
+
+include/gomwidgets.h: gomwidgets.in Makefile
+	-mkdir -p include
 	cp $< $@.tmp
 	chmod +w $@.tmp
 	awk '/GTK_TYPE_.*get_type/ { print "WIDGET ("$$2")" }' \
@@ -74,15 +53,17 @@ gomwidgets.c: gomwidgets.in Makefile
 	fi
 
 include examples/Makefile.inc
-include idl/Makefile.inc
+#include idl/Makefile.inc
 #include include/gom/Makefile.inc
 #include include/gom/dom/Makefile.inc
-include include/xpgom/Makefile.inc
+#include include/Makefile.inc
+#include include/xpgom/Makefile.inc
 #include src/gom/Makefile.inc
 #include src/libgom/Makefile.inc
 include src/schema/Makefile.inc
-include src/xpgom/Makefile.inc
-include tests/Makefile.inc
+#include src/xpgom/Makefile.inc
+#include src/xulapp/Makefile.inc
+#include tests/Makefile.inc
 
 update-makefiles:
 	@for dir in $(include_subdirs) ; do \
@@ -90,8 +71,4 @@ update-makefiles:
 		cp "$(top_srcdir)/Makefile.am.subdir" "$(top_srcdir)/$$dir/Makefile.am" || exit 1 ; \
 	done
 
-.idl.hh:
-	$(XPIDL) $(XPIDL_FLAGS) -m header -e $@ $<
-
-.idl.xpt:
-	$(XPIDL) $(XPIDL_FLAGS) -m typelib -e $@ $<
+.PHONY: xulapp

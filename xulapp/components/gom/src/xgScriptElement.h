@@ -21,16 +21,41 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#include "nsISupports.idl"
+#ifndef XG_SCRIPT_ELEMENT_HH
+#define XG_SCRIPT_ELEMENT_HH
 
-%{C++
-#include <glib-object.h>
-%}
+#include <xgString.h>
 
-[ptr] native xgNativeGObject(GObject);
+#include <nsCOMPtr.h>
+#include <nsIURI.h>
+#include <nsIXTFElement.h>
+#include <nsIXTFElementWrapper.h>
+#include <nsWeakReference.h>
 
-[uuid(97457374-87E2-4213-9B18-9ED575692D2E)]
-interface xgPIWrapped : nsISupports
+class xgScriptElement : public nsIXTFElement
 {
-    xgNativeGObject getWrappedGObject();
+public:
+    NS_DECL_ISUPPORTS
+    NS_DECL_NSIXTFELEMENT
+
+    xgScriptElement ();
+    //nsresult Init();
+
+private:
+    ~xgScriptElement ();
+
+protected:
+    nsresult DownloadScript ();
+    nsresult EvaluateScript ();
+    nsresult MaybeEvaluateScript ();
+
+    nsAutoString mScript;
+    nsWeakPtr mGlobal;
+    nsCOMPtr<nsIURI> mDocumentURI;
+    nsWeakPtr mElement;
+    nsCAutoString mSrc;
+    PRUint32 mLangId;
+    bool mActive;
 };
+
+#endif // XG_SCRIPT_ELEMENT_HH

@@ -21,35 +21,50 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
-#include "xpgom/xgGomElementFactory.hh"
-#include "xpgom/xgScriptElement.hh"
-#include "xpgom/xgString.hh"
+#include "xgGomElementFactory.h"
+#include "xgGtkElementFactory.h"
+#include "xgString.h"
 
-#include <nsISupportsUtils.h>
+#include <gtk/gtk.h>
 
-/* Implementation file */
-NS_IMPL_ISUPPORTS1(xgGomElementFactory, nsIXTFElementFactory)
+#include <nsIClassInfoImpl.h>
+#include <nsIFile.h>
+#include <nsIGenericFactory.h>
+#include <nsIXTFElementFactory.h>
 
-xgGomElementFactory::xgGomElementFactory()
+NS_GENERIC_FACTORY_CONSTRUCTOR(xgGomElementFactory)
+NS_GENERIC_FACTORY_CONSTRUCTOR(xgGtkElementFactory)
+
+static const nsModuleComponentInfo components[] = {
+    {
+	"Gom Core Element Factory",
+	XG_GOMELEMENTFACTORY_CID, XG_GOMELEMENTFACTORY_CONTRACTID,
+	xgGomElementFactoryConstructor
+    },
+    {
+	"Gom Gtk Element Factory",
+	XG_GTKELEMENTFACTORY_CID, XG_GTKELEMENTFACTORY_CONTRACTID,
+	xgGtkElementFactoryConstructor
+    },
+};
+
+static nsresult
+nsGomModuleConstructor (nsIModule *self)
 {
-  /* member initializers and constructor code */
-}
-
-xgGomElementFactory::~xgGomElementFactory()
-{
-  /* destructor code */
-}
-
-/* nsIXTFElement createElement (in AString tagName); */
-NS_IMETHODIMP
-xgGomElementFactory::CreateElement (const nsAString &tagName, nsIXTFElement **_retval)
-{
-    *_retval = NULL;
-    if (tagName.EqualsLiteral ("script")) {
-	*_retval = new xgScriptElement;
+    if (!gtk_init_check (NULL, NULL)) {
+	g_warning ("Could not initialize Gtk; Gom module unavailable.");
+	return NS_ERROR_NOT_AVAILABLE;
     }
-    NS_IF_ADDREF (*_retval);
+
+#define WIDGET(w) g_type_qname (w);
+#include "gomwidgets.h"
+#undef WIDGET
+
     return NS_OK;
 }
+
+NS_IMPL_NSGETMODULE_WITH_CTOR(nsGomModule, components, nsGomModuleConstructor)

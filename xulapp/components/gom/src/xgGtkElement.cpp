@@ -21,18 +21,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
-#include "xpgom/xgGtkElement.hh"
-
-#include <nsIAtom.h>
-#include <nsIDOMNode.h>
-#include <nsIDOMElement.h>
-#include <nsMemory.h>
+#include "xgGtkElement.h"
 
 #include <gtk/gtk.h>
 
 #include "gommacros.h"
+
+#include <nsIAtom.h>
+#include <nsIDOMNode.h>
+#include <nsIDOMElement.h>
 
 xgGtkElement::xgGtkElement () 
     : mType (0),
@@ -53,9 +54,9 @@ xgGtkElement::~xgGtkElement()
     }
 }
 
-NS_IMPL_ISUPPORTS3 (xgGtkElement, nsIXTFElement, nsIXTFAttributeHandler, xgPIWrapped)
+NS_IMPL_ISUPPORTS3 (xgGtkElement, nsIXTFElement, nsIXTFAttributeHandler, xgIGObjectWrapper)
 
-extern "C" static void
+static void
 free_value (gpointer data)
 {
     GValue *value = (GValue *)data;
@@ -130,21 +131,7 @@ xgGtkElement::GetIsAttributeHandler (PRBool *aIsAttributeHandler)
 NS_IMETHODIMP
 xgGtkElement::GetScriptingInterfaces (PRUint32 *count, nsIID ***array)
 {
-    *array = (nsIID **)nsMemory::Alloc (sizeof (nsIID *));
-    if (!array) {
-	return NS_ERROR_OUT_OF_MEMORY;
-    }
-
-    const nsIID wrappedIID = XGPIWRAPPED_IID;
-    (*array)[0] = (nsIID *)nsMemory::Clone (&wrappedIID, sizeof (nsIID));
-    if (!(*array)[0]) {
-	nsMemory::Free (*array);
-	*array = NULL;
-	return NS_ERROR_OUT_OF_MEMORY;
-    }
-
-    *count = 1;
-    return NS_OK;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* void willChangeDocument (in nsIDOMDocument newDoc); */
@@ -168,7 +155,7 @@ xgGtkElement::WillChangeParent (nsIDOMElement *newParent)
     XG_RETURN_NOT_IMPLEMENTED;
 }
 
-extern "C" static void
+static void
 append_child_attrs_foreach (gpointer key, gpointer value, gpointer user_data)
 {
     GParamSpec *spec;
@@ -212,7 +199,7 @@ xgGtkElement::ParentChanged (nsIDOMElement *newParent)
     }
 
     /* just as a sanity check */
-    nsCOMPtr<xgPIWrapped> wrappedParent (do_QueryInterface (newParent));
+    nsCOMPtr<xgIGObjectWrapper> wrappedParent (do_QueryInterface (newParent));
     GObject *parent = NULL;
     if (!wrappedParent || NS_FAILED (wrappedParent->GetWrappedGObject (&parent)) ||
 	!GTK_IS_CONTAINER (parent)) {
@@ -250,7 +237,7 @@ xgGtkElement::WillAppendChild (nsIDOMNode *child)
 	return NS_ERROR_FAILURE;
     }
 
-    nsCOMPtr<xgPIWrapped> wrappedChild (do_QueryInterface (child));
+    nsCOMPtr<xgIGObjectWrapper> wrappedChild (do_QueryInterface (child));
     GObject *widget = NULL;
     if (!wrappedChild || NS_FAILED (wrappedChild->GetWrappedGObject (&widget)) ||
 	!GTK_IS_WIDGET (widget)) {

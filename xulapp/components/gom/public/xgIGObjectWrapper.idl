@@ -21,39 +21,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef XG_GTK_ELEMENT_HH
-#define XG_GTK_ELEMENT_HH
+#include "nsISupports.idl"
 
-#include "xgPIWrapped.hh"
-
-#include <nsIXTFElement.h>
-#include <nsIXTFElementWrapper.h>
-#include <nsIXTFAttributeHandler.h>
-#include <nsCOMPtr.h>
-
+%{C++
 #include <glib-object.h>
+%}
 
-class xgGtkElement : public nsIXTFElement,
-		     public nsIXTFAttributeHandler,
-		     public xgPIWrapped
+[ptr] native xgNativeGObject(GObject);
+
+[uuid(97457374-87E2-4213-9B18-9ED575692D2E)]
+interface xgIGObjectWrapper : nsISupports
 {
-public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_NSIXTFELEMENT
-    NS_DECL_NSIXTFATTRIBUTEHANDLER
-    NS_DECL_XGPIWRAPPED
-
-    xgGtkElement();
-    nsresult Init(GType type);
-
-private:
-    ~xgGtkElement();
-
-protected:
-    GType mType;
-    GObject *mObject;
-    nsCOMPtr<nsIXTFElementWrapper> mWrapper;
-    GHashTable *mAttrs;
+    xgNativeGObject getWrappedGObject();
 };
-
-#endif /* XG_GTK_ELEMENT_HH */
