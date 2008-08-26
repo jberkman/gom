@@ -22,7 +22,8 @@ TESTS :=
 
 AM_CPPFLAGS :=
 
-dist_noinst_DATA := Makefile.am.subdir gomwidgets.in
+dist_noinst_DATA := Makefile.am.subdir
+dist_noinst_HEADERS :=
 noinst_PROGRAMS :=
 
 SUBDIRS = .
@@ -33,20 +34,9 @@ DIST_SUBDIRS := $(SUBDIRS) $(include_subdirs)
 
 all:
 
-include/gomwidgets.h: gomwidgets.in Makefile
-	-mkdir -p include
-	cp $< $@.tmp
-	chmod +w $@.tmp
-	awk '/GTK_TYPE_.*get_type/ { print "WIDGET ("$$2")" }' \
-		$(shell pkg-config --variable includedir gtk+-2.0)/gtk-2.0/gtk/*.h \
-		>> $@.tmp
-	@if ! cmp $@.tmp $@ ; then		\
-		echo cp $@.tmp $@;		\
-		cp $@.tmp $@;			\
-	fi
-
 include examples/Makefile.inc
 #include idl/Makefile.inc
+include include/Makefile.inc
 #include include/gom/Makefile.inc
 #include include/gom/dom/Makefile.inc
 #include include/Makefile.inc
@@ -64,8 +54,3 @@ update-makefiles:
 		echo " cp $(top_srcdir)/Makefile.am.subdir $(top_srcdir)/$$dir/Makefile.am" ; \
 		cp "$(top_srcdir)/Makefile.am.subdir" "$(top_srcdir)/$$dir/Makefile.am" || exit 1 ; \
 	done
-
-clean:
-	-rm -rf mozilla
-
-.PHONY: xulapp

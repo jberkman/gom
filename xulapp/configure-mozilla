@@ -1,0 +1,17 @@
+#!/bin/bash
+
+MOZILLA=$1
+top_srcdir=$2
+top_builddir=$PWD
+if [ -z "$MOZILLA" -o -z "$top_srcdir" ] ; then
+    echo >&2 "Usage: ${0##*/} <mozilla dir> <top_srcdir>"
+    exit 1
+fi
+
+set -x
+
+rm -f $MOZILLA/gom
+ln -s $top_builddir/$top_srcdir/xulapp $MOZILLA/gom
+mkdir -p mozilla.obj
+cd mozilla.obj
+MOZCONFIG=$PWD/../xulapp/mozconfig CPPFLAGS="$CPPFLAGS -I$top_builddir/$top_srcdir/include -I$top_builddir/include" $MOZILLA/configure

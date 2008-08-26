@@ -1,6 +1,14 @@
 2008-08-24  jacob  <jacob@ilovegom.org>
 
-	* xulapp/mozconfig: remove mk_add_options, as we not longer use
+	* configure.ac: use a source file we actually dist to configure
+	the sourcedir
+
+	* xulapp/Makefile.inc: dist all the files in this directory
+
+	* xulapp/configure-mozilla: a script which will run configure on a
+	mozilla source tree
+
+	* xulapp/mozconfig: remove mk_add_options, as we no longer use
 	client.mk
 
 	* xulapp/app/Makefile.in: disable some things for now
