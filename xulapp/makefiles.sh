@@ -35,30 +35,15 @@
 #
 # ***** END LICENSE BLOCK *****
 
-TIERS += app
-
-ifdef MOZ_EXTENSIONS
-tier_app_dirs += extensions
-endif
-
-tier_app_dirs += \
-  gom \
-  $(NULL)
-
-#ifdef MOZ_MOCHITEST
-#tier_testharness_dirs += \
-#  testing/mochitest \
-#  gom/tests \
-#  $(NULL)
-#endif
-
-installer:
-	@echo "Gom doesn't have an installer yet."
-	@exit 1
-
-package:
-	@$(MAKE) -C gom/installer
-
-install::
-	@echo "Gom can't be installed directly."
-	@exit 1
+add_makefiles "
+gom/Makefile
+gom/chrome/Makefile
+gom/chrome/branding/Makefile
+gom/chrome/content/Makefile
+gom/chrome/locales/Makefile
+gom/components/Makefile
+gom/components/gom/public/Makefile
+gom/components/gom/src/Makefile
+gom/app/Makefile
+gom/installer/Makefile
+"

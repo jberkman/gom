@@ -3,6 +3,8 @@
 all: xulapp
 
 xulapp: include/gomwidgets.h xulapp/app/application.ini xulapp/confvars.sh xulapp/mozconfig
+	rm -f $(MOZILLA)/gom
+	$(LN_S) $(shell pwd)/$(top_srcdir)/xulapp $(MOZILLA)/gom
 	$(MAKE) -C mozilla.obj
 
 clean:
@@ -17,6 +19,7 @@ dist_noinst_DATA += xulapp/Makefile.in
 dist_noinst_DATA += xulapp/build.mk
 dist_noinst_DATA += xulapp/configure-mozilla
 dist_noinst_DATA += xulapp/confvars.sh
+dist_noinst_DATA += xulapp/makefiles.sh
 
 dist_noinst_DATA += xulapp/app/Makefile.in
 dist_noinst_DATA += xulapp/app/application.ini
@@ -57,3 +60,5 @@ dist_noinst_DATA += xulapp/components/gom/src/xgGtkElementFactory.h
 dist_noinst_DATA += xulapp/components/gom/src/xgScriptElement.cpp
 dist_noinst_DATA += xulapp/components/gom/src/xgScriptElement.h
 dist_noinst_DATA += xulapp/components/gom/src/xgString.h
+
+dist_noinst_DATA += xulapp/installer/Makefile.in

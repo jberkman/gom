@@ -1,5 +1,8 @@
 2008-08-24  jacob  <jacob@ilovegom.org>
 
+	* xulapp/various: continue to fixup 'make dist', and enable 'make
+	package', which is a binary tarball distribution
+
 	* configure.ac: use a source file we actually dist to configure
 	the sourcedir
 

@@ -49,6 +49,9 @@ include xulapp/Makefile.inc
 #include src/xulapp/Makefile.inc
 #include tests/Makefile.inc
 
+package:
+	$(MAKE) -C mozilla.obj/gom/installer
+
 update-makefiles:
 	@for dir in $(include_subdirs) ; do \
 		echo " cp $(top_srcdir)/Makefile.am.subdir $(top_srcdir)/$$dir/Makefile.am" ; \
