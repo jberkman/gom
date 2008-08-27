@@ -50,10 +50,14 @@ private:
     ~xgGtkElement();
 
 protected:
+    void AttrsModified ();
+    void EnsureKeys ();
+
     GType mType;
     GObject *mObject;
     nsCOMPtr<nsIXTFElementWrapper> mWrapper;
     GHashTable *mAttrs;
+    GList *mKeys;
 };
 
 #endif // XG_GTK_ELEMENT_H

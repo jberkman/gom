@@ -32,18 +32,25 @@ THE SOFTWARE.
 #include "gommacros.h"
 
 #include <nsIAtom.h>
+#include <nsIAtomService.h>
 #include <nsIDOMNode.h>
 #include <nsIDOMElement.h>
+#include <nsServiceManagerUtils.h>
 
 xgGtkElement::xgGtkElement () 
     : mType (0),
       mObject (NULL),
-      mAttrs (NULL)
+      mAttrs (NULL),
+      mKeys (NULL)
 {
 }
 
 xgGtkElement::~xgGtkElement()
 {
+    if (mKeys) {
+	g_list_free (mKeys);
+	mKeys = NULL;
+    }
     if (mAttrs) {
 	g_hash_table_destroy (mAttrs);
 	mAttrs = NULL;
@@ -55,6 +62,23 @@ xgGtkElement::~xgGtkElement()
 }
 
 NS_IMPL_ISUPPORTS3 (xgGtkElement, nsIXTFElement, nsIXTFAttributeHandler, xgIGObjectWrapper)
+
+void
+xgGtkElement::AttrsModified ()
+{
+    if (mKeys) {
+	g_list_free (mKeys);
+	mKeys = NULL;
+    }
+}
+
+void
+xgGtkElement::EnsureKeys ()
+{
+    if (!mKeys) {
+	mKeys = g_hash_table_get_keys (mAttrs);
+    }
+}
 
 static void
 free_value (gpointer data)
@@ -158,6 +182,10 @@ xgGtkElement::WillChangeParent (nsIDOMElement *newParent)
 static void
 append_child_attrs_foreach (gpointer key, gpointer value, gpointer user_data)
 {
+    if (!value) {
+	return;
+    }
+
     GParamSpec *spec;
     GError *error = NULL;
     GValue gval = { 0 };
@@ -358,6 +386,7 @@ xgGtkElement::SetAttribute (nsIAtom *name, const nsAString &newValue)
     GOM_ASTRING_TO_GSTRING_RETURN (value, newValue, NS_ERROR_INVALID_ARG);
 
     GParamSpec *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (mObject), prop);
+    GValue *newval = NULL;
     if (spec) {
 	GError *error = NULL;
 	GValue gval = { 0 };
@@ -374,11 +403,12 @@ xgGtkElement::SetAttribute (nsIAtom *name, const nsAString &newValue)
 	    return NS_ERROR_FAILURE;
 	}
     } else {
-	GValue *newval = g_new0 (GValue, 1);
+	newval = g_new0 (GValue, 1);
         g_value_init (newval, G_TYPE_STRING);
         g_value_set_string (newval, value);
-	g_hash_table_insert (mAttrs, g_strdup (prop), newval);
     }
+    g_hash_table_insert (mAttrs, g_strdup (prop), newval);
+    AttrsModified();
     return NS_OK;
 }
 
@@ -422,19 +452,37 @@ xgGtkElement::GetAttribute (nsIAtom *name, nsAString &_retval)
 NS_IMETHODIMP
 xgGtkElement::HasAttribute (nsIAtom *name, PRBool *_retval)
 {
-    XG_RETURN_NOT_IMPLEMENTED;
+    GOM_ATOM_TO_GSTRING_RETURN (prop, name, NS_ERROR_INVALID_ARG);
+
+    GParamSpec *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (mObject), prop);
+    const GValue *gvalp = (const GValue *)g_hash_table_lookup (mAttrs, prop);
+
+    *_retval = spec || gvalp;
+    return NS_OK;
 }
 
 /* unsigned long getAttributeCount (); */
 NS_IMETHODIMP
 xgGtkElement::GetAttributeCount (PRUint32 *_retval)
 {
-    XG_RETURN_NOT_IMPLEMENTED;
+    EnsureKeys ();
+    *_retval = g_list_length (mKeys);
+    return NS_OK;
 }
 
 /* nsIAtom getAttributeNameAt (in unsigned long index); */
 NS_IMETHODIMP
 xgGtkElement::GetAttributeNameAt (PRUint32 index, nsIAtom **_retval)
 {
-    XG_RETURN_NOT_IMPLEMENTED;
+    EnsureKeys ();
+    const char *key = (const char *)g_list_nth_data (mKeys, index);
+    if (!key) {
+	return NS_ERROR_INVALID_ARG;
+    }
+
+    nsresult rv;
+    nsCOMPtr<nsIAtomService> as (do_GetService (NS_ATOMSERVICE_CONTRACTID, &rv));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    return as->GetAtomUTF8 (key, _retval);
 }

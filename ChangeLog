@@ -1,3 +1,11 @@
+2008-08-27  jacob  <jacob@ilovegom.org>
+
+	* xulapp/components/gom/src/xgGtkElement.cpp (xgGtkElement::SetAttribute):
+	add the attribute to our hash table whether it is handled as a
+	property or not, so that attribute lookups work as they should
+	(xgGtkElement::HasAttribute, xgGtkElement::GetAttributeCount)
+	(xgGtkElement::GetAttributeNameAt): implement
+
 2008-08-24  jacob  <jacob@ilovegom.org>
 
 	* xulapp/various: continue to fixup 'make dist', and enable 'make
