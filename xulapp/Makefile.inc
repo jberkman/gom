@@ -15,6 +15,15 @@ clean:
 distclean: maintainer-clean
 	rm -rf mozilla.obj
 
+install: mozilla-install
+
+mozilla-install:
+	$(MAKE) -C mozilla.obj install
+
+package:
+	$(MAKE) -C mozilla.obj/gom/installer
+
+
 dist_noinst_DATA += xulapp/Makefile.in
 dist_noinst_DATA += xulapp/build.mk
 dist_noinst_DATA += xulapp/configure-mozilla

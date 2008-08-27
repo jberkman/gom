@@ -59,6 +59,6 @@ installer:
 package:
 	@$(MAKE) -C gom/installer
 
-install::
-	@echo "Gom can't be installed directly."
-	@exit 1
+#install::
+#	@echo "Gom can't be installed directly."
+#	@exit 1
