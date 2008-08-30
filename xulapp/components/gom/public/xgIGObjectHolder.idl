@@ -27,10 +27,10 @@ THE SOFTWARE.
 #include <glib-object.h>
 %}
 
-[ptr] native xgNativeGObject(GObject);
+[ptr] native GObjectPtr(GObject);
 
 [uuid(97457374-87E2-4213-9B18-9ED575692D2E)]
-interface xgIGObjectWrapper : nsISupports
+interface xgIGObjectHolder : nsISupports
 {
-    xgNativeGObject getWrappedGObject();
+    GObjectPtr getGObject();
 };

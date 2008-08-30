@@ -26,112 +26,145 @@ THE SOFTWARE.
 #endif
 
 #include "xgGtkElement.h"
+#include "xgGObjectUtils.h"
 
 #include <gtk/gtk.h>
 
+#include "gom/gomcamel.h"
 #include "gommacros.h"
 
 #include <nsIAtom.h>
 #include <nsIAtomService.h>
-#include <nsIDOMNode.h>
+#include <nsIDOMDocument.h>
+#include <nsIDOMDocumentEvent.h>
 #include <nsIDOMElement.h>
+#include <nsIDOMEvent.h>
+#include <nsIDOMEventTarget.h>
+#include <nsIDOMNode.h>
+#include <nsIDOMUIEvent.h>
+#include <nsMemory.h>
 #include <nsServiceManagerUtils.h>
+#include <nsStringAPI.h>
 
 xgGtkElement::xgGtkElement () 
-    : mType (0),
-      mObject (NULL),
-      mAttrs (NULL),
-      mKeys (NULL)
 {
 }
 
 xgGtkElement::~xgGtkElement()
 {
-    if (mKeys) {
-	g_list_free (mKeys);
-	mKeys = NULL;
-    }
-    if (mAttrs) {
-	g_hash_table_destroy (mAttrs);
-	mAttrs = NULL;
-    }
-    if (mObject) {
-	g_object_unref (mObject);
-	mObject = NULL;
-    }
 }
 
-NS_IMPL_ISUPPORTS3 (xgGtkElement, nsIXTFElement, nsIXTFAttributeHandler, xgIGObjectWrapper)
-
-void
-xgGtkElement::AttrsModified ()
-{
-    if (mKeys) {
-	g_list_free (mKeys);
-	mKeys = NULL;
-    }
-}
-
-void
-xgGtkElement::EnsureKeys ()
-{
-    if (!mKeys) {
-	mKeys = g_hash_table_get_keys (mAttrs);
-    }
-}
-
-static void
-free_value (gpointer data)
-{
-    GValue *value = (GValue *)data;
-    g_value_unset (value);
-    g_free (value);
-}
+NS_IMPL_ISUPPORTS3 (xgGtkElement, nsIXTFAttributeHandler, nsIXTFElement, xgIGObjectHolder)
 
 nsresult
-xgGtkElement::Init (GType type)
+xgGtkElement::Init (GType gtype)
 {
-    mAttrs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, free_value);
-    if (!mAttrs) {
-	return NS_ERROR_OUT_OF_MEMORY;
-    }
-    mType = type;
+    mType = gtype;
     return NS_OK;
 }
 
-/* xgNativeGObject getWrappedGObject (); */
+/* GObjectPtr getGObject (); */
 NS_IMETHODIMP
-xgGtkElement::GetWrappedGObject (GObject **_retval)
+xgGtkElement::GetGObject (GObject **_retval)
 {
     *_retval = mObject ? G_OBJECT (g_object_ref (mObject)) : NULL;
     return NS_OK;
 }
 
-#if 0
-/* xgNativeGtkElement getGtkElement (); */
-NS_IMETHODIMP
-xgGtkElement::GetGtkElement (xgGtkElement **_retval)
+void
+xgGtkElement::WidgetActivate (GtkWidget *w, gpointer data)
 {
-    *_retval = this;
-    return NS_OK;
+    xgGtkElement *self = (xgGtkElement *)data;
+    nsresult rv;
+
+    nsCOMPtr<nsIDOMElement> elem;
+    rv = self->mWrapper->GetElementNode (getter_AddRefs (elem));
+    if (NS_FAILED (rv)) {
+	g_warning (GOM_LOC ("Failed to get element: %#x"), rv);
+	return;
+    }
+
+    nsCOMPtr<nsIDOMDocument> doc;
+    rv = elem->GetOwnerDocument (getter_AddRefs (doc));
+    if (NS_FAILED (rv)) {
+	g_warning (GOM_LOC ("Failed to get doc: %#x"), rv);
+	return;
+    }
+
+    nsCOMPtr<nsIDOMDocumentEvent> docEvent (do_QueryInterface (doc, &rv));
+    if (NS_FAILED (rv)) {
+	g_warning (GOM_LOC ("Failed to get doc event: %#x"), rv);
+	return;
+    }
+
+    nsCOMPtr<nsIDOMEvent> evt;
+    rv = docEvent->CreateEvent (NS_LITERAL_STRING ("UIEvent"), getter_AddRefs (evt));
+    if (NS_FAILED (rv)) {
+	g_warning (GOM_LOC ("Failed to create event: %#x"), rv);
+	return;
+    }
+
+    nsCOMPtr<nsIDOMUIEvent> uiEvt (do_QueryInterface (evt, &rv));
+    if (NS_FAILED (rv)) {
+	g_warning (GOM_LOC ("Failed to QI for ui event: %#x"), rv);
+	return;
+    }
+
+    rv = uiEvt->InitUIEvent (NS_LITERAL_STRING ("DOMActivate"),
+			     PR_TRUE, PR_TRUE, NULL, 0);
+    if (NS_FAILED (rv)) {
+	g_warning (GOM_LOC ("Failed to init UI event: %#x"), rv);
+	return;
+    }
+
+    nsCOMPtr<nsIDOMEventTarget> target (do_QueryInterface (elem, &rv));
+    if (NS_FAILED (rv)) {
+	g_warning (GOM_LOC ("Failed to QI for an event target: %#x"), rv);
+	return;
+    }
+
+    PRBool doDefault;
+    rv = target->DispatchEvent (evt, &doDefault);
+    if (NS_FAILED (rv)) {
+	g_warning (GOM_LOC ("Failed to dispatch event: %#x"), rv);
+	return;
+    }
+
+    g_message (GOM_LOC ("Event dispatch returned %#x"), doDefault);
 }
-#endif
 
 /* void onCreated (in nsIXTFElementWrapper wrapper); */
 NS_IMETHODIMP
 xgGtkElement::OnCreated (nsIXTFElementWrapper *wrapper)
 {
+    nsresult rv;
     if (!mType) {
 	return NS_ERROR_FAILURE;
     }
     g_print (GOM_LOC ("Creating new <%s>...\n"), g_type_name (mType));
     mObject = (GObject *)g_object_new (mType, NULL);
-    gtk_widget_show (GTK_WIDGET (mObject));
+    if (!mObject) {
+	return NS_ERROR_UNEXPECTED;
+    }
+
     mWrapper = wrapper;
     mWrapper->SetNotificationMask (NOTIFY_PARENT_CHANGED |
 				   NOTIFY_WILL_INSERT_CHILD |
 				   NOTIFY_WILL_APPEND_CHILD |
 				   NOTIFY_CHILD_REMOVED);
+
+    nsCOMPtr<nsIDOMElement> elem;
+    rv = mWrapper->GetElementNode (getter_AddRefs (elem));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    xgGObjectUtils::DefineProperties (elem, mType);
+
+    if (GTK_IS_ENTRY (mObject)) {
+	g_signal_connect (mObject, "activate",
+			  G_CALLBACK (&xgGtkElement::WidgetActivate), this);
+    }
+    gtk_widget_show (GTK_WIDGET (mObject));
+
     return NS_OK;
 }
 
@@ -227,9 +260,9 @@ xgGtkElement::ParentChanged (nsIDOMElement *newParent)
     }
 
     /* just as a sanity check */
-    nsCOMPtr<xgIGObjectWrapper> wrappedParent (do_QueryInterface (newParent));
+    nsCOMPtr<xgIGObjectHolder> wrappedParent (do_QueryInterface (newParent));
     GObject *parent = NULL;
-    if (!wrappedParent || NS_FAILED (wrappedParent->GetWrappedGObject (&parent)) ||
+    if (!wrappedParent || NS_FAILED (wrappedParent->GetGObject (&parent)) ||
 	!GTK_IS_CONTAINER (parent)) {
 	g_warning (GOM_LOC ("Could not get parent widget for node: <%s>"),
 		   G_OBJECT_TYPE_NAME (mObject));
@@ -238,7 +271,7 @@ xgGtkElement::ParentChanged (nsIDOMElement *newParent)
     g_assert ((GtkWidget *)parent == gtk_widget_get_parent (GTK_WIDGET (mObject)));
     g_object_unref (parent);
 
-    g_hash_table_foreach (mAttrs, append_child_attrs_foreach, mObject);
+    //g_hash_table_foreach (mAttrs, append_child_attrs_foreach, mObject);
 
     return NS_OK;
 }
@@ -265,9 +298,9 @@ xgGtkElement::WillAppendChild (nsIDOMNode *child)
 	return NS_ERROR_FAILURE;
     }
 
-    nsCOMPtr<xgIGObjectWrapper> wrappedChild (do_QueryInterface (child));
+    nsCOMPtr<xgIGObjectHolder> wrappedChild (do_QueryInterface (child));
     GObject *widget = NULL;
-    if (!wrappedChild || NS_FAILED (wrappedChild->GetWrappedGObject (&widget)) ||
+    if (!wrappedChild || NS_FAILED (wrappedChild->GetGObject (&widget)) ||
 	!GTK_IS_WIDGET (widget)) {
 	if (widget) {
 	    g_object_unref (widget);
@@ -374,7 +407,11 @@ xgGtkElement::PerformAccesskey ()
 NS_IMETHODIMP
 xgGtkElement::HandlesAttribute (nsIAtom *name, PRBool *_retval)
 {
-    *_retval = PR_TRUE;
+    GOM_ATOM_TO_GSTRING_RETURN (prop, name, NS_ERROR_INVALID_ARG);
+    GParamSpec *spec;
+    guint signal_id;
+    *_retval = xgGObjectUtils::Resolve (mType, prop, &spec, &signal_id) ? PR_TRUE : PR_FALSE;
+    g_print (GOM_LOC ("%s -> %d\n"), prop, *_retval);
     return NS_OK;
 }
 
@@ -385,30 +422,29 @@ xgGtkElement::SetAttribute (nsIAtom *name, const nsAString &newValue)
     GOM_ATOM_TO_GSTRING_RETURN (prop, name, NS_ERROR_INVALID_ARG);
     GOM_ASTRING_TO_GSTRING_RETURN (value, newValue, NS_ERROR_INVALID_ARG);
 
-    GParamSpec *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (mObject), prop);
-    GValue *newval = NULL;
-    if (spec) {
-	GError *error = NULL;
-	GValue gval = { 0 };
-        if (G_TYPE_FUNDAMENTAL (G_PARAM_SPEC_VALUE_TYPE (spec)) == G_TYPE_OBJECT) {
-            g_warning (GOM_LOC ("Attribute %s.%s is a %s, which a string cannot be converted to"),
-		       g_type_name (mType), prop,
-		       g_type_name (G_PARAM_SPEC_VALUE_TYPE (spec)));
-	    return NS_ERROR_FAILURE;
-        } else if (gtk_builder_value_from_string (NULL, spec, value, &gval, &error)) {
-            g_object_set_property (mObject, prop, &gval);
-	    g_value_unset (&gval);
-        } else {
-	    g_warning (GOM_LOC ("Could not get value from string: '%s'"), value);
-	    return NS_ERROR_FAILURE;
-	}
-    } else {
-	newval = g_new0 (GValue, 1);
-        g_value_init (newval, G_TYPE_STRING);
-        g_value_set_string (newval, value);
+    GParamSpec *spec;
+    guint signal_id;
+    if (!xgGObjectUtils::Resolve (mType, prop, &spec, &signal_id)) {
+	return NS_ERROR_FAILURE;
     }
-    g_hash_table_insert (mAttrs, g_strdup (prop), newval);
-    AttrsModified();
+    if (!spec) {
+	return NS_ERROR_FAILURE;
+    }
+
+    GError *error = NULL;
+    GValue gval = { 0 };
+    if (G_TYPE_FUNDAMENTAL (G_PARAM_SPEC_VALUE_TYPE (spec)) == G_TYPE_OBJECT) {
+	g_warning (GOM_LOC ("Attribute %s.%s is a %s, which a string cannot be converted to"),
+		   g_type_name (mType), prop,
+		   g_type_name (G_PARAM_SPEC_VALUE_TYPE (spec)));
+	return NS_ERROR_FAILURE;
+    } else if (gtk_builder_value_from_string (NULL, spec, value, &gval, &error)) {
+	g_object_set_property (mObject, spec->name, &gval);
+	g_value_unset (&gval);
+    } else {
+	g_warning (GOM_LOC ("Could not get value from string: '%s'"), value);
+	return NS_ERROR_FAILURE;
+    }
     return NS_OK;
 }
 
@@ -425,26 +461,24 @@ xgGtkElement::GetAttribute (nsIAtom *name, nsAString &_retval)
 {
     GOM_ATOM_TO_GSTRING_RETURN (prop, name, NS_ERROR_INVALID_ARG);
 
-    GParamSpec *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (mObject), prop);
-    if (spec) {
-	GValue gval = { 0 };
-        g_value_init (&gval, G_TYPE_STRING);
-        g_object_get_property (G_OBJECT (mObject), prop, &gval);
-        if (G_VALUE_HOLDS (&gval, G_TYPE_STRING)) {
-	    _retval = NS_ConvertUTF8toUTF16 (nsCAutoString (g_value_get_string (&gval)));	
-	    g_value_unset (&gval);
-	    return NS_OK;
-	}
-        g_value_unset (&gval);
-    } else {
-        const GValue *gvalp = (const GValue *)g_hash_table_lookup (mAttrs, prop);
-        if (gvalp) {
-            if (G_VALUE_HOLDS_STRING (gvalp)) {
-		_retval = NS_ConvertUTF8toUTF16 (nsCAutoString (g_value_get_string (gvalp)));
-		return NS_OK;
-	    }
-	}
+    GParamSpec *spec;
+    guint signal_id;
+    if (!xgGObjectUtils::Resolve (mType, prop, &spec, &signal_id)) {
+	return NS_ERROR_FAILURE;
     }
+    if (!spec) {
+	return NS_ERROR_FAILURE;
+    }
+
+    GValue gval = { 0 };
+    g_value_init (&gval, G_TYPE_STRING);
+    g_object_get_property (G_OBJECT (mObject), spec->name, &gval);
+    if (G_VALUE_HOLDS (&gval, G_TYPE_STRING)) {
+	_retval = NS_ConvertUTF8toUTF16 (nsCAutoString (g_value_get_string (&gval)));	
+	g_value_unset (&gval);
+	return NS_OK;
+    }
+    g_value_unset (&gval);
     return NS_ERROR_FAILURE;
 }
 
@@ -454,10 +488,10 @@ xgGtkElement::HasAttribute (nsIAtom *name, PRBool *_retval)
 {
     GOM_ATOM_TO_GSTRING_RETURN (prop, name, NS_ERROR_INVALID_ARG);
 
-    GParamSpec *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (mObject), prop);
-    const GValue *gvalp = (const GValue *)g_hash_table_lookup (mAttrs, prop);
+    GParamSpec *spec;
+    guint signal_id;
+    *_retval = xgGObjectUtils::Resolve (mType, prop, &spec, &signal_id);
 
-    *_retval = spec || gvalp;
     return NS_OK;
 }
 
@@ -465,24 +499,12 @@ xgGtkElement::HasAttribute (nsIAtom *name, PRBool *_retval)
 NS_IMETHODIMP
 xgGtkElement::GetAttributeCount (PRUint32 *_retval)
 {
-    EnsureKeys ();
-    *_retval = g_list_length (mKeys);
-    return NS_OK;
+    XG_RETURN_NOT_IMPLEMENTED;
 }
 
 /* nsIAtom getAttributeNameAt (in unsigned long index); */
 NS_IMETHODIMP
 xgGtkElement::GetAttributeNameAt (PRUint32 index, nsIAtom **_retval)
 {
-    EnsureKeys ();
-    const char *key = (const char *)g_list_nth_data (mKeys, index);
-    if (!key) {
-	return NS_ERROR_INVALID_ARG;
-    }
-
-    nsresult rv;
-    nsCOMPtr<nsIAtomService> as (do_GetService (NS_ATOMSERVICE_CONTRACTID, &rv));
-    NS_ENSURE_SUCCESS (rv, rv);
-
-    return as->GetAtomUTF8 (key, _retval);
+    XG_RETURN_NOT_IMPLEMENTED;
 }

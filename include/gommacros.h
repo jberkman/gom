@@ -26,10 +26,11 @@ THE SOFTWARE.
 
 #define JSVAL_CHARS(jval) (JS_GetStringBytes (JSVAL_TO_STRING (jval)))
 
+#define GOM_BASENAME(f) strchr (__FILE__, G_DIR_SEPARATOR) ? strrchr (__FILE__, G_DIR_SEPARATOR) + 1 : __FILE__
 #ifdef __cplusplus
-#define GOM_LOC(s) G_STRLOC":%s: "s, G_STRFUNC
+#define GOM_LOC(s) "%s:" G_STRINGIFY (__LINE__) ":%s: " s, GOM_BASENAME (__FILE__), G_STRFUNC
 #else
-#define GOM_LOC(s) G_STRLOC":%s(): "s, G_STRFUNC
+#define GOM_LOC(s) "%s:" G_STRINGIFY (__LINE__) ":%s(): " s, GOM_BASENAME (__FILE__), G_STRFUNC
 #endif
 
 #define GOM_NOT_IMPLEMENTED (g_message (GOM_LOC("Not implemented yet.")))

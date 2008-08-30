@@ -47,7 +47,7 @@ LIBRARY_NAME    = xpgom
 IS_COMPONENT    = 1
 USE_STATIC_LIBS = 1
 
-REQUIRES = \
+REQUIRES := \
 	content	\
 	dom \
 	js \
@@ -59,17 +59,24 @@ REQUIRES = \
 
 LOCAL_INCLUDES += $(MOZ_GTK2_CFLAGS)
 
-CPPSRCS = \
+CPPSRCS := \
+	xgGObjectUtils.cpp \
 	xgGomElementFactory.cpp \
+	xgGomModule.cpp \
 	xgGtkElement.cpp \
 	xgGtkElementFactory.cpp \
-	xgGomModule.cpp \
 	xgScriptElement.cpp \
+	$(NULL)
+
+CSRCS := \
+	gomcamel.c \
+	gomvalue.c \
 	$(NULL)
 
 EXTRA_DSO_LDOPTS = \
 	$(XPCOM_GLUE_LDOPTS) \
 	$(MOZ_GTK2_LIBS) \
+	$(MOZ_JS_LIBS) \
 	$(NSPR_LIBS) \
 	$(NULL)
 

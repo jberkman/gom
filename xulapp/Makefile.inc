@@ -56,7 +56,7 @@ dist_noinst_DATA += xulapp/components/Makefile.in
 dist_noinst_DATA += xulapp/components/gom/Makefile.in
 
 dist_noinst_DATA += xulapp/components/gom/public/Makefile.in
-dist_noinst_DATA += xulapp/components/gom/public/xgIGObjectWrapper.idl
+dist_noinst_DATA += xulapp/components/gom/public/xgIGObjectHolder.idl
 
 dist_noinst_DATA += xulapp/components/gom/src/Makefile.in
 dist_noinst_DATA += xulapp/components/gom/src/xgGomElementFactory.cpp

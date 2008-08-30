@@ -21,50 +21,27 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef XG_G_OBJECT_UTILS_H
+#define XG_G_OBJECT_UTILS_H
 
-#include "xgGomElementFactory.h"
-#include "xgGtkElementFactory.h"
-#include "xgString.h"
+#include <glib-object.h>
+#include <jspubtd.h>
+#include <nscore.h>
 
-#include <gtk/gtk.h>
+class nsISupports;
+class nsIDOMNode;
 
-#include <nsIClassInfoImpl.h>
-#include <nsIFile.h>
-#include <nsIGenericFactory.h>
-#include <nsIXTFElementFactory.h>
+class xgGObjectUtils
+{
+public:
+    static nsresult DefineProperties (nsIDOMNode *aNode, GType aType);
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(xgGomElementFactory)
-NS_GENERIC_FACTORY_CONSTRUCTOR(xgGtkElementFactory)
+    static gboolean Resolve (GType aType, const char *name, GParamSpec **spec, guint *signal_id);
 
-static const nsModuleComponentInfo components[] = {
-    {
-	"Gom Core Element Factory",
-	XG_GOMELEMENTFACTORY_CID, XG_GOMELEMENTFACTORY_CONTRACTID,
-	xgGomElementFactoryConstructor
-    },
-    {
-	"Gom Gtk Element Factory",
-	XG_GTKELEMENTFACTORY_CID, XG_GTKELEMENTFACTORY_CONTRACTID,
-	xgGtkElementFactoryConstructor,
-    },
+    static JSBool GetProperty (JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+    static JSBool SetProperty (JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+
+    static nsresult GetNative (JSContext *cx, JSObject *obj, nsISupports **_retval);
 };
 
-static nsresult
-xgGomModuleConstructor (nsIModule *self)
-{
-    if (!gtk_init_check (NULL, NULL)) {
-	g_warning ("Could not initialize Gtk; Gom module unavailable.");
-	return NS_ERROR_NOT_AVAILABLE;
-    }
-
-#define WIDGET(w) g_type_qname (w);
-#include "gomwidgets.h"
-#undef WIDGET
-
-    return NS_OK;
-}
-
-NS_IMPL_NSGETMODULE_WITH_CTOR (xgGomModule, components, xgGomModuleConstructor)
+#endif // XG_G_OBJECT_UTILS_H

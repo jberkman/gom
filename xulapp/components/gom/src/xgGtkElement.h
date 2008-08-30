@@ -24,7 +24,7 @@ THE SOFTWARE.
 #ifndef XG_GTK_ELEMENT_H
 #define XG_GTK_ELEMENT_H
 
-#include "xgIGObjectWrapper.h"
+#include "xgIGObjectHolder.h"
 
 #include <nsIXTFElement.h>
 #include <nsIXTFElementWrapper.h>
@@ -32,32 +32,31 @@ THE SOFTWARE.
 #include <nsCOMPtr.h>
 
 #include <glib-object.h>
+#include <gtk/gtk.h>
 
-class xgGtkElement : public nsIXTFElement,
+class xgGtkElement : public xgIGObjectHolder,
 		     public nsIXTFAttributeHandler,
-		     public xgIGObjectWrapper
+		     public nsIXTFElement		     
 {
 public:
     NS_DECL_ISUPPORTS
-    NS_DECL_NSIXTFELEMENT
+    NS_DECL_XGIGOBJECTHOLDER
     NS_DECL_NSIXTFATTRIBUTEHANDLER
-    NS_DECL_XGIGOBJECTWRAPPER
+    NS_DECL_NSIXTFELEMENT
 
     xgGtkElement();
-    nsresult Init(GType type);
+    nsresult Init (GType aType);
+
+protected:
+    nsCOMPtr<nsIXTFElementWrapper> mWrapper;
+
+    GType mType;
+    GObject *mObject;
 
 private:
     ~xgGtkElement();
 
-protected:
-    void AttrsModified ();
-    void EnsureKeys ();
-
-    GType mType;
-    GObject *mObject;
-    nsCOMPtr<nsIXTFElementWrapper> mWrapper;
-    GHashTable *mAttrs;
-    GList *mKeys;
+    static void WidgetActivate (GtkWidget *w, gpointer data);
 };
 
 #endif // XG_GTK_ELEMENT_H
