@@ -10,3 +10,5 @@ ID=xpgom@ilovegom.org
 MinVersion=1.9
 MaxVersion=1.9.0.*
 
+[XRE]
+EnableExtensionManager=1

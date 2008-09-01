@@ -24,7 +24,7 @@ THE SOFTWARE.
 #ifndef XG_GTK_ELEMENT_H
 #define XG_GTK_ELEMENT_H
 
-#include "xgIGObjectHolder.h"
+#include "xgGObject.h"
 
 #include <nsIXTFElement.h>
 #include <nsIXTFElementWrapper.h>
@@ -34,13 +34,13 @@ THE SOFTWARE.
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
-class xgGtkElement : public xgIGObjectHolder,
+class xgGtkElement : public xgGObject,
 		     public nsIXTFAttributeHandler,
-		     public nsIXTFElement		     
+		     public nsIXTFElement
 {
 public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_XGIGOBJECTHOLDER
+    NS_DECL_ISUPPORTS_INHERITED
+    NS_FORWARD_XGIGOBJECTHOLDER(xgGObject::)
     NS_DECL_NSIXTFATTRIBUTEHANDLER
     NS_DECL_NSIXTFELEMENT
 
@@ -48,10 +48,8 @@ public:
     nsresult Init (GType aType);
 
 protected:
+    nsresult GetJSContext (JSContext **jscx);
     nsCOMPtr<nsIXTFElementWrapper> mWrapper;
-
-    GType mType;
-    GObject *mObject;
 
 private:
     ~xgGtkElement();

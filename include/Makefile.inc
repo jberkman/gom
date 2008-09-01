@@ -1,7 +1,10 @@
 # -*- Makefile -*-
 
 dist_noinst_DATA += include/gomwidgets.in
+
 dist_noinst_HEADERS += include/gommacros.h
+dist_noinst_HEADERS += include/gom/gomcamel.h
+dist_noinst_HEADERS += include/gom/gomvalue.h
 
 CLEANFILES += include/gomwidgets.h
 

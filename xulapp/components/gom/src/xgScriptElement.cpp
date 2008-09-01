@@ -131,7 +131,8 @@ xgScriptElement::EvaluateScript ()
 
     nsAutoString aRet;
     PRBool isUndefined;
-    rv = cx->EvaluateString (mScript, NULL, NULL, NULL, 0, 0, &aRet, &isUndefined);
+    rv = cx->EvaluateString (mScript, global->GetGlobalJSObject (), NULL,
+			     mSrc.get (), 0, 0, &aRet, &isUndefined);
     mScript.Truncate ();
     mGlobal = NULL;
     NS_ENSURE_SUCCESS (rv, rv);

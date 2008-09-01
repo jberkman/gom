@@ -24,24 +24,38 @@ THE SOFTWARE.
 #ifndef XG_G_OBJECT_UTILS_H
 #define XG_G_OBJECT_UTILS_H
 
-#include <glib-object.h>
+#include "xgIGObjectHolder.h"
+
 #include <jspubtd.h>
 #include <nscore.h>
+#include <nsIXPCScriptable.h>
 
-class nsISupports;
-class nsIDOMNode;
-
-class xgGObjectUtils
+class xgGObject : public xgIGObjectHolder,
+		  public nsIXPCScriptable
 {
 public:
-    static nsresult DefineProperties (nsIDOMNode *aNode, GType aType);
+    NS_DECL_ISUPPORTS
+    NS_DECL_XGIGOBJECTHOLDER
+    NS_DECL_NSIXPCSCRIPTABLE
 
+    xgGObject();
+    nsresult Init (GObject *aObject);
+
+    gboolean Resolve (const char *name, GParamSpec **spec, guint *signal_id);
+
+    nsresult DefineProperties (JSContext *cx, nsISupports *aComObj);
+
+    static JSObject *GetNewOrUsed (JSContext *cx, GObject *gobj);
+    static nsresult GetNative (JSContext *cx, JSObject *obj, nsISupports **_retval);
+
+protected:
     static gboolean Resolve (GType aType, const char *name, GParamSpec **spec, guint *signal_id);
-
     static JSBool GetProperty (JSContext *cx, JSObject *obj, jsval id, jsval *vp);
     static JSBool SetProperty (JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 
-    static nsresult GetNative (JSContext *cx, JSObject *obj, nsISupports **_retval);
+    GObject *mObject;
+
+    ~xgGObject ();
 };
 
 #endif // XG_G_OBJECT_UTILS_H

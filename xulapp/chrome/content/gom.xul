@@ -8,7 +8,7 @@
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script src="gom.js"/>
   <hbox>
-    <textbox id="urlbar" flex="1" value="file:///Users/jacob/cvs/gom/examples/console.gom" onchange="go();"/>
+    <textbox id="urlbar" flex="1" value="file:///home/jacob/cvs/gom/examples/console.gom" onchange="go();"/>
     <button id="go" label="Go" oncommand="go();"/>
   </hbox>
   <browser id="browser" src="" flex="1" type="content-primary"/>

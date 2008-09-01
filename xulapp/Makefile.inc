@@ -23,6 +23,7 @@ mozilla-install:
 package:
 	$(MAKE) -C mozilla.obj/gom/installer
 
+check: package
 
 dist_noinst_DATA += xulapp/Makefile.in
 dist_noinst_DATA += xulapp/build.mk
@@ -59,6 +60,10 @@ dist_noinst_DATA += xulapp/components/gom/public/Makefile.in
 dist_noinst_DATA += xulapp/components/gom/public/xgIGObjectHolder.idl
 
 dist_noinst_DATA += xulapp/components/gom/src/Makefile.in
+dist_noinst_DATA += xulapp/components/gom/src/gomcamel.c
+dist_noinst_DATA += xulapp/components/gom/src/gomvalue.cpp
+dist_noinst_DATA += xulapp/components/gom/src/xgGObject.cpp
+dist_noinst_DATA += xulapp/components/gom/src/xgGObject.h
 dist_noinst_DATA += xulapp/components/gom/src/xgGomElementFactory.cpp
 dist_noinst_DATA += xulapp/components/gom/src/xgGomElementFactory.h
 dist_noinst_DATA += xulapp/components/gom/src/xgGomModule.cpp

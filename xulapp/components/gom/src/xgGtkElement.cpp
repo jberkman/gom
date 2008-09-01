@@ -26,7 +26,6 @@ THE SOFTWARE.
 #endif
 
 #include "xgGtkElement.h"
-#include "xgGObjectUtils.h"
 
 #include <gtk/gtk.h>
 
@@ -35,13 +34,17 @@ THE SOFTWARE.
 
 #include <nsIAtom.h>
 #include <nsIAtomService.h>
+#include <nsIDocument.h>
 #include <nsIDOMDocument.h>
 #include <nsIDOMDocumentEvent.h>
 #include <nsIDOMElement.h>
 #include <nsIDOMEvent.h>
 #include <nsIDOMEventTarget.h>
+#include <nsIDOMNamedNodeMap.h>
 #include <nsIDOMNode.h>
 #include <nsIDOMUIEvent.h>
+#include <nsIScriptContext.h>
+#include <nsIScriptGlobalObject.h>
 #include <nsMemory.h>
 #include <nsServiceManagerUtils.h>
 #include <nsStringAPI.h>
@@ -54,21 +57,17 @@ xgGtkElement::~xgGtkElement()
 {
 }
 
-NS_IMPL_ISUPPORTS3 (xgGtkElement, nsIXTFAttributeHandler, nsIXTFElement, xgIGObjectHolder)
+NS_IMPL_ISUPPORTS_INHERITED2 (xgGtkElement, xgGObject, nsIXTFAttributeHandler, nsIXTFElement)
 
 nsresult
-xgGtkElement::Init (GType gtype)
+xgGtkElement::Init (GType aType)
 {
-    mType = gtype;
-    return NS_OK;
-}
-
-/* GObjectPtr getGObject (); */
-NS_IMETHODIMP
-xgGtkElement::GetGObject (GObject **_retval)
-{
-    *_retval = mObject ? G_OBJECT (g_object_ref (mObject)) : NULL;
-    return NS_OK;
+    nsresult rv;
+    g_print (GOM_LOC ("Creating new <%s>...\n"), g_type_name (aType));
+    GObject *obj = (GObject *)g_object_new (aType, NULL);
+    rv = xgGObject::Init (obj);
+    g_object_unref (obj);
+    return rv;
 }
 
 void
@@ -138,14 +137,6 @@ NS_IMETHODIMP
 xgGtkElement::OnCreated (nsIXTFElementWrapper *wrapper)
 {
     nsresult rv;
-    if (!mType) {
-	return NS_ERROR_FAILURE;
-    }
-    g_print (GOM_LOC ("Creating new <%s>...\n"), g_type_name (mType));
-    mObject = (GObject *)g_object_new (mType, NULL);
-    if (!mObject) {
-	return NS_ERROR_UNEXPECTED;
-    }
 
     mWrapper = wrapper;
     mWrapper->SetNotificationMask (NOTIFY_PARENT_CHANGED |
@@ -157,7 +148,12 @@ xgGtkElement::OnCreated (nsIXTFElementWrapper *wrapper)
     rv = mWrapper->GetElementNode (getter_AddRefs (elem));
     NS_ENSURE_SUCCESS (rv, rv);
 
-    xgGObjectUtils::DefineProperties (elem, mType);
+    JSContext *jscx;
+    rv = GetJSContext (&jscx);
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    rv = DefineProperties (jscx, elem);
+    NS_ENSURE_SUCCESS (rv, rv);
 
     if (GTK_IS_ENTRY (mObject)) {
 	g_signal_connect (mObject, "activate",
@@ -268,10 +264,49 @@ xgGtkElement::ParentChanged (nsIDOMElement *newParent)
 		   G_OBJECT_TYPE_NAME (mObject));
 	return NS_ERROR_FAILURE;
     }
-    g_assert ((GtkWidget *)parent == gtk_widget_get_parent (GTK_WIDGET (mObject)));
-    g_object_unref (parent);
+    g_assert (GTK_WIDGET (parent) == gtk_widget_get_parent (GTK_WIDGET (mObject)));
 
-    //g_hash_table_foreach (mAttrs, append_child_attrs_foreach, mObject);
+    nsresult rv;
+    nsCOMPtr<nsIDOMElement> elem;
+    rv = mWrapper->GetElementNode (getter_AddRefs (elem));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    nsCOMPtr<nsIDOMNamedNodeMap> attrs;
+    rv = elem->GetAttributes (getter_AddRefs (attrs));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    PRUint32 len;
+    rv = attrs->GetLength (&len);
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    nsCOMPtr<nsIDOMNode> attr;
+    nsAutoString attrName;
+    nsAutoString attrValue;
+    const char *camel_prop;
+    GValue gval = { 0 };
+
+    for (PRUint32 i = 0; i < len; i++) {
+	rv = attrs->Item (i, getter_AddRefs (attr));
+	NS_ENSURE_SUCCESS (rv, rv);
+
+	rv = attr->GetNodeName (attrName);
+	NS_ENSURE_SUCCESS (rv, rv);
+
+	NS_ConvertUTF16toUTF8 attrCName (attrName);
+	camel_prop = gom_camel_uncase (attrCName.get ());
+
+	rv = attr->GetNodeValue (attrValue);
+	NS_ENSURE_SUCCESS (rv, rv);
+
+	g_value_init (&gval, G_TYPE_STRING);
+	g_value_set_string (&gval, NS_ConvertUTF16toUTF8 (attrValue).get ());
+	append_child_attrs_foreach ((gpointer)camel_prop,
+				    (gpointer)&gval,
+				    (gpointer)mObject);
+
+	GOM_CAMEL_FREE (camel_prop, attrCName.get ());
+	g_value_unset (&gval);
+    }
 
     return NS_OK;
 }
@@ -302,9 +337,6 @@ xgGtkElement::WillAppendChild (nsIDOMNode *child)
     GObject *widget = NULL;
     if (!wrappedChild || NS_FAILED (wrappedChild->GetGObject (&widget)) ||
 	!GTK_IS_WIDGET (widget)) {
-	if (widget) {
-	    g_object_unref (widget);
-	}
 	return NS_ERROR_FAILURE;
     }
 
@@ -410,7 +442,7 @@ xgGtkElement::HandlesAttribute (nsIAtom *name, PRBool *_retval)
     GOM_ATOM_TO_GSTRING_RETURN (prop, name, NS_ERROR_INVALID_ARG);
     GParamSpec *spec;
     guint signal_id;
-    *_retval = xgGObjectUtils::Resolve (mType, prop, &spec, &signal_id) ? PR_TRUE : PR_FALSE;
+    *_retval = Resolve (prop, &spec, &signal_id) ? PR_TRUE : PR_FALSE;
     g_print (GOM_LOC ("%s -> %d\n"), prop, *_retval);
     return NS_OK;
 }
@@ -424,7 +456,7 @@ xgGtkElement::SetAttribute (nsIAtom *name, const nsAString &newValue)
 
     GParamSpec *spec;
     guint signal_id;
-    if (!xgGObjectUtils::Resolve (mType, prop, &spec, &signal_id)) {
+    if (!Resolve (prop, &spec, &signal_id)) {
 	return NS_ERROR_FAILURE;
     }
     if (!spec) {
@@ -435,7 +467,7 @@ xgGtkElement::SetAttribute (nsIAtom *name, const nsAString &newValue)
     GValue gval = { 0 };
     if (G_TYPE_FUNDAMENTAL (G_PARAM_SPEC_VALUE_TYPE (spec)) == G_TYPE_OBJECT) {
 	g_warning (GOM_LOC ("Attribute %s.%s is a %s, which a string cannot be converted to"),
-		   g_type_name (mType), prop,
+		   G_OBJECT_TYPE_NAME (mObject), prop,
 		   g_type_name (G_PARAM_SPEC_VALUE_TYPE (spec)));
 	return NS_ERROR_FAILURE;
     } else if (gtk_builder_value_from_string (NULL, spec, value, &gval, &error)) {
@@ -463,7 +495,7 @@ xgGtkElement::GetAttribute (nsIAtom *name, nsAString &_retval)
 
     GParamSpec *spec;
     guint signal_id;
-    if (!xgGObjectUtils::Resolve (mType, prop, &spec, &signal_id)) {
+    if (!Resolve (prop, &spec, &signal_id)) {
 	return NS_ERROR_FAILURE;
     }
     if (!spec) {
@@ -490,7 +522,7 @@ xgGtkElement::HasAttribute (nsIAtom *name, PRBool *_retval)
 
     GParamSpec *spec;
     guint signal_id;
-    *_retval = xgGObjectUtils::Resolve (mType, prop, &spec, &signal_id);
+    *_retval = Resolve (prop, &spec, &signal_id);
 
     return NS_OK;
 }
@@ -507,4 +539,35 @@ NS_IMETHODIMP
 xgGtkElement::GetAttributeNameAt (PRUint32 index, nsIAtom **_retval)
 {
     XG_RETURN_NOT_IMPLEMENTED;
+}
+
+nsresult
+xgGtkElement::GetJSContext (JSContext **jscx)
+{
+    nsresult rv;
+
+    nsCOMPtr<nsIDOMElement> elem;
+    rv = mWrapper->GetElementNode (getter_AddRefs (elem));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    nsCOMPtr<nsIDOMDocument> doc;
+    rv = elem->GetOwnerDocument (getter_AddRefs (doc));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    nsCOMPtr<nsIDocument> nsdoc (do_QueryInterface (doc, &rv));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    nsCOMPtr<nsIScriptGlobalObject> global (nsdoc->GetScriptGlobalObject ());
+    NS_ENSURE_TRUE (global, NS_ERROR_UNEXPECTED);
+
+    rv = global->EnsureScriptEnvironment (nsIProgrammingLanguage::JAVASCRIPT);
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    nsCOMPtr<nsIScriptContext> cx (global->GetScriptContext (nsIProgrammingLanguage::JAVASCRIPT));
+    NS_ENSURE_TRUE (cx, NS_ERROR_UNEXPECTED);
+
+    *jscx = (JSContext *)cx->GetNativeContext ();
+    NS_ENSURE_TRUE (*jscx, NS_ERROR_UNEXPECTED);
+
+    return NS_OK;
 }

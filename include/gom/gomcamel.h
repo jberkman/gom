@@ -24,7 +24,7 @@ THE SOFTWARE.
 #ifndef GOM_CAMEL_H
 #define GOM_CAMEL_H
 
-#include <glib/gmem.h>
+#include <glib.h>
 
 G_BEGIN_DECLS
 

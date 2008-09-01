@@ -27,7 +27,9 @@ THE SOFTWARE.
 
 #include "gom/gomvalue.h"
 
-#include <gom/gomjsobject.h>
+#include "xgGObject.h"
+
+#include <nsCOMPtr.h>
 
 GQuark
 gom_value_error_quark (void)
@@ -39,20 +41,26 @@ gboolean
 gom_g_value (JSContext *cx, GValue *gval, jsval jval, GError **error)
 {
     switch (JSVAL_TAG (jval)) {
-#if 0
     case JSVAL_OBJECT: {
-        GObject *gobj;
-        gobj = gom_js_object_get_g_object (cx, JSVAL_TO_OBJECT (jval));
-        if (!gobj) {
-            g_set_error (error, GOM_VALUE_ERROR, GOM_VALUE_ERROR_G_OBJECT_NOT_FOUND,
-                         "Cannot get GObject from JSObject %p (%s)",
-                         JSVAL_TO_OBJECT (jval),
-                         JS_GET_CLASS (cx, JSVAL_TO_OBJECT (jval))->name);
-            return FALSE;
+        nsCOMPtr<nsISupports> native;
+        nsresult rv = xgGObject::GetNative (cx, JSVAL_TO_OBJECT (jval), getter_AddRefs (native));
+        if (NS_SUCCEEDED (rv)) {
+            nsCOMPtr<xgIGObjectHolder> holder (do_QueryInterface (native, &rv));
+            if (NS_SUCCEEDED (rv)) {
+		GObject *gobj;
+                rv = holder->GetGObject (&gobj);
+                if (NS_SUCCEEDED (rv)) {
+                    g_value_set_object (gval, gobj);
+                    break;
+                }
+            }
         }
-        break;
+        g_set_error (error, GOM_VALUE_ERROR, GOM_VALUE_ERROR_G_OBJECT_NOT_FOUND,
+                     "Cannot get GObject from JSObject %p (%s)",
+                     (gpointer)JSVAL_TO_OBJECT (jval),
+                     JS_GET_CLASS (cx, JSVAL_TO_OBJECT (jval))->name);
+        return FALSE;
     }
-#endif
     case JSVAL_DOUBLE:
         g_value_init (gval, G_TYPE_DOUBLE);
         g_value_set_double (gval, *JSVAL_TO_DOUBLE (jval));
@@ -153,24 +161,22 @@ gom_jsval (JSContext *cx, jsval *jval, const GValue *gval, GError **error)
         break;
 
     default:
-#if 0
         if (G_VALUE_HOLDS_OBJECT (gval)) {
-            gobj = g_value_get_object (gval);
+            gobj = (GObject *)g_value_get_object (gval);
             if (!gobj) {
                 *jval = JSVAL_NULL;
             } else {
-                jsobj = gom_js_object_get_or_create_js_object (cx, gobj);
+                jsobj = xgGObject::GetNewOrUsed (cx, gobj);
                 if (!jsobj) {
                     g_set_error (error, GOM_VALUE_ERROR, GOM_VALUE_ERROR_JS_OBJECT_NOT_FOUND,
                                  "Cannot get JSObject from Object %p (%s)",
-                                 gobj, g_type_name (G_TYPE_FROM_INSTANCE (gobj)));
+                                 (gpointer)gobj, g_type_name (G_TYPE_FROM_INSTANCE (gobj)));
                     return FALSE;
                 }
                 *jval = OBJECT_TO_JSVAL (jsobj);
             }
             ret = TRUE;
         }
-#endif
         break;
     }
 

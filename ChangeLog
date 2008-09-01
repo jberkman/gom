@@ -1,3 +1,52 @@
+2008-09-01  jacob berkman  <jacob@ilovegom.org>
+
+	* xulapp/components/gom/src/xgGObject.{h,cpp} (class xgGObject):
+	modify xgGObjectUtils to be an nsIXPCScriptable xgIGObjectHolder
+
+	* xulapp/components/gom/src/gomvalue.cpp (gom_g_value): use
+	xgGObject instead of gomjsobject for getting a GObject from a
+	jsval
+	(gom_jsval): use xgGObject instead of gomjsobject for getting a
+	JSObject from a GObject
+
+	* xulapp/components/gom/src/xgGtkElement.cpp: use xgGObject as a
+	base class
+	(xgGtkElement::Init): create the object here
+	(xgGtkElement::ParentChanged): add child properties using
+	attributes
+	(xgGtkElement::WillAppendChild): don't unref the return of
+	GetGObject()
+	(xgGtkElement::GetJSContext): get the JSContext from this
+	element's document
+
+	* xulapp/app/application.ini.in (EnableExtensionManager): enable
+	extensions
+
+	* include/gom/gomcamel.h: don't try to pull in headers mozilla
+	won't like
+
+2008-08-30  jacob berkman  <jacob@ilovegom.org>
+
+	* xulapp/components/gom/src/gomcamel.c: 
+	* xulapp/components/gom/src/gomvalue.c: copy from libgom
+
+	* xulapp/components/gom/src/xgGObjectUtils.h: static class which
+	handles some GObject/JSObject interaction for us
+
+	* xulapp/components/gom/src/xgGtkElement.cpp:
+	(xgGtkElement::WidgetActivate): handle activate events on
+	GtkEntries
+	(xgGtkElement::OnCreated): add our GObject's properties to our
+	JSObject
+	(xgGtkElement::HandlesAttribute): only handle attributes for which
+	we have a property
+
+	* include/gommacros.h (GOM_LOC): print the file's basename, not
+	its full path
+
+	* include/gom/gomvalue.h (GOM_VALUE_ERROR): C++ doesn't allow
+	trailing commas, or something daft
+
 2008-08-27  jacob  <jacob@ilovegom.org>
 
 	* xulapp/components/gom/src/xgGtkElement.cpp (xgGtkElement::SetAttribute):

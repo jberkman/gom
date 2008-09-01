@@ -60,7 +60,8 @@ REQUIRES := \
 LOCAL_INCLUDES += $(MOZ_GTK2_CFLAGS)
 
 CPPSRCS := \
-	xgGObjectUtils.cpp \
+	gomvalue.cpp \
+	xgGObject.cpp \
 	xgGomElementFactory.cpp \
 	xgGomModule.cpp \
 	xgGtkElement.cpp \
@@ -70,7 +71,6 @@ CPPSRCS := \
 
 CSRCS := \
 	gomcamel.c \
-	gomvalue.c \
 	$(NULL)
 
 EXTRA_DSO_LDOPTS = \
