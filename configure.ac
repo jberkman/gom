@@ -2,7 +2,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([gom], [0.3], [http://code.google.com/p/ilovegom/issues/entry])
+# http://www.mail-archive.com/autoconf@gnu.org/msg16720.html
+AC_INIT([gom],
+	[0.3.]m4_esyscmd([svnversion -n]),
+	[http://code.google.com/p/ilovegom/issues/entry])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([xulapp/components/gom/src/xgGomModule.cpp])
 AC_CONFIG_HEADER([config.h])

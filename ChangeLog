@@ -1,5 +1,8 @@
 2008-09-01  jacob berkman  <jacob@ilovegom.org>
 
+	* configure.ac: generate package version number based on svn
+	revision
+
 	* xulapp/components/gom/src/xgGObject.{h,cpp} (class xgGObject):
 	modify xgGObjectUtils to be an nsIXPCScriptable xgIGObjectHolder
 
