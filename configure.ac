@@ -87,6 +87,7 @@ rm -rf a.out.dSYM
 
 AC_CONFIG_FILES([
 Makefile
+test-gom.sh
 xulapp/app/application.ini
 xulapp/confvars.sh
 xulapp/mozconfig

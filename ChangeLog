@@ -1,5 +1,19 @@
 2008-09-01  jacob berkman  <jacob@ilovegom.org>
 
+	* xulapp/components/gom/src/xgGtkElement.cpp
+	(xgGtkElement::DefineProperties): move to xgGtkElement, as simple
+	xgGObjects get their properties defined dynamically via its
+	nsIXPCScriptable implementation
+	(xgGtkElement::Resolve): resolve on nsIAtoms
+
+	* xulapp/components/gom/src/xgGObject.cpp
+	(xgGObject::GetProperty, xgGObject::SetProperty): split into two;
+	one operates on a JSObject, and a helper operates on a GObject
+	(xgGObject::Resolve): add variants that operate on jsval property
+	names
+	(xgGObject::GetProperty, xgGObject::SetProperty): use static
+	variants
+
 	* configure.ac: generate package version number based on svn
 	revision
 

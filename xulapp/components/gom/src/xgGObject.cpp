@@ -74,69 +74,12 @@ xgGObject::GetGObject (GObject **_retval)
 }
 
 
-nsresult
-xgGObject::DefineProperties (JSContext *jscx, nsISupports *aCOMObj)
-{
-    nsresult rv;
-
-    nsCOMPtr<nsIXPConnect> xpc (do_GetService ("@mozilla.org/js/xpc/XPConnect;1", &rv));
-    NS_ENSURE_SUCCESS (rv, rv);
-
-    nsCOMPtr<nsIXPConnectJSObjectHolder> jswrapper;
-    rv = xpc->WrapNative (jscx, JS_GetGlobalObject (jscx), aCOMObj, NS_GET_IID (nsISupports), getter_AddRefs (jswrapper));
-    NS_ENSURE_SUCCESS (rv, rv);
-
-#if 0
-    nsCOMPtr<nsIXPConnectWrappedNative> wrapper (do_QueryInterface (jswrapper, &rv));
-    NS_ENSURE_SUCCESS (rv, rv);
-    nsDOMClassInfo::PreserveNodeWrapper(wrapper);
-#endif
-
-    JSObject *jsobj;
-    rv = jswrapper->GetJSObject (&jsobj);
-    NS_ENSURE_SUCCESS (rv, rv);
-
-    g_message (GOM_LOC ("Got JSObject: %p"), (void *)jsobj);
-
-    guint n_properties;
-    GParamSpec **props = g_object_class_list_properties (G_OBJECT_GET_CLASS (mObject), &n_properties);
-    g_message (GOM_LOC ("Adding %d properties from %s"), n_properties, G_OBJECT_TYPE_NAME (mObject));
-
-    JS_BeginRequest (jscx);
-
-    const char *camelName;
-    for (guint i = 0; i < n_properties; i++) {
-	camelName = gom_camel_case (props[i]->name);
-	if (!JS_DefineProperty (jscx, jsobj, camelName, JSVAL_VOID,
-				xgGObject::GetProperty,
-				xgGObject::SetProperty,
-				JSPROP_ENUMERATE | JSPROP_PERMANENT)) {
-	    g_printerr ("Could not define a property for %s\n", camelName);
-	} else {
-	    g_print (GOM_LOC ("Defined property: %s.%s\n"),
-		     G_OBJECT_TYPE_NAME (mObject), camelName);
-	}
-	GOM_CAMEL_FREE (camelName, props[i]->name);
-    }
-
-    JS_EndRequest (jscx);
-
-    return NS_OK;
-}
-
 // static
 JSBool
-xgGObject::GetProperty (JSContext *cx,
-			JSObject  *obj,
-			jsval      id,
-			jsval     *vp)
+xgGObject::GetProperty (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-    if (JSVAL_IS_INT (id)) {
-        return JS_TRUE;
-    }
-
+    //g_print (GOM_LOC ("Entered\n"));
     nsresult rv;
-
     nsCOMPtr<nsISupports> native;
     rv = GetNative (cx, obj, getter_AddRefs (native));
     NS_ENSURE_SUCCESS (rv, JS_FALSE);
@@ -149,12 +92,17 @@ xgGObject::GetProperty (JSContext *cx,
     NS_ENSURE_SUCCESS (rv, rv);
     NS_ENSURE_TRUE (G_IS_OBJECT (gobj), NS_ERROR_UNEXPECTED);
 
-    const char *name = JSVAL_CHARS (id);
+    return GetProperty (cx, gobj, id, vp);
+}
+
+// static
+JSBool
+xgGObject::GetProperty (JSContext *cx, GObject *gobj, jsval id, jsval *vp)
+{
+    //g_print (GOM_LOC ("Entered\n"));
     GParamSpec *spec;
     guint signal_id;
-
-    g_print (GOM_LOC (""));
-    if (!Resolve (G_TYPE_FROM_INSTANCE (gobj), name, &spec, &signal_id)) {
+    if (!Resolve (G_TYPE_FROM_INSTANCE (gobj), id, &spec, &signal_id)) {
 	return JS_TRUE;
     }
 
@@ -181,21 +129,14 @@ xgGObject::GetProperty (JSContext *cx,
         return JS_FALSE;
     }
     g_value_unset (&gval);
-
     return JS_TRUE;
 }
 
 // static
 JSBool
-xgGObject::SetProperty (JSContext *cx,
-			     JSObject  *obj,
-			     jsval      id,
-			     jsval     *vp)
+xgGObject::SetProperty (JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-    if (JSVAL_IS_INT (id)) {
-        return JS_TRUE;
-    }
-
+    //g_print (GOM_LOC ("Entered\n"));
     nsresult rv;
 
     nsCOMPtr<nsISupports> native;
@@ -210,12 +151,17 @@ xgGObject::SetProperty (JSContext *cx,
     NS_ENSURE_SUCCESS (rv, rv);
     NS_ENSURE_TRUE (G_IS_OBJECT (gobj), NS_ERROR_UNEXPECTED);
 
-    const char *name = JSVAL_CHARS (id);
+    return SetProperty (cx, gobj, id, vp);
+}
+
+// static
+JSBool
+xgGObject::SetProperty (JSContext *cx, GObject *gobj, jsval id, jsval *vp)
+{
+    //g_print (GOM_LOC ("Entered\n"));
     GParamSpec *spec;
     guint signal_id;
-
-    g_print (GOM_LOC (""));
-    if (!Resolve (G_TYPE_FROM_INSTANCE (gobj), name, &spec, &signal_id)) {
+    if (!Resolve (G_TYPE_FROM_INSTANCE (gobj), id, &spec, &signal_id)) {
 	return JS_TRUE;
     }
 
@@ -260,23 +206,37 @@ xgGObject::SetProperty (JSContext *cx,
     return JS_TRUE;
 }
 
-gboolean
-xgGObject::Resolve (const char  *name,
-		    GParamSpec **spec,
-		    guint       *signal_id)
+JSBool
+xgGObject::Resolve (const char *name, GParamSpec **spec, guint *signal_id)
 {
     return Resolve (G_TYPE_FROM_INSTANCE (mObject), name, spec, signal_id);
 }
 
+JSBool
+xgGObject::Resolve (jsval id, GParamSpec **spec, guint *signal_id)
+{
+    return Resolve (G_TYPE_FROM_INSTANCE (mObject), id, spec, signal_id);
+}
+
 // static
-gboolean
+JSBool
+xgGObject::Resolve (GType aType, jsval id, GParamSpec **spec, guint *signal_id)
+{
+    if (JSVAL_IS_INT (id)) {
+        return JS_FALSE;
+    }
+    return Resolve (aType, JSVAL_CHARS (id), spec, signal_id);
+}
+
+// static
+JSBool
 xgGObject::Resolve (GType        aType,
 		    const char  *name,
 		    GParamSpec **spec,
 		    guint       *signal_id)
 {
+    //g_print (GOM_LOC ("Entered\n"));
     const char *n;
-
     n = gom_camel_uncase (name);
 
     if (n[0] == 'o' && n[1] == 'n' &&
@@ -321,6 +281,7 @@ xgGObject::GetNative (JSContext    *cx,
 JSObject *
 xgGObject::GetNewOrUsed (JSContext *cx, GObject *gobj)
 {
+    //g_print (GOM_LOC ("Looking up JSObject for %s"), G_OBJECT_TYPE_NAME (gobj));
     nsCOMPtr<xgIGObjectHolder> holder (static_cast<xgIGObjectHolder *>(g_object_get_data (gobj, "XG_GOBJECT")));
     if (!holder) {
 	xgGObject *obj = new xgGObject ();
@@ -328,7 +289,6 @@ xgGObject::GetNewOrUsed (JSContext *cx, GObject *gobj)
 	if (NS_FAILED (obj->Init (gobj))) {
 	    return NULL;
 	}
-	obj->DefineProperties (cx, holder);
     }
 
     nsresult rv;
@@ -385,24 +345,6 @@ NS_IMETHODIMP
 xgGObject::AddProperty (nsIXPConnectWrappedNative *wrapper,
 			JSContext *cx, JSObject *obj, jsval id, jsval *vp, PRBool *_retval)
 {
-#if 0
-    if (JSVAL_IS_INT (id)) {
-	*_retval = PR_TRUE;
-	return NS_OK;
-    }
-
-    const char *name = JSVAL_CHARS (id);
-    GParamSpec *spec;
-    guint signal_id;
-
-#if 1
-    g_print (GOM_LOC (""));
-#endif
-    if (!Resolve (name, &spec, &signal_id)) {
-	*_retval = PR_TRUE;
-	return NS_OK;
-    }
-#endif
     *_retval = PR_TRUE;
     return NS_OK;
 }
@@ -418,111 +360,16 @@ NS_IMETHODIMP
 xgGObject::GetProperty (nsIXPConnectWrappedNative *wrapper,
 			JSContext * cx, JSObject * obj, jsval id, jsval * vp, PRBool *_retval)
 {
-    if (JSVAL_IS_INT (id)) {
-	*_retval = PR_TRUE;
-	return NS_OK;
-    }
-
-    const char *name = JSVAL_CHARS (id);
-    GParamSpec *spec;
-    guint signal_id;
-
-#if 1
-    g_print (GOM_LOC (""));
-#endif
-    if (!Resolve (name, &spec, &signal_id)) {
-	*_retval = PR_TRUE;
-	return NS_OK;
-    }
-
-#if 0
-    if (signal_id) {
-        closure = gom_js_object_get_closure_prop (gobj, signal_id);
-        g_print ("closure: %p\n", closure);
-        *vp = closure ? OBJECT_TO_JSVAL (JS_GetFunctionObject (closure->fun)) : JSVAL_VOID;
-        return JS_TRUE;
-    }
-#endif
-
-    g_assert (spec);
-    
-    GValue gval = { 0 };
-    g_value_init (&gval, G_PARAM_SPEC_VALUE_TYPE (spec));
-    g_object_get_property (mObject, spec->name, &gval);
-
-    GError *error = NULL;
-    if (!gom_jsval (cx, vp, &gval, &error)) {
-        g_printerr ("Could not get jsval: %s\n", error->message);
-        g_value_unset (&gval);
-        g_error_free (error);
-	*_retval = PR_FALSE;
-	return NS_OK;
-    }
-    g_value_unset (&gval);
-
-    *_retval = PR_TRUE;
+    *_retval = GetProperty (cx, mObject, id, vp);
     return NS_OK;
 }
 
 /* PRBool setProperty (in nsIXPConnectWrappedNative wrapper, in JSContextPtr cx, in JSObjectPtr obj, in JSVal id, in JSValPtr vp); */
-NS_IMETHODIMP xgGObject::SetProperty(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, jsval id, jsval * vp, PRBool *_retval)
+NS_IMETHODIMP
+xgGObject::SetProperty (nsIXPConnectWrappedNative *wrapper,
+			JSContext * cx, JSObject * obj, jsval id, jsval * vp, PRBool *_retval)
 {
-    g_message (GOM_LOC ("well, got here?"));
-    if (JSVAL_IS_INT (id)) {
-	*_retval = PR_TRUE;
-	return NS_OK;
-    }
-
-    const char *name = JSVAL_CHARS (id);
-    GParamSpec *spec;
-    guint signal_id;
-
-    g_print (GOM_LOC (""));
-    if (!Resolve (name, &spec, &signal_id)) {
-	*_retval = PR_TRUE;
-	return NS_OK;
-    }
-
-#if 0
-    GomJSClosure *closure;
-    if (signal_id) {
-        JSFunction *fun;
-        if (!JSVAL_IS_OBJECT (*vp) ||
-            !JS_ObjectIsFunction (cx, JSVAL_TO_OBJECT (*vp))) {
-            g_printerr ("jsval is not a function.  sucka.\n");
-            return JS_FALSE;
-        }
-        fun = JS_ValueToFunction (cx, *vp);
-        if (!fun) {
-            g_printerr ("could not get function from value\n");
-            return JS_FALSE;
-        }
-        closure = gom_js_object_get_closure_prop (gobj, signal_id);
-        if (closure) {
-            closure->fun = fun;
-        } else {
-            closure = (GomJSClosure *)gom_js_closure_new (cx, obj, fun);
-            gom_js_object_set_closure_prop (gobj, signal_id, closure);
-            g_signal_connect_closure_by_id (gobj, signal_id, 0, &closure->closure, FALSE);
-        }
-        return JS_TRUE;
-    }
-#endif
-    g_assert (spec);
-
-    GValue gval = { 0 };
-    GError *error = NULL;
-    if (!gom_g_value (cx, &gval, *vp, &error)) {
-        g_printerr ("Could not get GValue: %s\n", error->message);
-        g_error_free (error);
-	*_retval = PR_FALSE;
-	return NS_OK;
-    }
-
-    g_object_set_property (mObject, spec->name, &gval);
-    g_value_unset (&gval);
-
-    *_retval = PR_TRUE;
+    *_retval = SetProperty (cx, mObject, id, vp);
     return NS_OK;
 }
 
@@ -543,22 +390,12 @@ NS_IMETHODIMP
 xgGObject::NewResolve (nsIXPConnectWrappedNative *wrapper,
 		       JSContext *cx, JSObject *obj, jsval id, PRUint32 flags, JSObject **objp, PRBool *_retval)
 {
-    if (JSVAL_IS_INT (id)) {
-	*objp = NULL;
-        *_retval = PR_TRUE;
-	return NS_OK;
-    }
-    const char *name = JSVAL_CHARS (id);
+    //g_print (GOM_LOC ("Entered\n"));
     GParamSpec *spec;
-    guint signal_id;
-
-    g_print (GOM_LOC (""));
-    if (!Resolve (name, &spec, &signal_id)) {
+    guint signal_id;    
+    if (!Resolve (id, &spec, &signal_id)) {
 	*objp = NULL;
-	*_retval = PR_TRUE;
-	return NS_OK;
     }
-
     *_retval = PR_TRUE;
     return NS_OK;
 }

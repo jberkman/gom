@@ -41,17 +41,21 @@ public:
     xgGObject();
     nsresult Init (GObject *aObject);
 
-    gboolean Resolve (const char *name, GParamSpec **spec, guint *signal_id);
-
-    nsresult DefineProperties (JSContext *cx, nsISupports *aComObj);
+    JSBool Resolve (const char *name, GParamSpec **spec, guint *signal_id);
+    JSBool Resolve (jsval id, GParamSpec **spec, guint *signal_id);
 
     static JSObject *GetNewOrUsed (JSContext *cx, GObject *gobj);
-    static nsresult GetNative (JSContext *cx, JSObject *obj, nsISupports **_retval);
+    static nsresult  GetNative (JSContext *cx, JSObject *obj, nsISupports **_retval);
 
 protected:
-    static gboolean Resolve (GType aType, const char *name, GParamSpec **spec, guint *signal_id);
+    static JSBool Resolve (GType aType, jsval id, GParamSpec **spec, guint *signal_id);
+    static JSBool Resolve (GType aType, const char *name, GParamSpec **spec, guint *signal_id);
+
     static JSBool GetProperty (JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+    static JSBool GetProperty (JSContext *cx, GObject *obj, jsval id, jsval *vp);
+
     static JSBool SetProperty (JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+    static JSBool SetProperty (JSContext *cx, GObject *obj, jsval id, jsval *vp);
 
     GObject *mObject;
 

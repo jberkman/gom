@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "gom/gomcamel.h"
 #include "gommacros.h"
 
+#include <jsapi.h>
 #include <nsIAtom.h>
 #include <nsIAtomService.h>
 #include <nsIDocument.h>
@@ -63,8 +64,10 @@ nsresult
 xgGtkElement::Init (GType aType)
 {
     nsresult rv;
+    NS_ENSURE_TRUE (g_type_is_a (aType, GTK_TYPE_WIDGET), NS_ERROR_INVALID_ARG);
     g_print (GOM_LOC ("Creating new <%s>...\n"), g_type_name (aType));
     GObject *obj = (GObject *)g_object_new (aType, NULL);
+    NS_ENSURE_TRUE (obj, NS_ERROR_OUT_OF_MEMORY);
     rv = xgGObject::Init (obj);
     g_object_unref (obj);
     return rv;
@@ -148,11 +151,8 @@ xgGtkElement::OnCreated (nsIXTFElementWrapper *wrapper)
     rv = mWrapper->GetElementNode (getter_AddRefs (elem));
     NS_ENSURE_SUCCESS (rv, rv);
 
-    JSContext *jscx;
-    rv = GetJSContext (&jscx);
-    NS_ENSURE_SUCCESS (rv, rv);
-
-    rv = DefineProperties (jscx, elem);
+    // need to do this as XTF won't QI us for nsIXPCScriptable
+    rv = DefineProperties ();
     NS_ENSURE_SUCCESS (rv, rv);
 
     if (GTK_IS_ENTRY (mObject)) {
@@ -439,11 +439,9 @@ xgGtkElement::PerformAccesskey ()
 NS_IMETHODIMP
 xgGtkElement::HandlesAttribute (nsIAtom *name, PRBool *_retval)
 {
-    GOM_ATOM_TO_GSTRING_RETURN (prop, name, NS_ERROR_INVALID_ARG);
     GParamSpec *spec;
     guint signal_id;
-    *_retval = Resolve (prop, &spec, &signal_id) ? PR_TRUE : PR_FALSE;
-    g_print (GOM_LOC ("%s -> %d\n"), prop, *_retval);
+    *_retval = Resolve (name, &spec, &signal_id) ? PR_TRUE : PR_FALSE;
     return NS_OK;
 }
 
@@ -451,12 +449,11 @@ xgGtkElement::HandlesAttribute (nsIAtom *name, PRBool *_retval)
 NS_IMETHODIMP
 xgGtkElement::SetAttribute (nsIAtom *name, const nsAString &newValue)
 {
-    GOM_ATOM_TO_GSTRING_RETURN (prop, name, NS_ERROR_INVALID_ARG);
     GOM_ASTRING_TO_GSTRING_RETURN (value, newValue, NS_ERROR_INVALID_ARG);
 
     GParamSpec *spec;
     guint signal_id;
-    if (!Resolve (prop, &spec, &signal_id)) {
+    if (!Resolve (name, &spec, &signal_id)) {
 	return NS_ERROR_FAILURE;
     }
     if (!spec) {
@@ -467,7 +464,7 @@ xgGtkElement::SetAttribute (nsIAtom *name, const nsAString &newValue)
     GValue gval = { 0 };
     if (G_TYPE_FUNDAMENTAL (G_PARAM_SPEC_VALUE_TYPE (spec)) == G_TYPE_OBJECT) {
 	g_warning (GOM_LOC ("Attribute %s.%s is a %s, which a string cannot be converted to"),
-		   G_OBJECT_TYPE_NAME (mObject), prop,
+		   G_OBJECT_TYPE_NAME (mObject), spec->name,
 		   g_type_name (G_PARAM_SPEC_VALUE_TYPE (spec)));
 	return NS_ERROR_FAILURE;
     } else if (gtk_builder_value_from_string (NULL, spec, value, &gval, &error)) {
@@ -491,11 +488,9 @@ xgGtkElement::RemoveAttribute (nsIAtom *name)
 NS_IMETHODIMP
 xgGtkElement::GetAttribute (nsIAtom *name, nsAString &_retval)
 {
-    GOM_ATOM_TO_GSTRING_RETURN (prop, name, NS_ERROR_INVALID_ARG);
-
     GParamSpec *spec;
     guint signal_id;
-    if (!Resolve (prop, &spec, &signal_id)) {
+    if (!Resolve (name, &spec, &signal_id)) {
 	return NS_ERROR_FAILURE;
     }
     if (!spec) {
@@ -522,8 +517,7 @@ xgGtkElement::HasAttribute (nsIAtom *name, PRBool *_retval)
 
     GParamSpec *spec;
     guint signal_id;
-    *_retval = Resolve (prop, &spec, &signal_id);
-
+    *_retval = xgGObject::Resolve (prop, &spec, &signal_id);
     return NS_OK;
 }
 
@@ -570,4 +564,66 @@ xgGtkElement::GetJSContext (JSContext **jscx)
     NS_ENSURE_TRUE (*jscx, NS_ERROR_UNEXPECTED);
 
     return NS_OK;
+}
+
+nsresult
+xgGtkElement::DefineProperties ()
+{
+    nsresult rv;
+
+    JSContext *jscx;
+    rv = GetJSContext (&jscx);
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    nsCOMPtr<nsIXPConnect> xpc (do_GetService ("@mozilla.org/js/xpc/XPConnect;1", &rv));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    nsCOMPtr<nsIDOMElement> elem;
+    rv = mWrapper->GetElementNode (getter_AddRefs (elem));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    nsCOMPtr<nsIXPConnectJSObjectHolder> jswrapper;
+    rv = xpc->WrapNative (jscx, JS_GetGlobalObject (jscx), elem,
+			  NS_GET_IID (nsISupports),
+			  getter_AddRefs (jswrapper));
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    JSObject *jsobj;
+    rv = jswrapper->GetJSObject (&jsobj);
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    g_message (GOM_LOC ("Got JSObject: %p"), (void *)jsobj);
+
+    guint n_properties;
+    GParamSpec **props = g_object_class_list_properties (G_OBJECT_GET_CLASS (mObject), &n_properties);
+    g_message (GOM_LOC ("Adding %d properties from %s"), n_properties, G_OBJECT_TYPE_NAME (mObject));
+
+    JS_BeginRequest (jscx);
+
+    const char *camelName;
+    for (guint i = 0; i < n_properties; i++) {
+	camelName = gom_camel_case (props[i]->name);
+	if (!JS_DefineProperty (jscx, jsobj, camelName, JSVAL_VOID,
+				xgGObject::GetProperty,
+				xgGObject::SetProperty,
+				JSPROP_ENUMERATE | JSPROP_PERMANENT)) {
+	    g_printerr ("Could not define a property for %s\n", camelName);
+	} else {
+	    g_print (GOM_LOC ("Defined property: %s.%s\n"),
+		     G_OBJECT_TYPE_NAME (mObject), camelName);
+	}
+	GOM_CAMEL_FREE (camelName, props[i]->name);
+    }
+
+    JS_EndRequest (jscx);
+
+    return NS_OK;
+}
+
+JSBool
+xgGtkElement::Resolve (nsIAtom *name, GParamSpec **spec, guint *signal_id)
+{
+    g_print (GOM_LOC ("Entered\n"));
+    GOM_ATOM_TO_GSTRING_RETURN (prop, name, NS_ERROR_INVALID_ARG);
+    return xgGObject::Resolve (prop, spec, signal_id);
 }

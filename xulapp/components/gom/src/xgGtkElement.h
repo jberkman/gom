@@ -34,6 +34,8 @@ THE SOFTWARE.
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
+class nsIAtom;
+
 class xgGtkElement : public xgGObject,
 		     public nsIXTFAttributeHandler,
 		     public nsIXTFElement
@@ -48,6 +50,8 @@ public:
     nsresult Init (GType aType);
 
 protected:
+    JSBool Resolve (nsIAtom *name, GParamSpec **spec, guint *signal_id);
+    nsresult DefineProperties ();
     nsresult GetJSContext (JSContext **jscx);
     nsCOMPtr<nsIXTFElementWrapper> mWrapper;
 
