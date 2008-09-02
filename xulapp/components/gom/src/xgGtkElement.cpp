@@ -26,6 +26,7 @@ THE SOFTWARE.
 #endif
 
 #include "xgGtkElement.h"
+#include "nsGtkKeyUtils.h"
 
 #include <gtk/gtk.h>
 
@@ -41,16 +42,18 @@ THE SOFTWARE.
 #include <nsIDOMElement.h>
 #include <nsIDOMEvent.h>
 #include <nsIDOMEventTarget.h>
+#include <nsIDOMKeyEvent.h>
+#include <nsIDOMMouseEvent.h>
 #include <nsIDOMNamedNodeMap.h>
 #include <nsIDOMNode.h>
 #include <nsIDOMUIEvent.h>
 #include <nsIScriptContext.h>
 #include <nsIScriptGlobalObject.h>
-#include <nsMemory.h>
 #include <nsServiceManagerUtils.h>
 #include <nsStringAPI.h>
 
-xgGtkElement::xgGtkElement () 
+xgGtkElement::xgGtkElement ()
+    : mClickState (0)
 {
 }
 
@@ -73,8 +76,267 @@ xgGtkElement::Init (GType aType)
     return rv;
 }
 
+/*
+ Triple-clicks are very similar to double-clicks, except that
+ GDK_3BUTTON_PRESS is inserted after the third click. The order of the
+ events is:
+
+ 1. GDK_BUTTON_PRESS
+ 2. GDK_BUTTON_RELEASE
+ 3. GDK_BUTTON_PRESS
+ 4. GDK_2BUTTON_PRESS
+ 5. GDK_BUTTON_RELEASE
+ 6. GDK_BUTTON_PRESS
+ 7. GDK_3BUTTON_PRESS
+ 8. GDK_BUTTON_RELEASE
+
+Meanwhile, for the DOM...
+
+ The click event occurs when the pointing device button is clicked
+ over an element. A click is defined as a mousedown and mouseup over
+ the same screen location. The sequence of these events is:
+
+ 1. mousedown
+ 2. mouseup
+ 3. click
+
+ If multiple clicks occur at the same screen location, the sequence
+ repeats with the detail attribute incrementing with each repetition.
+*/
+
+#define INIT_MOUSE_EVENT(name, f)                                       \
+    G_STMT_START {                                                      \
+	rv = docEvent->CreateEvent (NS_LITERAL_STRING ("MouseEvent"),	\
+				    getter_AddRefs (evt));		\
+	NS_ENSURE_SUCCESS (rv, FALSE);					\
+									\
+	nsCOMPtr<nsIDOMMouseEvent> mouseEvt (do_QueryInterface (evt, &rv)); \
+	NS_ENSURE_SUCCESS (rv, FALSE);					\
+									\
+	rv = mouseEvt->InitMouseEvent (NS_LITERAL_STRING (name),	\
+				       PR_TRUE, event->type != GDK_MOTION_NOTIFY, \
+				       NULL, self->mClickState,		\
+				       (PRInt32)event->f.x_root,	\
+				       (PRInt32)event->f.y_root,	\
+				       (PRInt32)event->f.x,		\
+				       (PRInt32)event->f.y,		\
+				       event->f.state & GDK_CONTROL_MASK, \
+				       event->f.state & GDK_MOD1_MASK,	\
+				       event->f.state & GDK_SHIFT_MASK,	\
+				       event->f.state & GDK_META_MASK,	\
+				       (event->f.state & (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK | GDK_BUTTON3_MASK)) >> 8, \
+				       NULL);				\
+	NS_ENSURE_SUCCESS (rv, FALSE);					\
+    } G_STMT_END
+    
+#define INIT_KEY_EVENT(name)                                            \
+    G_STMT_START {                                                      \
+	rv = docEvent->CreateEvent (NS_LITERAL_STRING ("KeyboardEvent"), \
+				    getter_AddRefs (evt));		\
+	NS_ENSURE_SUCCESS (rv, FALSE);					\
+									\
+	nsCOMPtr<nsIDOMKeyEvent> keyEvt (do_QueryInterface (evt, &rv)); \
+	NS_ENSURE_SUCCESS (rv, FALSE);					\
+									\
+	rv = keyEvt->InitKeyEvent (NS_LITERAL_STRING (name),		\
+				   PR_TRUE, PR_TRUE, NULL,		\
+				   event->key.state & GDK_CONTROL_MASK, \
+				   event->key.state & GDK_MOD1_MASK,	\
+				   event->key.state & GDK_SHIFT_MASK,	\
+				   event->key.state & GDK_META_MASK,	\
+				   gom_GdkKeyCodeToDOMKeyCode (event->key.keyval), \
+				   gom_nsConvertCharCodeToUnicode (&event->key)); \
+	NS_ENSURE_SUCCESS (rv, FALSE);					\
+    } G_STMT_END
+
+// static
+gboolean
+xgGtkElement::Event (GtkWidget *widget, GdkEvent *event, gpointer userData)
+{
+    static GdkEventType  last_type  = GDK_NOTHING;
+    static GdkEvent     *last_event = NULL;
+
+    if (event == last_event && event->type == last_type) {
+        return FALSE;
+    }
+
+    switch (event->type) {
+    case GDK_MOTION_NOTIFY:
+    case GDK_BUTTON_PRESS:
+    case GDK_BUTTON_RELEASE:
+    case GDK_ENTER_NOTIFY:
+    case GDK_LEAVE_NOTIFY:
+    case GDK_KEY_PRESS:
+    case GDK_KEY_RELEASE:
+	break;
+    default:
+	return FALSE;
+    }
+
+    xgGtkElement *self = reinterpret_cast<xgGtkElement *> (userData);
+    NS_ENSURE_TRUE (self, FALSE);
+
+    nsresult rv;
+    nsCOMPtr<nsIDOMElement> elem;
+    rv = self->mWrapper->GetElementNode (getter_AddRefs (elem));
+    NS_ENSURE_SUCCESS (rv, FALSE);
+
+    nsCOMPtr<nsIDOMDocument> doc;
+    rv = elem->GetOwnerDocument (getter_AddRefs (doc));
+    NS_ENSURE_SUCCESS (rv, FALSE);
+
+    nsCOMPtr<nsIDOMDocumentEvent> docEvent (do_QueryInterface (doc, &rv));
+    NS_ENSURE_SUCCESS (rv, FALSE);
+
+    nsCOMPtr<nsIDOMEvent> evt;
+
+    switch (event->type) {
+    case GDK_MOTION_NOTIFY:
+	self->mClickState = 0;
+        INIT_MOUSE_EVENT ("mousemove", motion);
+        break;
+    case GDK_BUTTON_PRESS:
+        ++self->mClickState;
+        INIT_MOUSE_EVENT ("mousedown", button);
+        break;
+    case GDK_BUTTON_RELEASE:
+        INIT_MOUSE_EVENT ("mouseup", button);
+        break;
+    case GDK_ENTER_NOTIFY:
+        INIT_MOUSE_EVENT ("mouseover", crossing);
+        break;
+    case GDK_LEAVE_NOTIFY:
+        INIT_MOUSE_EVENT ("mouseout", crossing);
+        break;
+    case GDK_KEY_PRESS:
+        if (GTK_IS_WINDOW (widget) && GTK_WINDOW (widget)->focus_widget) {
+            widget = GTK_WINDOW (widget)->focus_widget;
+	    self = reinterpret_cast<xgGtkElement *> (g_object_get_data (G_OBJECT (widget), "XG_GOBJECT"));
+	    NS_ENSURE_TRUE (self, FALSE);
+
+	    rv = self->mWrapper->GetElementNode (getter_AddRefs (elem));
+	    NS_ENSURE_SUCCESS (rv, FALSE);
+        }
+        INIT_KEY_EVENT ("keydown");
+        break;
+    case GDK_KEY_RELEASE:
+        if (GTK_IS_WINDOW (widget) && GTK_WINDOW (widget)->focus_widget) {
+            widget = GTK_WINDOW (widget)->focus_widget;
+	    self = reinterpret_cast<xgGtkElement *> (g_object_get_data (G_OBJECT (widget), "XG_GOBJECT"));
+	    NS_ENSURE_TRUE (self, FALSE);
+		
+	    rv = self->mWrapper->GetElementNode (getter_AddRefs (elem));
+	    NS_ENSURE_SUCCESS (rv, FALSE);
+        }
+        INIT_KEY_EVENT ("keyup");
+        break;
+    default:
+	g_assert_not_reached ();
+    }
+
+    g_assert (evt);
+
+    last_type  = event->type;
+    last_event = event;
+
+    nsCOMPtr<nsIDOMEventTarget> target (do_QueryInterface (elem, &rv));
+    NS_ENSURE_SUCCESS (rv, FALSE);
+
+    PRBool doDefault;
+    rv = target->DispatchEvent (evt, &doDefault);
+    NS_ENSURE_SUCCESS (rv, FALSE);
+
+    if (!doDefault) {
+	return TRUE;
+    }
+
+    if (event->type == GDK_BUTTON_RELEASE && self->mClickState) {
+        evt = NULL;
+        INIT_MOUSE_EVENT ("click", button);
+	rv = target->DispatchEvent (evt, &doDefault);
+	NS_ENSURE_SUCCESS (rv, FALSE);
+	if (!doDefault) {
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
+// static
 void
-xgGtkElement::WidgetActivate (GtkWidget *w, gpointer data)
+xgGtkElement::EventAfter (GtkWidget *widget, GdkEvent *event, gpointer userData)
+{
+    static GdkEventType  last_type  = GDK_NOTHING;
+    static GdkEvent     *last_event = NULL;
+
+    if (event == last_event && event->type == last_type) {
+        return;
+    }
+
+    if (event->type != GDK_FOCUS_CHANGE) {
+	return;
+    }
+
+    xgGtkElement *self = reinterpret_cast<xgGtkElement *> (userData);
+    if (!self) {
+	return;
+    }
+
+    nsresult rv;
+    nsCOMPtr<nsIDOMElement> elem;
+    rv = self->mWrapper->GetElementNode (getter_AddRefs (elem));
+    if (NS_FAILED (rv)) {
+	return;
+    }
+
+    nsCOMPtr<nsIDOMDocument> doc;
+    rv = elem->GetOwnerDocument (getter_AddRefs (doc));
+    if (NS_FAILED (rv)) {
+	return;
+    }
+
+    nsCOMPtr<nsIDOMDocumentEvent> docEvent (do_QueryInterface (doc, &rv));
+    if (NS_FAILED (rv)) {
+	return;
+    }
+
+    nsCOMPtr<nsIDOMEvent> evt;
+    rv = docEvent->CreateEvent (NS_LITERAL_STRING ("UIEvent"),
+				getter_AddRefs (evt));
+    if (NS_FAILED (rv)) {
+	return;
+    }
+
+    nsCOMPtr<nsIDOMUIEvent> uiEvt (do_QueryInterface (evt, &rv));
+    if (NS_FAILED (rv)) {
+	return;
+    }
+
+    rv = uiEvt->InitUIEvent (event->focus_change.in
+			     ? NS_LITERAL_STRING ("DOMFocusIn")
+			     : NS_LITERAL_STRING ("DOMFocusOut"),
+			     PR_TRUE, PR_FALSE, NULL, 0);
+    if (NS_FAILED (rv)) {
+	return;
+    }
+
+    last_type  = event->type;
+    last_event = event;
+
+    nsCOMPtr<nsIDOMEventTarget> target (do_QueryInterface (elem, &rv));
+    if (NS_FAILED (rv)) {
+	return;
+    }
+    
+    PRBool doDefault;
+    rv = target->DispatchEvent (evt, &doDefault);
+    if (NS_FAILED (rv)) {
+	return;
+    }
+}
+
+void
+xgGtkElement::Activate (GtkWidget *w, gpointer data)
 {
     xgGtkElement *self = (xgGtkElement *)data;
     nsresult rv;
@@ -145,7 +407,8 @@ xgGtkElement::OnCreated (nsIXTFElementWrapper *wrapper)
     mWrapper->SetNotificationMask (NOTIFY_PARENT_CHANGED |
 				   NOTIFY_WILL_INSERT_CHILD |
 				   NOTIFY_WILL_APPEND_CHILD |
-				   NOTIFY_CHILD_REMOVED);
+				   NOTIFY_CHILD_REMOVED |
+				   NOTIFY_HANDLE_DEFAULT);
 
     nsCOMPtr<nsIDOMElement> elem;
     rv = mWrapper->GetElementNode (getter_AddRefs (elem));
@@ -155,10 +418,21 @@ xgGtkElement::OnCreated (nsIXTFElementWrapper *wrapper)
     rv = DefineProperties ();
     NS_ENSURE_SUCCESS (rv, rv);
 
+    gtk_widget_add_events (GTK_WIDGET (mObject), 
+                           GDK_BUTTON_PRESS_MASK  | GDK_BUTTON_RELEASE_MASK |
+                           GDK_ENTER_NOTIFY_MASK  | GDK_LEAVE_NOTIFY_MASK   |
+                           GDK_KEY_PRESS_MASK     | GDK_KEY_RELEASE_MASK    |
+                           GDK_FOCUS_CHANGE_MASK  | GDK_POINTER_MOTION_HINT_MASK);
+
     if (GTK_IS_ENTRY (mObject)) {
 	g_signal_connect (mObject, "activate",
-			  G_CALLBACK (&xgGtkElement::WidgetActivate), this);
+			  G_CALLBACK (xgGtkElement::Activate), this);
+    } else if (GTK_IS_BUTTON (mObject)) {
+	g_signal_connect (mObject, "clicked",
+			  G_CALLBACK (xgGtkElement::Activate), this);
     }
+    g_signal_connect (mObject, "event", G_CALLBACK (xgGtkElement::Event), this);
+    g_signal_connect (mObject, "event-after", G_CALLBACK (xgGtkElement::EventAfter), this);
     gtk_widget_show (GTK_WIDGET (mObject));
 
     return NS_OK;
@@ -411,7 +685,16 @@ xgGtkElement::DoneAddingChildren ()
 NS_IMETHODIMP
 xgGtkElement::HandleDefault (nsIDOMEvent *aEvent, PRBool *_retval)
 {
-    XG_RETURN_NOT_IMPLEMENTED;
+    nsresult rv;
+    nsAutoString evtType;
+    rv = aEvent->GetType (evtType);
+    NS_ENSURE_SUCCESS (rv, rv);
+
+    g_print (GOM_LOC ("handling default for %s\n"), NS_ConvertUTF16toUTF8 (evtType).get ());
+
+    *_retval = PR_FALSE;
+
+    return NS_OK;
 }
 
 /* void cloneState (in nsIDOMElement aElement); */

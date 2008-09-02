@@ -53,12 +53,16 @@ protected:
     JSBool Resolve (nsIAtom *name, GParamSpec **spec, guint *signal_id);
     nsresult DefineProperties ();
     nsresult GetJSContext (JSContext **jscx);
-    nsCOMPtr<nsIXTFElementWrapper> mWrapper;
 
+    nsCOMPtr<nsIXTFElementWrapper> mWrapper;
+    guint mClickState;
+    
 private:
     ~xgGtkElement();
 
-    static void WidgetActivate (GtkWidget *w, gpointer data);
+    static void Activate (GtkWidget *widget, gpointer data);
+    static gboolean Event (GtkWidget *widget, GdkEvent *event, gpointer data);
+    static void EventAfter (GtkWidget *widget, GdkEvent *event, gpointer data);
 };
 
 #endif // XG_GTK_ELEMENT_H

@@ -1,5 +1,15 @@
 2008-09-01  jacob berkman  <jacob@ilovegom.org>
 
+	* xulapp/components/gom/src/keysym2ucs.[ch]:
+	* xulapp/components/gom/src/nsGtkKeyUtils.{cpp,h}: copy from mozilla
+
+	* xulapp/components/gom/src/xgGtkElement.cpp
+	(xgGtkElement::Event): convert gdk events into dom events
+	(xgGtkElement::EventAfter): convert gdk events into dom events
+	(xgGtkElement::OnCreated): ask for HandleDefault, add some widget
+	events to our widget, and hook up event signal handlers
+	(xgGtkElement::HandleDefault): just print a message for now
+
 	* xulapp/components/gom/src/xgGtkElement.cpp
 	(xgGtkElement::DefineProperties): move to xgGtkElement, as simple
 	xgGObjects get their properties defined dynamically via its
